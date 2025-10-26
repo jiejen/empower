@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Search, X, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './Layout.css';
 
 // Sidebar Component
-export const Sidebar = ({ activePage = 'Dashboard', onNavigate }) => {
+export const Sidebar = ({ activePage = 'Dashboard' }) => {
+  const navigate = useNavigate();
+  
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'create-report', label: 'Create Report' },
-    { id: 'add-appliance', label: 'Add Appliance' }
+    { id: 'dashboard', label: 'Dashboard', path: '/' },
+    { id: 'create-report', label: 'Create Report', path: '/create-report' },
+    { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
   ];
 
   return (
@@ -20,7 +23,7 @@ export const Sidebar = ({ activePage = 'Dashboard', onNavigate }) => {
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => onNavigate?.(item.id)}
+            onClick={() => navigate(item.path)}
             className={`sidebar-item ${activePage === item.label ? 'active' : ''}`}
           >
             {item.label}
@@ -35,7 +38,7 @@ export const Sidebar = ({ activePage = 'Dashboard', onNavigate }) => {
   );
 };
 
-// Navbar Component
+// Navbar Component (keep as is)
 export const Navbar = ({ userName = 'User name' }) => {
   const [searchValue, setSearchValue] = useState('');
 

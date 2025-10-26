@@ -2,10 +2,11 @@
 import { Sidebar } from './sidebar';
 import { Navbar } from './sidebar';
 
-export const Layout = ({ children, activePage, userName, onNavigate }) => {
+// Layout Component (remove onNavigate prop)
+export const Layout = ({ children, activePage, userName }) => {
   return (
     <div className="layout">
-      <Sidebar activePage={activePage} onNavigate={onNavigate} />
+      <Sidebar activePage={activePage} />
       <div className="main-container">
         <Navbar userName={userName} />
         <main className="content">

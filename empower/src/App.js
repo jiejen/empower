@@ -1,9 +1,19 @@
-// src/App.js
 import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './frontend/pages/dashboard';
+import CreateReport from './frontend/pages/createReport';
+import AddAppliance from './frontend/pages/addAppliance';
 
 function App() {
-  return <Dashboard />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/create-report" element={<CreateReport />} />
+        <Route path="/add-appliance" element={<AddAppliance />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
