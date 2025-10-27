@@ -8,6 +8,7 @@ function AddAppliance() {
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [message, setMessage] = useState('');
+  const [csvFile, setCsvFile] = useState(null);
 
   const applianceOptions = [
     'Refrigerator',
@@ -29,6 +30,7 @@ function AddAppliance() {
     'Other'
   ];
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -37,13 +39,19 @@ function AddAppliance() {
       return;
     }
 
-    const applianceData = { applianceType, name, location, notes };
-
     try {
+      const formData = new FormData();
+      formData.append('applianceType', applianceType);
+      formData.append('name', name);
+      formData.append('location', location);
+      formData.append('notes', notes);
+      if (csvFile) {
+        formData.append('csv', csvFile);
+      }
+
       const response = await fetch('/api/appliances', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(applianceData),
+        body: formData,
       });
 
       if (response.ok) {
@@ -52,6 +60,7 @@ function AddAppliance() {
         setName('');
         setLocation('');
         setNotes('');
+        setCsvFile(null);
       } else {
         setMessage('Failed to add appliance.');
       }
@@ -65,7 +74,8 @@ function AddAppliance() {
     <Layout activePage="Add Appliance" userName="John Doe">
       <div style={{ padding: '32px' }}>
         <h2>Add Appliance</h2>
-        {message && <p>{message}</p>}
+        {message && <p style={{ color: message.includes('success') ? 'green' : 'red' }}>{message}</p>}
+        
         <form
           onSubmit={handleSubmit}
           style={{
@@ -130,6 +140,21 @@ function AddAppliance() {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any extra notes..."
             />
+          </div>
+
+          {/* CSV Energy Data Upload */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label htmlFor="csvFile">Upload Energy Data CSV (Optional):</label>
+            <input
+              id="csvFile"
+              type="file"
+              accept=".csv"
+              onChange={(e) => setCsvFile(e.target.files[0])}
+              style={{ fontSize: '14px' }}
+            />
+            <small style={{ color: '#666', marginTop: '4px' }}>
+              CSV should have columns: timestamp, kwh
+            </small>
           </div>
 
           <button type="submit" style={{ padding: '8px 16px', cursor: 'pointer' }}>
