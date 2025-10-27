@@ -8,7 +8,8 @@ export const Sidebar = ({ activePage = 'Dashboard' }) => {
   const navigate = useNavigate();
   
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', path: '/' },
+    { id: 'home', label: 'Home', path: '/' },
+    { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { id: 'create-report', label: 'Create Report', path: '/create-report' },
     { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
   ];
