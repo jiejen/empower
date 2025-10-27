@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, X, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, X, User, ChevronDown, LogOut, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Layout.css';
 
@@ -38,9 +38,34 @@ export const Sidebar = ({ activePage = 'Dashboard' }) => {
   );
 };
 
-// Navbar Component (keep as is)
 export const Navbar = ({ userName = 'User name' }) => {
   const [searchValue, setSearchValue] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleProfileClick = () => {
+    setIsDropdownOpen(false);
+    
+    console.log('Navigate to profile');
+  };
+
+  const handleLogout = () => {
+    setIsDropdownOpen(false);
+    
+    console.log('Logging out...');
+  };
 
   return (
     <div className="navbar">
@@ -62,11 +87,34 @@ export const Navbar = ({ userName = 'User name' }) => {
         </div>
       </div>
 
-      <div className="user-profile">
-        <div className="user-avatar">
-          <User size={24} />
-        </div>
-        <span className="user-name">{userName}</span>
+      <div className="user-profile" ref={dropdownRef}>
+        <button 
+          className="user-profile-btn"
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        >
+          <div className="user-avatar">
+            <User size={24} />
+          </div>
+          <span className="user-name">{userName}</span>
+          <ChevronDown 
+            size={20} 
+            className={`dropdown-icon ${isDropdownOpen ? 'open' : ''}`}
+          />
+        </button>
+
+        {isDropdownOpen && (
+          <div className="dropdown-menu">
+            <button className="dropdown-item" onClick={handleProfileClick}>
+              <UserCircle size={18} />
+              <span>Profile</span>
+            </button>
+            <div className="dropdown-divider" />
+            <button className="dropdown-item logout" onClick={handleLogout}>
+              <LogOut size={18} />
+              <span>Log Out</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
