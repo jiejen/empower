@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout';
 import '../components/Layout.css';
 
@@ -11,16 +11,30 @@ function CreateReport() {
   const [yAxis, setYAxis] = useState('kwh');
   const [xAxis, setXAxis] = useState('week');
   const [notes, setNotes] = useState('');
+  const [appliances, setAppliances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Dummy appliance data
-  const appliances = [
-    { id: 1, name: 'Refrigerator - Kitchen' },
-    { id: 2, name: 'Air Conditioner - Living Room' },
-    { id: 3, name: 'Washing Machine - Laundry' },
-    { id: 4, name: 'Electric Oven - Kitchen' },
-    { id: 5, name: 'Water Heater - Bathroom' },
-    { id: 6, name: 'Television - Living Room' },
-  ];
+  // Fetch appliances from backend
+  useEffect(() => {
+    const fetchAppliances = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/appliances');
+        if (!response.ok) {
+          throw new Error('Failed to fetch appliances');
+        }
+        const data = await response.json();
+        setAppliances(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching appliances:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchAppliances();
+  }, []);
 
   const handleApplianceToggle = (applianceId) => {
     setSelectedAppliances(prev =>
@@ -176,36 +190,50 @@ function CreateReport() {
               overflowY: 'auto',
               backgroundColor: '#f9fafb'
             }}>
-              {appliances.map((appliance) => (
-                <label
-                  key={appliance.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '8px',
-                    cursor: 'pointer',
-                    borderRadius: '4px',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedAppliances.includes(appliance.id)}
-                    onChange={() => handleApplianceToggle(appliance.id)}
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                  Loading appliances...
+                </div>
+              ) : error ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#dc2626' }}>
+                  Error loading appliances: {error}
+                </div>
+              ) : appliances.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                  No appliances available. Please add appliances first.
+                </div>
+              ) : (
+                appliances.map((appliance) => (
+                  <label
+                    key={appliance.id}
                     style={{
-                      width: '18px',
-                      height: '18px',
-                      marginRight: '12px',
-                      cursor: 'pointer'
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px',
+                      cursor: 'pointer',
+                      borderRadius: '4px',
+                      transition: 'background-color 0.2s'
                     }}
-                  />
-                  <span style={{ fontSize: '15px', color: '#374151' }}>
-                    {appliance.name}
-                  </span>
-                </label>
-              ))}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAppliances.includes(appliance.id)}
+                      onChange={() => handleApplianceToggle(appliance.id)}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        marginRight: '12px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <span style={{ fontSize: '15px', color: '#374151' }}>
+                      {appliance.name} - {appliance.location}
+                    </span>
+                  </label>
+                ))
+              )}
             </div>
           </div>
 
