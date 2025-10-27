@@ -7,7 +7,7 @@ import Card from '../components/card.js';
 function Home() {
   const navigate = useNavigate();
   return (
-    <Layout activePage="Dashboard" userName="John Doe">
+    <Layout activePage="Home" userName="John Doe">
       <div style={{ padding: '32px' }}>
         <h1>Take Charge of <span style={{color:' #4d8be9'}}>Your</span> Energy</h1>
         <button class="button" onClick={() => navigate('dashboard')}>Get Started</button>
