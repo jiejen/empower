@@ -42,6 +42,7 @@ export const Navbar = ({ userName = 'User name' }) => {
   const [searchValue, setSearchValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,8 +58,7 @@ export const Navbar = ({ userName = 'User name' }) => {
 
   const handleProfileClick = () => {
     setIsDropdownOpen(false);
-    
-    console.log('Navigate to profile');
+    navigate('/profile');
   };
 
   const handleLogout = () => {
