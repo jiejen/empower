@@ -135,6 +135,8 @@ function CreateReport() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                disabled={!startDate}
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -142,7 +144,9 @@ function CreateReport() {
                   borderRadius: '6px',
                   fontSize: '16px',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  backgroundColor: !startDate ? '#f3f4f6' : 'white',
+                  cursor: !startDate ? 'not-allowed' : 'pointer'
                 }}
               />
             </div>
