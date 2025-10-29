@@ -54,7 +54,7 @@ app.get('/api/appliances', (req, res) => {
 
 // POST new appliance
 app.post('/api/appliances', (req, res) => {
-  const { applianceType, name, location, notes } = req.body;
+  const { applianceType, name, location, notes, energyData } = req.body;
 
   // Validate required fields
   if (!applianceType || !name || !location) {
@@ -63,13 +63,14 @@ app.post('/api/appliances', (req, res) => {
 
   const appliances = readAppliances();
 
-  // Create new appliance object
+  // Create new appliance object - ensure energyData is always an array
   const newAppliance = {
     id: Date.now().toString(),
     applianceType,
     name,
     location,
     notes: notes || '',
+    energyData: Array.isArray(energyData) ? energyData : [],
     createdAt: new Date().toISOString(),
   };
 
@@ -98,7 +99,7 @@ app.get('/api/appliances/:id', (req, res) => {
 
 // PUT update appliance
 app.put('/api/appliances/:id', (req, res) => {
-  const { applianceType, name, location, notes } = req.body;
+  const { applianceType, name, location, notes, energyData } = req.body;
   const appliances = readAppliances();
   const index = appliances.findIndex((a) => a.id === req.params.id);
 
@@ -113,6 +114,7 @@ app.put('/api/appliances/:id', (req, res) => {
     name: name || appliances[index].name,
     location: location || appliances[index].location,
     notes: notes !== undefined ? notes : appliances[index].notes,
+    energyData: energyData !== undefined ? energyData : appliances[index].energyData,
     updatedAt: new Date().toISOString(),
   };
 

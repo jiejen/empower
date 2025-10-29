@@ -7,6 +7,8 @@ function AddAppliance() {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvData, setCsvData] = useState(null);
   const [message, setMessage] = useState('');
 
   const applianceOptions = [
@@ -29,6 +31,62 @@ function AddAppliance() {
     'Other'
   ];
 
+  const parseCSV = (text) => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length === 0) return [];
+    
+    // Parse header
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    
+    // Find indices for common column names
+    const timeIndex = headers.findIndex(h => h.includes('time') || h.includes('timestamp') || h.includes('date'));
+    const kwhIndex = headers.findIndex(h => h.includes('kwh') || h.includes('energy') || h.includes('power'));
+    
+    if (timeIndex === -1 || kwhIndex === -1) {
+      throw new Error('CSV must contain time and kWh columns');
+    }
+    
+    // Parse data rows
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length >= Math.max(timeIndex, kwhIndex) + 1) {
+        const time = values[timeIndex];
+        const kwh = parseFloat(values[kwhIndex]);
+        if (!isNaN(kwh)) {
+          data.push({ time, kwh });
+        }
+      }
+    }
+    
+    return data;
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+      setMessage('Please upload a CSV file.');
+      return;
+    }
+    
+    setCsvFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = parseCSV(event.target.result);
+        setCsvData(parsed);
+        setMessage(`Successfully parsed ${parsed.length} data points from CSV.`);
+      } catch (error) {
+        setMessage(`Error parsing CSV: ${error.message}`);
+        setCsvData(null);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -37,7 +95,13 @@ function AddAppliance() {
       return;
     }
 
-    const applianceData = { applianceType, name, location, notes };
+    const applianceData = { 
+      applianceType, 
+      name, 
+      location, 
+      notes,
+      energyData: csvData || []
+    };
 
     try {
       const response = await fetch('/api/appliances', {
@@ -52,6 +116,10 @@ function AddAppliance() {
         setName('');
         setLocation('');
         setNotes('');
+        setCsvFile(null);
+        setCsvData(null);
+        // Reset file input
+        document.getElementById('csvFile').value = '';
       } else {
         setMessage('Failed to add appliance.');
       }
@@ -63,79 +131,257 @@ function AddAppliance() {
 
   return (
     <Layout activePage="Add Appliance" userName="John Doe">
-      <div style={{ padding: '32px' }}>
-        <h2>Add Appliance</h2>
-        {message && <p>{message}</p>}
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            maxWidth: '400px',
-          }}
-        >
-          {/* Appliance Type */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label htmlFor="applianceType">Appliance Type:</label>
-            <select
-              id="applianceType"
-              value={applianceType}
-              onChange={(e) => setApplianceType(e.target.value)}
-            >
-              <option value="">Select Type</option>
-              {applianceOptions.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div style={{ padding: '32px', maxWidth: '900px' }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb',
+          padding: '32px'
+        }}>
+          <h2 style={{ 
+            margin: '0 0 32px 0', 
+            fontSize: '24px', 
+            fontWeight: '600', 
+            color: '#1f2937' 
+          }}>
+            Add New Appliance
+          </h2>
 
-          {/* Name */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label htmlFor="name">Name:</label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Appliance Name"
-            />
-          </div>
+          {message && (
+            <div style={{
+              padding: '12px 16px',
+              marginBottom: '24px',
+              backgroundColor: message.includes('successfully') ? '#d1fae5' : '#fee2e2',
+              color: message.includes('successfully') ? '#065f46' : '#991b1b',
+              borderRadius: '6px',
+              border: `1px solid ${message.includes('successfully') ? '#a7f3d0' : '#fecaca'}`,
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              {message}
+            </div>
+          )}
 
-          {/* Location */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label htmlFor="location">Location:</label>
-            <select
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            >
-              <option value="">Select Location</option>
-              {locationOptions.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
-          </div>
+          <form onSubmit={handleSubmit}>
+            {/* Appliance Type */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="applianceType" style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Appliance Type *
+              </label>
+              <select
+                id="applianceType"
+                value={applianceType}
+                onChange={(e) => setApplianceType(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="">Select Type</option>
+                {applianceOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Notes */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label htmlFor="notes">Notes (Optional):</label>
-            <textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any extra notes..."
-            />
-          </div>
+            {/* Name */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="name" style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Appliance Name *
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter appliance name"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
 
-          <button type="submit" style={{ padding: '8px 16px', cursor: 'pointer' }}>
-            Add Appliance
-          </button>
-        </form>
+            {/* Location */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="location" style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Location *
+              </label>
+              <select
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="">Select Location</option>
+                {locationOptions.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Notes */}
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="notes" style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Notes (Optional)
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any additional notes or comments..."
+                rows="4"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* CSV File Upload */}
+            <div style={{ marginBottom: '32px' }}>
+              <label htmlFor="csvFile" style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Upload Energy Data CSV (Optional)
+              </label>
+              <div style={{
+                border: '2px dashed #d1d5db',
+                borderRadius: '6px',
+                padding: '20px',
+                textAlign: 'center',
+                backgroundColor: csvFile ? '#f0f9ff' : '#f9fafb',
+                transition: 'all 0.2s'
+              }}>
+                <input
+                  id="csvFile"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  style={{
+                    display: 'none'
+                  }}
+                />
+                <label
+                  htmlFor="csvFile"
+                  style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  {csvFile ? csvFile.name : 'Choose CSV File'}
+                </label>
+                <p style={{
+                  marginTop: '12px',
+                  fontSize: '13px',
+                  color: '#6b7280'
+                }}>
+                  CSV should contain columns for time/timestamp and kWh/energy. 
+                  First row should be headers.
+                </p>
+                {csvData && (
+                  <p style={{
+                    marginTop: '8px',
+                    fontSize: '13px',
+                    color: '#059669',
+                    fontWeight: '500'
+                  }}>
+                    ✓ {csvData.length} data points loaded
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div>
+              <button
+                type="submit"
+                style={{
+                  padding: '12px 32px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              >
+                Add Appliance
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </Layout>
   );
