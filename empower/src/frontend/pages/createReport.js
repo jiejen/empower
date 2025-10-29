@@ -320,9 +320,7 @@ function CreateReport() {
               >
                 <option value="kwh">Energy (kWh)</option>
                 <option value="cost">Cost ($)</option>
-                <option value="power">Power (W)</option>
-                <option value="voltage">Voltage (V)</option>
-                <option value="current">Current (A)</option>
+                <option value="power">Power (kW)</option>
               </select>
             </div>
             <div>
