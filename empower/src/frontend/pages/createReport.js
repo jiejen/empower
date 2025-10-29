@@ -320,9 +320,8 @@ function CreateReport() {
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="kwh">Energy (kWh)</option>
-                <option value="cost">Cost ($)</option>
                 <option value="power">Power (kW)</option>
+                <option value="cost">Cost ($)</option>
               </select>
             </div>
             <div>
