@@ -1,9 +1,9 @@
 .headline-card-container {
-  width: 400px;
+  width: 600px;
   height: 500px;
   border-radius: 12px;
   overflow: hidden;
-  background-color: #fff;
+  background-color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@
 .headline-card-image {
   width: 100%;
   height: 50%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -38,6 +38,7 @@
   font-weight: bold;
   color: #222;
   margin-bottom: 8px;
+  margin-left: 16px;
 }
 
 .headline-card-subtitle {
@@ -45,6 +46,8 @@
   color: #555;
   flex-grow: 1;
   margin-bottom: 16px;
+  margin-left: 16px;
+  margin-right: 16px;
 }
 
 .headline-card-button {
