@@ -19,7 +19,7 @@ code {
 .button {
   background-color: #4d8be9; 
   border: none;
-  color: white;
+  color: #fff;
   padding: 15px 32px;
   text-align: center;
   text-decoration: none;
@@ -31,4 +31,9 @@ code {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   font-weight:bold ;
+  transition: background-color 0.5s ease;
+}
+
+.button:hover {
+  background-color: #73a4ec;
 }
