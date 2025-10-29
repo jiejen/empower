@@ -3,7 +3,6 @@ import { Layout } from '../components/layout';
 import { auth } from '../../firebase';
 import { authService } from '../../services/authService';
 import '../components/Layout.css';
-import { useState, useEffect } from 'react';
 
 function Dashboard() {
   const [appliances, setAppliances] = useState([]);
