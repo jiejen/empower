@@ -17,7 +17,7 @@ function Home() {
           <nav className="header-nav">
             <a className="nav-link" href="#about">About Us</a>
             <a className="nav-link" href="#contact">Contact Us</a>
-            <button className="signin-btn" onClick={() => navigate('/dashboard')}>Sign In/Up</button>
+            <button className="signin-btn" onClick={() => navigate('/login')}>Sign In/Up</button>
           </nav>
         </div>
       </header>
@@ -30,7 +30,7 @@ function Home() {
             <p className="hero-subtitle">Empowering homeowners to be efficient.</p>
             <button
               className="signup-btn"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/login')}
             >
               Sign Up for free
             </button>
@@ -53,7 +53,7 @@ function Home() {
             <p className="feature-subtitle">
               Empower yourself with appliance-level energy breakdowns and analytics. Explore interactive dashboards and create reports with actionable fix suggestions.
             </p>
-            <button className="try-btn" onClick={() => navigate('/dashboard')}>Try it now!</button>
+            <button className="try-btn" onClick={() => navigate('/login')}>Try it now!</button>
           </div>
         </div>
       </section>
