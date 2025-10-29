@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
+import { useNavigate } from 'react-router-dom';
 import '../components/Layout.css';
 
 function CreateReport() {
   const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [reportName, setReportName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedAppliances, setSelectedAppliances] = useState([]);
   const [chartType, setChartType] = useState('line');
-  const [yAxis, setYAxis] = useState('kwh');
-  const [xAxis, setXAxis] = useState('week');
+  const [yAxis, setYAxis] = useState('power');
+  const [xAxis, setXAxis] = useState('hour');
   const [notes, setNotes] = useState('');
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,16 +49,40 @@ function CreateReport() {
   };
 
   const handleSubmit = () => {
-    console.log('Report submitted:', {
+    // Validation
+    if (!reportName.trim()) {
+      alert('Please enter a report name');
+      return;
+    }
+    if (!startDate || !endDate) {
+      alert('Please select both start and end dates');
+      return;
+    }
+    if (selectedAppliances.length === 0) {
+      alert('Please select at least one appliance');
+      return;
+    }
+
+    // Get selected appliance data
+    const selectedApplianceData = appliances.filter(app => 
+      selectedAppliances.includes(app.id)
+    );
+
+    // Create report data object
+    const reportData = {
       reportName,
       startDate,
       endDate,
-      selectedAppliances,
+      appliances: selectedApplianceData,
       chartType,
       yAxis,
       xAxis,
-      notes
-    });
+      notes,
+      createdAt: new Date().toISOString()
+    };
+
+    // Navigate to report view with data
+    navigate('/report-view', { state: { reportData } });
   };
 
   return (
