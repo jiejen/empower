@@ -62,10 +62,20 @@ export const Navbar = ({ userName = 'User name' }) => {
     navigate('/profile');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
-    
-    console.log('Logging out...');
+    try {
+      // Clear local storage auth
+      localStorage.removeItem('empower_session');
+      // Clear Firebase auth if exists
+      if (window.firebase?.auth) {
+        await window.firebase.auth().signOut();
+      }
+      // Navigate to home page
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
