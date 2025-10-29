@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
-import { auth } from '../../firebase';
-import { authService } from '../../services/authService';
+import { useUser } from '../../context/UserContext';
 import '../components/Layout.css';
 
 function Dashboard() {
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchAppliances();
-  }, []);
+    if (user) {
+      fetchAppliances();
+    } else {
+      navigate('/');
+    }
+  }, [navigate, user]);
 
   const fetchAppliances = async () => {
     try {
@@ -58,7 +64,7 @@ function Dashboard() {
   };
 
   return (
-    <Layout activePage="Dashboard" userName="John Doe">
+    <Layout activePage="Dashboard" userName={user?.name || user?.email || 'User'} onLogout={logout}>
       <div style={{ padding: '32px', maxWidth: '1400px' }}>
         <div style={{
           backgroundColor: 'white',

@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
+import { useUser } from '../../context/UserContext';
 import '../components/Layout.css';
 
 function AddAppliance() {
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [applianceType, setApplianceType] = useState('');
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
@@ -130,7 +134,7 @@ function AddAppliance() {
   };
 
   return (
-    <Layout activePage="Add Appliance" userName="John Doe">
+    <Layout activePage="Add Appliance" userName={user?.name || user?.email || 'User'} onLogout={logout}>
       <div style={{ padding: '32px', maxWidth: '900px' }}>
         <div style={{
           backgroundColor: 'white',

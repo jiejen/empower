@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout';
+import { useUser } from '../../context/UserContext';
 import '../components/Layout.css';
 
 function CreateReport() {
+  const { user, logout } = useUser();
   const [reportName, setReportName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -58,7 +60,7 @@ function CreateReport() {
   };
 
   return (
-    <Layout activePage="Create Report" userName="John Doe">
+    <Layout activePage="Create Report" userName={user?.name || user?.email || 'User'} onLogout={logout}>
       <div style={{ padding: '32px', maxWidth: '900px' }}>
         <div style={{
           backgroundColor: 'white',

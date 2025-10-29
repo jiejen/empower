@@ -1,26 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
+import { useUser } from '../../context/UserContext';
+import { authService } from '../../services/authService';
 import '../components/Layout.css';
 
 function Profile() {
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (111) 123-4567',
-    location: 'Coppell, Texas, US'
+    name: '',
+    email: '',
+    phone: '',
+    location: ''
   });
-
   const [editedInfo, setEditedInfo] = useState(userInfo);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    const initialInfo = {
+      name: user.name || user.email?.split('@')[0] || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      location: user.location || ''
+    };
+    setUserInfo(initialInfo);
+    setEditedInfo(initialInfo);
+  }, [user, navigate]);
 
   const handleEdit = () => {
     setIsEditing(true);
     setEditedInfo(userInfo);
+    setError('');
   };
 
-  const handleSave = () => {
-    setUserInfo(editedInfo);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setError('');
+      const updates = {
+        name: editedInfo.name,
+        phone: editedInfo.phone,
+        location: editedInfo.location
+      };
+      
+      await authService.updateProfile(updates);
+      setUserInfo(editedInfo);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      setError(error.message || 'Failed to update profile. Please try again.');
+    }
   };
 
   const handleCancel = () => {
@@ -33,7 +68,7 @@ function Profile() {
   };
 
   return (
-    <Layout activePage="Profile" userName={userInfo.name}>
+    <Layout activePage="Profile" userName={user?.name || user?.email || 'User'} onLogout={logout}>
       <div style={{ padding: '32px', maxWidth: '800px' }}>
         <div style={{ 
           backgroundColor: 'white', 
@@ -41,6 +76,21 @@ function Profile() {
           border: '1px solid #e5e7eb',
           padding: '32px'
         }}>
+          {error && (
+            <div style={{
+              padding: '12px 16px',
+              marginBottom: '24px',
+              backgroundColor: '#fee2e2',
+              color: '#991b1b',
+              borderRadius: '6px',
+              border: '1px solid #fecaca',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              {error}
+            </div>
+          )}
+
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -101,7 +151,7 @@ function Profile() {
               </div>
             )}
           </div>
-
+          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* Name */}
             <div>
@@ -150,14 +200,16 @@ function Profile() {
                 <input
                   type="email"
                   value={editedInfo.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  readOnly
                   style={{
                     width: '100%',
                     padding: '8px 12px',
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     fontSize: '16px',
-                    outline: 'none'
+                    outline: 'none',
+                    backgroundColor: '#f3f4f6',
+                    cursor: 'not-allowed'
                   }}
                 />
               ) : (

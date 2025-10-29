@@ -4,11 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import './Layout.css';
 
 // Sidebar Component
-export const Sidebar = ({ activePage = 'Dashboard' }) => {
+export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
   const navigate = useNavigate();
   
   const menuItems = [
-    { id: 'home', label: 'Home', path: '/' },
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { id: 'create-report', label: 'Create Report', path: '/create-report' },
     { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
@@ -33,13 +32,13 @@ export const Sidebar = ({ activePage = 'Dashboard' }) => {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn">Log Out</button>
+        <button className="logout-btn" onClick={onLogout}>Log Out</button>
       </div>
     </div>
   );
 };
 
-export const Navbar = ({ userName = 'User name' }) => {
+export const Navbar = ({ userName = 'User name', onLogout }) => {
   const [searchValue, setSearchValue] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -62,20 +61,9 @@ export const Navbar = ({ userName = 'User name' }) => {
     navigate('/profile');
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setIsDropdownOpen(false);
-    try {
-      // Clear local storage auth
-      localStorage.removeItem('empower_session');
-      // Clear Firebase auth if exists
-      if (window.firebase?.auth) {
-        await window.firebase.auth().signOut();
-      }
-      // Navigate to home page
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    onLogout();
   };
 
   return (
