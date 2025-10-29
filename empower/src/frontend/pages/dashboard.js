@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
+import { auth } from '../../firebase';
 import '../components/Layout.css';
 
 function Dashboard() {
@@ -22,7 +23,13 @@ function Dashboard() {
   const fetchAppliances = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/appliances');
+      const uid = auth.currentUser?.uid;
+      if (!uid) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+      const response = await fetch('/api/appliances', { headers: { 'x-user-uid': uid } });
       if (response.ok) {
         const data = await response.json();
         setAppliances(data);

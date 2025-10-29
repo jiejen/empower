@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
+import { auth } from '../../firebase';
 import '../components/Layout.css';
 
 function CreateReport() {
@@ -17,11 +18,17 @@ function CreateReport() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch appliances from backend
+  // Fetch appliances from backend for current Firebase user
   useEffect(() => {
     const fetchAppliances = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/appliances');
+        const uid = auth.currentUser?.uid;
+        if (!uid) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+        const response = await fetch('/api/appliances', { headers: { 'x-user-uid': uid } });
         if (!response.ok) {
           throw new Error('Failed to fetch appliances');
         }

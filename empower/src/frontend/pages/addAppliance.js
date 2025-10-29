@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
+import { auth } from '../../firebase';
 import '../components/Layout.css';
 
 function AddAppliance() {
@@ -14,6 +15,7 @@ function AddAppliance() {
   const [csvFile, setCsvFile] = useState(null);
   const [csvData, setCsvData] = useState(null);
   const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const applianceOptions = [
     'Refrigerator',
@@ -99,6 +101,12 @@ function AddAppliance() {
       return;
     }
 
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      setMessage('You must be signed in with Firebase to add an appliance.');
+      return;
+    }
+
     const applianceData = { 
       applianceType, 
       name, 
@@ -108,9 +116,10 @@ function AddAppliance() {
     };
 
     try {
+      setSubmitting(true);
       const response = await fetch('/api/appliances', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-uid': uid },
         body: JSON.stringify(applianceData),
       });
 
@@ -125,11 +134,18 @@ function AddAppliance() {
         // Reset file input
         document.getElementById('csvFile').value = '';
       } else {
-        setMessage('Failed to add appliance.');
+        let err = 'Failed to add appliance.';
+        try {
+          const body = await response.json();
+          if (body?.error) err = body.error;
+        } catch {}
+        setMessage(err);
       }
     } catch (error) {
       console.error(error);
       setMessage('An error occurred while saving appliance.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -380,8 +396,9 @@ function AddAppliance() {
                 }}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                disabled={submitting}
               >
-                Add Appliance
+                {submitting ? 'Adding...' : 'Add Appliance'}
               </button>
             </div>
           </form>
