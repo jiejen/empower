@@ -88,7 +88,7 @@
 }
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 3.2rem;
   margin: 0 0 12px 0;
   line-height: 1.02;
   color: #111;
@@ -97,7 +97,7 @@
 .hero-subtitle {
   margin: 0 0 20px 0;
   color: #333;
-  font-size: 1.55rem;
+  font-size: 1.4rem;
 }
 
 .signup-btn {
@@ -109,7 +109,7 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 1.125rem;
-  margin-top: 24px
+  margin-top: 30px
 }
 
 .signup-btn:hover {
@@ -137,7 +137,7 @@
 }
 
 .hero-image {
-  max-width: 95%;
+  max-width: 100%;
   height: auto;
   display: block;
   border-radius: 8px;
@@ -207,7 +207,7 @@
 }
 
 .feature-title {
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin: 0 0 12px 0;
 }
 
@@ -266,21 +266,21 @@
 }
 
 .about-title {
-  font-size: 1.9rem;
+  font-size: 2rem;
   margin-bottom: 12px;
 }
 
 .about-text {
   color: #000; 
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   line-height: 1.6;
 }
 
 .team-avatars {
   display: flex;
   justify-content: center;
-  gap: 14px;
-  margin-top: 20px;
+  gap: 30px;
+  margin-top: 40px;
   margin-bottom: 18px;
 }
 

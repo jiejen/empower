@@ -73,7 +73,7 @@ function Home() {
               built Empower to help homeowners understand their energy use and
               take practical steps to save money and reduce waste.
             </p>
-
+            
             <div className="team-avatars" aria-hidden="true">
               <div className="avatar">A</div>
               <div className="avatar">B</div>
@@ -82,11 +82,11 @@ function Home() {
               <div className="avatar">E</div>
             </div>
 
-            <h3 className="mission-title">Our Mission</h3>
+            {/* <h3 className="mission-title">Our Mission</h3>
             <p className="mission-text">
               To empower homeowners with clear, actionable insights that make
               energy savings simple, affordable, and sustainable.
-            </p>
+            </p> */}
           </div>
         </section>
 
