@@ -19,16 +19,73 @@ function ReportView() {
     }
 
     // Process the energy data based on selected parameters
-    const processedData = processEnergyData(
-      reportData.appliances,
-      reportData.startDate,
-      reportData.endDate,
-      reportData.xAxis,
-      reportData.yAxis
-    );
+    let processedData;
+    
+    if (reportData.chartType === 'pie') {
+      // For pie chart, compare appliances
+      processedData = processApplianceComparison(
+        reportData.appliances,
+        reportData.startDate,
+        reportData.endDate,
+        reportData.yAxis
+      );
+    } else {
+      // For line and bar charts, show data over time
+      processedData = processEnergyData(
+        reportData.appliances,
+        reportData.startDate,
+        reportData.endDate,
+        reportData.xAxis,
+        reportData.yAxis
+      );
+    }
     
     setChartData(processedData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportData, navigate]);
+
+  const processApplianceComparison = (appliances, startDate, endDate, yAxis) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const costPerKwh = 0.12; // $0.12 per kWh
+
+    const comparisonData = appliances.map(appliance => {
+      let totalValue = 0;
+      let dataPointCount = 0;
+
+      if (appliance.energyData && Array.isArray(appliance.energyData)) {
+        appliance.energyData.forEach(dataPoint => {
+          const pointDate = new Date(dataPoint.time);
+          
+          // Filter by date range
+          if (pointDate >= start && pointDate <= end) {
+            if (yAxis === 'power') {
+              // For power, calculate average
+              totalValue += dataPoint.kwh;
+            } else {
+              // For cost, calculate total
+              totalValue += dataPoint.kwh * costPerKwh;
+            }
+            dataPointCount++;
+          }
+        });
+      }
+
+      // For power (average), divide by count; for cost (total), use sum
+      const finalValue = yAxis === 'power' 
+        ? (dataPointCount > 0 ? totalValue / dataPointCount : 0)
+        : totalValue;
+
+      return {
+        name: appliance.name,
+        value: parseFloat(finalValue.toFixed(2)),
+        applianceType: appliance.applianceType,
+        location: appliance.location
+      };
+    });
+
+    return comparisonData;
+  };
 
   const processEnergyData = (appliances, startDate, endDate, xAxis, yAxis) => {
     const start = new Date(startDate);
@@ -153,6 +210,7 @@ function ReportView() {
         );
       
       case 'pie':
+        const metricLabel = reportData.yAxis === 'power' ? 'Avg Power (kW)' : 'Total Cost ($)';
         return (
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
@@ -160,7 +218,7 @@ function ReportView() {
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                labelLine={true}
                 label={({ name, value }) => `${name}: ${value}`}
                 outerRadius={120}
                 fill="#8884d8"
@@ -170,7 +228,7 @@ function ReportView() {
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip formatter={(value) => [`${value} ${reportData.yAxis === 'power' ? 'kW' : '$'}`, metricLabel]} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

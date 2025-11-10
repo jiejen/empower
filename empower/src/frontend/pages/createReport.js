@@ -20,17 +20,19 @@ function CreateReport() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch appliances from backend for current Firebase user
+  // Fetch appliances from backend
   useEffect(() => {
     const fetchAppliances = async () => {
       try {
         const uid = auth.currentUser?.uid;
         if (!uid) {
-          setError('Not authenticated');
-          setLoading(false);
-          return;
+          throw new Error('Not authenticated');
         }
-        const response = await fetch('/api/appliances', { headers: { 'x-user-uid': uid } });
+        
+        const response = await fetch('http://localhost:3001/api/appliances', {
+          headers: { 'x-user-uid': uid }
+        });
+        
         if (!response.ok) {
           throw new Error('Failed to fetch appliances');
         }
@@ -322,13 +324,9 @@ function CreateReport() {
           </div>
 
           {/* Axis Selection */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '16px',
-            marginBottom: '24px' 
-          }}>
-            <div>
+          {chartType === 'pie' ? (
+            // For pie chart, only show metric selection
+            <div style={{ marginBottom: '24px' }}>
               <label style={{
                 display: 'block',
                 fontSize: '14px',
@@ -336,7 +334,7 @@ function CreateReport() {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Plot Y-Value *
+                Compare By *
               </label>
               <select
                 value={yAxis}
@@ -353,43 +351,89 @@ function CreateReport() {
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="power">Power (kW)</option>
-                <option value="cost">Cost ($)</option>
+                <option value="power">Average Power (kW)</option>
+                <option value="cost">Total Cost ($)</option>
               </select>
-            </div>
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
+              <p style={{ 
+                margin: '8px 0 0 0', 
+                fontSize: '13px', 
+                color: '#6b7280',
+                fontStyle: 'italic'
               }}>
-                Plot X-Value *
-              </label>
-              <select
-                value={xAxis}
-                onChange={(e) => setXAxis(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="hour">Hour</option>
-                <option value="day">Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
-              </select>
+                Pie chart will compare selected appliances by {yAxis === 'power' ? 'average power consumption' : 'total cost'} within the date range.
+              </p>
             </div>
-          </div>
+          ) : (
+            // For line and bar charts, show both axes
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '16px',
+              marginBottom: '24px' 
+            }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}>
+                  Plot Y-Value *
+                </label>
+                <select
+                  value={yAxis}
+                  onChange={(e) => setYAxis(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '16px',
+                    outline: 'none',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="power">Power (kW)</option>
+                  <option value="cost">Cost ($)</option>
+                </select>
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  marginBottom: '8px'
+                }}>
+                  Plot X-Value *
+                </label>
+                <select
+                  value={xAxis}
+                  onChange={(e) => setXAxis(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '16px',
+                    outline: 'none',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="hour">Hour</option>
+                  <option value="day">Day</option>
+                  <option value="week">Week</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           <div style={{ marginBottom: '32px' }}>
