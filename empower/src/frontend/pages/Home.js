@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 import Card from '../components/card.js';
+import heroImg from '../assets/Green-energy-lightbulb.jpg';
+import heroImg2 from '../assets/Saving_Hub_House.png';
 
 function Home() {
   const navigate = useNavigate();
@@ -26,7 +28,7 @@ function Home() {
           <div className="hero-inner">
             <div className="hero-left">
               <h1 className="hero-title">Your home's energy bill,</h1>
-              <h1 className="hero-title">optimized.</h1>
+              <h1 className="hero-title" style={{color: '#28a745', fontWeight: 700 }}>optimized.</h1>
 
               <p className="hero-subtitle">Empowering homeowners to be efficient.</p>
               <button
@@ -38,7 +40,8 @@ function Home() {
             </div>
 
             <div className="hero-right">
-              <div className="placeholder-image" aria-hidden="true">Placeholder Image</div>
+              {/* <div className="placeholder-image" aria-hidden="true">Placeholder Image</div> */}
+              <img src={heroImg} alt="Green energy lightbulb" className="hero-image" />
             </div>
           </div>
         </section>
@@ -46,7 +49,8 @@ function Home() {
         <section className="white-section">
           <div className="white-inner">
             <div className="feature-left">
-              <div className="placeholder-image" aria-hidden="true">Placeholder Image</div>
+              {/* <div className="placeholder-image" aria-hidden="true">Placeholder Image</div> */}
+              <img src={heroImg2} alt="Saving Hub House" className="hero-image2" />
             </div>
 
             <div className="feature-right">
@@ -69,7 +73,7 @@ function Home() {
               built Empower to help homeowners understand their energy use and
               take practical steps to save money and reduce waste.
             </p>
-
+            
             <div className="team-avatars" aria-hidden="true">
               <div className="avatar">A</div>
               <div className="avatar">B</div>
@@ -78,11 +82,11 @@ function Home() {
               <div className="avatar">E</div>
             </div>
 
-            <h3 className="mission-title">Our Mission</h3>
+            {/* <h3 className="mission-title">Our Mission</h3>
             <p className="mission-text">
               To empower homeowners with clear, actionable insights that make
               energy savings simple, affordable, and sustainable.
-            </p>
+            </p> */}
           </div>
         </section>
 
