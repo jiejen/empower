@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
@@ -15,6 +15,8 @@ function AddAppliance() {
   const [csvFile, setCsvFile] = useState(null);
   const [csvData, setCsvData] = useState(null);
   const [message, setMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   const applianceOptions = [
     'Refrigerator',
@@ -35,6 +37,21 @@ function AddAppliance() {
     'Laundry Room',
     'Other'
   ];
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
+  const showToastMessage = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+  };
 
   const parseCSV = (text) => {
     const lines = text.split('\n').filter(line => line.trim());
@@ -83,7 +100,6 @@ function AddAppliance() {
       try {
         const parsed = parseCSV(event.target.result);
         setCsvData(parsed);
-        setMessage(`Successfully parsed ${parsed.length} data points from CSV.`);
       } catch (error) {
         setMessage(`Error parsing CSV: ${error.message}`);
         setCsvData(null);
@@ -122,7 +138,7 @@ function AddAppliance() {
       });
 
       if (response.ok) {
-        setMessage('Appliance added successfully!');
+        showToastMessage('Appliance added successfully!');
         setApplianceType('');
         setName('');
         setLocation('');
@@ -162,14 +178,38 @@ function AddAppliance() {
             <div style={{
               padding: '12px 16px',
               marginBottom: '24px',
-              backgroundColor: message.includes('successfully') ? '#d1fae5' : '#fee2e2',
-              color: message.includes('successfully') ? '#065f46' : '#991b1b',
+              backgroundColor: '#fee2e2',
+              color: '#991b1b',
               borderRadius: '6px',
-              border: `1px solid ${message.includes('successfully') ? '#a7f3d0' : '#fecaca'}`,
+              border: '1px solid #fecaca',
               fontSize: '14px',
               fontWeight: '500'
             }}>
               {message}
+            </div>
+          )}
+
+          {/* Bottom Centered Toast Notification */}
+          {showToast && (
+            <div style={{
+              position: 'fixed',
+              bottom: '32px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              padding: '16px 24px',
+              backgroundColor: '#d1fae5',
+              color: '#065f46',
+              borderRadius: '8px',
+              border: '1px solid #a7f3d0',
+              fontSize: '16px',
+              fontWeight: '500',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+              animation: 'fadeInBottom 0.3s ease-in',
+              minWidth: '300px',
+              textAlign: 'center'
+            }}>
+              {toastMessage}
             </div>
           )}
 
