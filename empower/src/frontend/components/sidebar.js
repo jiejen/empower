@@ -9,6 +9,7 @@ export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
   
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+    { id: 'appliances', label: 'Appliances', path: '/appliances' },
     { id: 'create-report', label: 'Create Report', path: '/create-report' },
     { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
   ];

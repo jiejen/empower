@@ -15,7 +15,6 @@ function AddAppliance() {
   const [csvFile, setCsvFile] = useState(null);
   const [csvData, setCsvData] = useState(null);
   const [message, setMessage] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const applianceOptions = [
     'Refrigerator',
@@ -116,7 +115,6 @@ function AddAppliance() {
     };
 
     try {
-      setSubmitting(true);
       const response = await fetch('/api/appliances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-uid': uid },
@@ -134,18 +132,11 @@ function AddAppliance() {
         // Reset file input
         document.getElementById('csvFile').value = '';
       } else {
-        let err = 'Failed to add appliance.';
-        try {
-          const body = await response.json();
-          if (body?.error) err = body.error;
-        } catch {}
-        setMessage(err);
+        setMessage('Failed to add appliance.');
       }
     } catch (error) {
       console.error(error);
       setMessage('An error occurred while saving appliance.');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -396,9 +387,8 @@ function AddAppliance() {
                 }}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-                disabled={submitting}
               >
-                {submitting ? 'Adding...' : 'Add Appliance'}
+                Add Appliance
               </button>
             </div>
           </form>
