@@ -3,6 +3,7 @@ import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
+import { Calendar, PieChart, BarChart3, TrendingUp, FileText, Sparkles } from 'lucide-react';
 import '../components/Layout.css';
 
 function CreateReport() {
@@ -96,394 +97,508 @@ function CreateReport() {
 
   return (
     <Layout activePage="Create Report" userName={user?.name || user?.email || 'User'} onLogout={logout}>
-      <div style={{ padding: '32px', maxWidth: '900px' }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
-          padding: '32px'
-        }}>
-          <h2 style={{ 
-            margin: '0 0 32px 0', 
-            fontSize: '24px', 
-            fontWeight: '600', 
-            color: '#1f2937' 
+      <div style={{
+        minHeight: 'calc(100vh - 96px)',
+        background: 'linear-gradient(135deg, #f6f0b2 0%, #e8f5e9 45%, #dff3ff 100%)',
+        padding: '40px 20px'
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          {/* Header Section */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            marginBottom: '24px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '2px solid #f4f0a4'
           }}>
-            Create New Report
-          </h2>
-
-          {/* Report Name */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '8px'
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Sparkles size={28} color="white" />
+              </div>
+              <h1 style={{
+                margin: 0,
+                fontSize: '32px',
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                Create Your Energy Report
+              </h1>
+            </div>
+            <p style={{
+              margin: 0,
+              fontSize: '16px',
+              color: '#666',
+              lineHeight: '1.6'
             }}>
-              Report Name *
-            </label>
-            <input
-              type="text"
-              value={reportName}
-              onChange={(e) => setReportName(e.target.value)}
-              placeholder="Enter report name"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '16px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
+              Generate detailed insights about your appliance energy usage with beautiful visualizations
+            </p>
           </div>
 
-          {/* Date Range */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '16px',
-            marginBottom: '24px' 
+          {/* Main Form Container */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
           }}>
-            <div>
+            {/* Report Name */}
+            <div style={{ marginBottom: '28px' }}>
               <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                color: '#333',
+                marginBottom: '10px'
               }}>
-                Start Date *
+                <FileText size={18} color="#4d8be9" />
+                Report Name *
               </label>
               <input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  if (endDate && e.target.value > endDate) {
-                    setEndDate(e.target.value);
-                  }
-                }}
+                type="text"
+                value={reportName}
+                onChange={(e) => setReportName(e.target.value)}
+                placeholder="e.g., Monthly Kitchen Usage"
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
-              }}>
-                End Date *
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                disabled={!startDate}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
+                  padding: '14px 16px',
+                  border: '2px solid #e6e6e6',
+                  borderRadius: '10px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box',
-                  backgroundColor: !startDate ? '#f3f4f6' : 'white',
-                  cursor: !startDate ? 'not-allowed' : 'pointer'
+                  transition: 'all 0.3s ease'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#4d8be9'}
+                onBlur={(e) => e.target.style.borderColor = '#e6e6e6'}
               />
             </div>
-          </div>
 
-          {/* Select Appliances */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Select Appliances *
-            </label>
+            {/* Date Range */}
             <div style={{
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              padding: '16px',
-              maxHeight: '200px',
-              overflowY: 'auto',
-              backgroundColor: '#f9fafb'
+              background: 'linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%)',
+              borderRadius: '12px',
+              padding: '24px',
+              marginBottom: '28px',
+              border: '2px solid #e0f2fe'
             }}>
-              {loading ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
-                  Loading appliances...
-                </div>
-              ) : error ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#dc2626' }}>
-                  Error loading appliances: {error}
-                </div>
-              ) : appliances.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
-                  No appliances available. Please add appliances first.
-                </div>
-              ) : (
-                appliances.map((appliance) => (
-                  <label
-                    key={appliance.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '8px',
-                      cursor: 'pointer',
-                      borderRadius: '4px',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAppliances.includes(appliance.id)}
-                      onChange={() => handleApplianceToggle(appliance.id)}
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        marginRight: '12px',
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <span style={{ fontSize: '15px', color: '#374151' }}>
-                      {appliance.name} - {appliance.location}
-                    </span>
-                  </label>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Chart Type */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Chart Type *
-            </label>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {['line', 'bar', 'pie'].map((type) => (
-                <label
-                  key={type}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '12px',
-                    border: `2px solid ${chartType === type ? '#3b82f6' : '#d1d5db'}`,
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    backgroundColor: chartType === type ? '#eff6ff' : 'white',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="chartType"
-                    value={type}
-                    checked={chartType === type}
-                    onChange={(e) => setChartType(e.target.value)}
-                    style={{ marginRight: '8px', cursor: 'pointer' }}
-                  />
-                  <span style={{ 
-                    fontSize: '15px', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '16px'
+              }}>
+                <Calendar size={20} color="#28a745" />
+                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '600', color: '#333' }}>
+                  Date Range *
+                </h3>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
                     fontWeight: '500',
-                    color: chartType === type ? '#3b82f6' : '#374151',
-                    textTransform: 'capitalize'
+                    color: '#555',
+                    marginBottom: '8px'
                   }}>
-                    {type} Chart
-                  </span>
-                </label>
-              ))}
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      if (endDate && e.target.value > endDate) {
+                        setEndDate(e.target.value);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e6e6e6',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      backgroundColor: 'white'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#555',
+                    marginBottom: '8px'
+                  }}>
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
+                    disabled={!startDate}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e6e6e6',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      backgroundColor: !startDate ? '#f3f4f6' : 'white',
+                      cursor: !startDate ? 'not-allowed' : 'pointer'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Axis Selection */}
-          {chartType === 'pie' ? (
-            // For pie chart, only show metric selection
-            <div style={{ marginBottom: '24px' }}>
+            {/* Select Appliances */}
+            <div style={{ marginBottom: '28px' }}>
               <label style={{
                 display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
+                fontSize: '15px',
+                fontWeight: '600',
+                color: '#333',
+                marginBottom: '12px'
               }}>
-                Compare By *
+                Select Appliances * ({selectedAppliances.length} selected)
               </label>
-              <select
-                value={yAxis}
-                onChange={(e) => setYAxis(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="power">Average Power (kW)</option>
-                <option value="cost">Total Cost ($)</option>
-              </select>
-              <p style={{ 
-                margin: '8px 0 0 0', 
-                fontSize: '13px', 
-                color: '#6b7280',
-                fontStyle: 'italic'
+              <div style={{
+                border: '2px solid #e6e6e6',
+                borderRadius: '12px',
+                padding: '16px',
+                maxHeight: '240px',
+                overflowY: 'auto',
+                background: '#fafafa'
               }}>
-                Pie chart will compare selected appliances by {yAxis === 'power' ? 'average power consumption' : 'total cost'} within the date range.
-              </p>
+                {loading ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                    Loading appliances...
+                  </div>
+                ) : error ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#dc2626' }}>
+                    Error loading appliances: {error}
+                  </div>
+                ) : appliances.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                    No appliances available. Please add appliances first.
+                  </div>
+                ) : (
+                  appliances.map((appliance) => (
+                    <label
+                      key={appliance.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '14px',
+                        cursor: 'pointer',
+                        borderRadius: '8px',
+                        marginBottom: '8px',
+                        transition: 'all 0.2s',
+                        backgroundColor: selectedAppliances.includes(appliance.id) ? '#e3f2fd' : 'white',
+                        border: `2px solid ${selectedAppliances.includes(appliance.id) ? '#4d8be9' : '#e6e6e6'}`
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!selectedAppliances.includes(appliance.id)) {
+                          e.currentTarget.style.backgroundColor = '#f5f5f5';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!selectedAppliances.includes(appliance.id)) {
+                          e.currentTarget.style.backgroundColor = 'white';
+                        }
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedAppliances.includes(appliance.id)}
+                        onChange={() => handleApplianceToggle(appliance.id)}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          marginRight: '12px',
+                          cursor: 'pointer',
+                          accentColor: '#4d8be9'
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '15px', fontWeight: '600', color: '#333', marginBottom: '2px' }}>
+                          {appliance.name}
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#666' }}>
+                          {appliance.applianceType} • {appliance.location}
+                        </div>
+                      </div>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
-          ) : (
-            // For line and bar charts, show both axes
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr', 
-              gap: '16px',
-              marginBottom: '24px' 
-            }}>
-              <div>
+
+            {/* Chart Type Selection */}
+            <div style={{ marginBottom: '28px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '15px',
+                fontWeight: '600',
+                color: '#333',
+                marginBottom: '12px'
+              }}>
+                Chart Type *
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                {[
+                  { value: 'line', label: 'Line Chart', icon: TrendingUp, color: '#4d8be9' },
+                  { value: 'bar', label: 'Bar Chart', icon: BarChart3, color: '#28a745' },
+                  { value: 'pie', label: 'Pie Chart', icon: PieChart, color: '#f59e0b' }
+                ].map((type) => {
+                  const Icon = type.icon;
+                  const isSelected = chartType === type.value;
+                  return (
+                    <label
+                      key={type.value}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '20px 16px',
+                        border: `3px solid ${isSelected ? type.color : '#e6e6e6'}`,
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        backgroundColor: isSelected ? `${type.color}15` : 'white',
+                        transition: 'all 0.3s ease',
+                        position: 'relative'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = type.color;
+                          e.currentTarget.style.backgroundColor = `${type.color}08`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#e6e6e6';
+                          e.currentTarget.style.backgroundColor = 'white';
+                        }
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="chartType"
+                        value={type.value}
+                        checked={isSelected}
+                        onChange={(e) => setChartType(e.target.value)}
+                        style={{ display: 'none' }}
+                      />
+                      <Icon size={32} color={isSelected ? type.color : '#999'} strokeWidth={2.5} />
+                      <span style={{
+                        marginTop: '12px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: isSelected ? type.color : '#666'
+                      }}>
+                        {type.label}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Axis Configuration */}
+            {chartType === 'pie' ? (
+              <div style={{
+                background: 'linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%)',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '28px',
+                border: '2px solid #fed7aa'
+              }}>
                 <label style={{
                   display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '8px'
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#333',
+                  marginBottom: '10px'
                 }}>
-                  Plot Y-Value *
+                  Compare By *
                 </label>
                 <select
                   value={yAxis}
                   onChange={(e) => setYAxis(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '16px',
+                    padding: '12px',
+                    border: '2px solid #e6e6e6',
+                    borderRadius: '8px',
+                    fontSize: '15px',
                     outline: 'none',
                     backgroundColor: 'white',
                     cursor: 'pointer',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    fontWeight: '500'
                   }}
                 >
-                  <option value="power">Power (kW)</option>
-                  <option value="cost">Cost ($)</option>
+                  <option value="power">Average Power (kW)</option>
+                  <option value="cost">Total Cost ($)</option>
                 </select>
-              </div>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '8px'
+                <p style={{
+                  margin: '10px 0 0 0',
+                  fontSize: '13px',
+                  color: '#92400e',
+                  fontStyle: 'italic'
                 }}>
-                  Plot X-Value *
-                </label>
-                <select
-                  value={xAxis}
-                  onChange={(e) => setXAxis(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    backgroundColor: 'white',
-                    cursor: 'pointer',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="hour">Hour</option>
-                  <option value="day">Day</option>
-                  <option value="week">Week</option>
-                  <option value="month">Month</option>
-                  <option value="year">Year</option>
-                </select>
+                  📊 Pie chart compares appliances by {yAxis === 'power' ? 'average power' : 'total cost'}
+                </p>
               </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px',
+                marginBottom: '28px'
+              }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    Y-Axis (Value) *
+                  </label>
+                  <select
+                    value={yAxis}
+                    onChange={(e) => setYAxis(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e6e6e6',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      outline: 'none',
+                      backgroundColor: 'white',
+                      cursor: 'pointer',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="power">Power (kW)</option>
+                    <option value="cost">Cost ($)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    X-Axis (Time) *
+                  </label>
+                  <select
+                    value={xAxis}
+                    onChange={(e) => setXAxis(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e6e6e6',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      outline: 'none',
+                      backgroundColor: 'white',
+                      cursor: 'pointer',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="hour">Hour</option>
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div style={{ marginBottom: '32px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '15px',
+                fontWeight: '600',
+                color: '#333',
+                marginBottom: '10px'
+              }}>
+                Notes (Optional)
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any additional notes or observations..."
+                rows="4"
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  border: '2px solid #e6e6e6',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.3s ease'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#4d8be9'}
+                onBlur={(e) => e.target.style.borderColor = '#e6e6e6'}
+              />
             </div>
-          )}
 
-          {/* Notes */}
-          <div style={{ marginBottom: '32px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: '8px'
-            }}>
-              Notes (Optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any additional notes or comments..."
-              rows="4"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '16px',
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          {/* Submit Button */}
-          <div>
+            {/* Submit Button */}
             <button
               onClick={handleSubmit}
               style={{
-                padding: '12px 32px',
-                backgroundColor: '#3b82f6',
+                width: '100%',
+                padding: '16px',
+                background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
-                fontSize: '16px',
-                fontWeight: '500',
+                borderRadius: '12px',
+                fontSize: '18px',
+                fontWeight: '700',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s'
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(77, 139, 233, 0.3)'
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(77, 139, 233, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(77, 139, 233, 0.3)';
+              }}
             >
-              Generate Report
+              ✨ Generate Report
             </button>
           </div>
         </div>
