@@ -4,6 +4,11 @@ import './Home.css';
 import Card from '../components/card.js';
 import heroImg from '../assets/Green-energy-lightbulb.jpg';
 import heroImg2 from '../assets/Saving_Hub_House.png';
+import joshImg from '../assets/josh.png';
+import viviImg from '../assets/vivi.png';
+import jenniImg from '../assets/jenni.png';
+import thuyanImg from '../assets/thuyan.png';
+import abbasImg from '../assets/abbas.png';
 
 function Home() {
   const navigate = useNavigate();
@@ -74,12 +79,27 @@ function Home() {
               take practical steps to save money and reduce waste.
             </p>
             
-            <div className="team-avatars" aria-hidden="true">
-              <div className="avatar">A</div>
-              <div className="avatar">B</div>
-              <div className="avatar">C</div>
-              <div className="avatar">D</div>
-              <div className="avatar">E</div>
+            <div className="team-avatars">
+              <div className="avatar-container">
+                <img src={joshImg} alt="Joshua Das" className="avatar-img" />
+                <div className="avatar-name">Joshua Das</div>
+              </div>
+              <div className="avatar-container">
+                <img src={viviImg} alt="Vaishnavi Josyula" className="avatar-img" />
+                <div className="avatar-name">Vaishnavi Josyula</div>
+              </div>
+              <div className="avatar-container">
+                <img src={jenniImg} alt="Jennifer Zhang" className="avatar-img" />
+                <div className="avatar-name">Jennifer Zhang</div>
+              </div>
+              <div className="avatar-container">
+                <img src={thuyanImg} alt="Thuyan Dang" className="avatar-img" />
+                <div className="avatar-name">Thuyan Dang</div>
+              </div>
+              <div className="avatar-container">
+                <img src={abbasImg} alt="Abbas Khawaja" className="avatar-img" />
+                <div className="avatar-name">Abbas Khawaja</div>
+              </div>
             </div>
 
             {/* <h3 className="mission-title">Our Mission</h3>
@@ -92,10 +112,10 @@ function Home() {
 
 
         <section className="testimonials">
-          <div style={{ padding: '32px' }}>
+          <div className="testimonials-inner">
             {/* Testimony Section */}
-            <h1 style={{padding: '16px'}}><br/>Testimonies</h1>
-            <div style={{ padding: '16px', display: 'flex', gap: '60px' }}>
+            <h1 className="testimonials-title">Testimonies</h1>
+            <div className="testimonials-cards">
               <Card
                 title={"Sarah L"}
                 subtitle={"\"Wow! I was in so much debt I thought I was going to have to sell my own house! The energy bill was too high and I had no idea how to manage it, but through the EMPOWER app I have so much money saved! Thank you!! - Sarah L."}
@@ -116,13 +136,22 @@ function Home() {
 
             <div className="contact-card">
               <div className="contact-item">
-                <strong>Address</strong>
-                <div>800 W Campbell Rd, Richardson, TX 75080</div>
+                <strong>Address:  </strong>
+                <a 
+                  href="https://www.google.com/maps/search/?api=1&query=800+W+Campbell+Rd,+Richardson,+TX+75080" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="contact-link"
+                >
+                  800 W Campbell Rd, Richardson, TX 75080
+                </a>
               </div>
 
               <div className="contact-item">
-                <strong>Phone</strong>
-                <div>(972) 883-2111</div>
+                <strong>Phone:  </strong>
+                <a href="tel:+19728832111" className="contact-link">
+                  (972) 883-2111
+                </a>
               </div>
             </div>
           </div>
