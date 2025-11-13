@@ -145,10 +145,16 @@
 }
 
 .hero-image2 {
-  max-width: 110%;
+  max-width: 100%;
   height: auto;
   display: block;
   border-radius: 8px;
+}
+
+@media (max-width: 800px) {
+  .hero-image, .hero-image2 {
+    max-width: 60%; /* Adjust max-width for smaller screens */
+  }
 }
 
 /* Responsive */
