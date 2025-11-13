@@ -1,0 +1,38 @@
+/* Signup page uses same styles as Login page */
+@import './Login.css';
+
+/* Signup-specific styling */
+.auth-form .submit {
+  margin-top: 8px;
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-form .submit:hover {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.auth-form .submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.new-user-link .text-link {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.new-user-link .text-link:hover {
+  color: #4b5563;
+  text-decoration: underline;
+}
