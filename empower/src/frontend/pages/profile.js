@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
-import { authService } from '../../services/authService';
 import { db, auth } from '../../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import '../components/Layout.css';
@@ -45,26 +45,37 @@ function Profile() {
     const loadUserData = async () => {
       let firestoreData = {};
       
-      // Try to load from Firestore if user is authenticated with Firebase
+      // Try to load from Firestore
       if (auth.currentUser) {
         try {
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
             firestoreData = userDoc.data();
+          } else {
+            // Create initial user document if it doesn't exist
+            const initialData = {
+              email: auth.currentUser.email,
+              name: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || '',
+              photoURL: auth.currentUser.photoURL || '',
+              createdAt: new Date().toISOString()
+            };
+            await setDoc(userDocRef, initialData);
+            firestoreData = initialData;
           }
         } catch (error) {
-          console.log('Error loading from Firestore:', error);
+          console.error('Error loading from Firestore:', error);
         }
       }
 
+      // Prioritize Firestore data, then Firebase auth, then user context
       const initialInfo = {
-        name: firestoreData.name || user.name || user.email?.split('@')[0] || '',
-        email: user.email || '',
-        phone: firestoreData.phone || user.phone || '',
+        name: firestoreData.name || auth.currentUser?.displayName || user.name || user.email?.split('@')[0] || '',
+        email: auth.currentUser?.email || user.email || '',
+        phone: firestoreData.phone || auth.currentUser?.phoneNumber || user.phone || '',
         city: firestoreData.city || user.city || '',
         state: firestoreData.state || user.state || '',
-        photoURL: user.photoURL || ''
+        photoURL: auth.currentUser?.photoURL || firestoreData.photoURL || user.photoURL || ''
       };
       setUserInfo(initialInfo);
       setEditedInfo(initialInfo);
@@ -89,27 +100,20 @@ function Profile() {
         state: editedInfo.state
       };
       
-      // Save to Firestore if user is authenticated with Firebase
+      // Save to Firestore (works for both Google and email/password users)
       if (auth.currentUser) {
         try {
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
           await setDoc(userDocRef, {
             ...updates,
-            email: user.email,
+            email: auth.currentUser.email,
+            photoURL: auth.currentUser.photoURL || '',
             updatedAt: new Date().toISOString()
           }, { merge: true });
+          console.log('Profile saved to Firestore successfully');
         } catch (error) {
           console.error('Error saving to Firestore:', error);
           throw new Error('Failed to save to database');
-        }
-      }
-      
-      // Update in local storage if user has an ID
-      if (user.id) {
-        try {
-          await authService.updateProfile(updates);
-        } catch (err) {
-          console.log('Local storage update skipped:', err.message);
         }
       }
       
@@ -160,8 +164,8 @@ function Profile() {
             </div>
           )}
 
-          {userInfo.photoURL && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+            {userInfo.photoURL ? (
               <img 
                 src={userInfo.photoURL} 
                 alt="Profile" 
@@ -173,8 +177,22 @@ function Profile() {
                   border: '3px solid #28a745'
                 }}
               />
-            </div>
-          )}
+            ) : (
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                backgroundColor: '#28a745',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                border: '3px solid #28a745'
+              }}>
+                <User size={50} strokeWidth={2} />
+              </div>
+            )}
+          </div>
 
           <div style={{ 
             display: 'flex', 

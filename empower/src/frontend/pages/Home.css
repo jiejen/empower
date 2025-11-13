@@ -110,11 +110,14 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 1.125rem;
-  margin-top: 30px
+  margin-top: 30px;
+  transition: all 0.2s;
 }
 
 .signup-btn:hover {
-  opacity: 0.95;
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .hero-right {
