@@ -14,6 +14,16 @@ export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
     { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
   ];
 
+  const handleLogout = async () => {
+    try {
+      await onLogout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/');
+    }
+  };
+
   return (
     <div className="sidebar">
       <div className="sidebar-logo">
@@ -33,7 +43,7 @@ export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={onLogout}>Log Out</button>
+        <button className="logout-btn" onClick={handleLogout}>Log Out</button>
       </div>
     </div>
   );

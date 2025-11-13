@@ -66,17 +66,19 @@
 .logout-btn {
   width: 100%;
   text-align: left;
-  padding: 8px;
+  padding: 12px 24px;
   border: none;
   background: none;
-  color: #6b7280;
+  color: #dc2626;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   font-size: 16px;
+  font-weight: 500;
 }
 
 .logout-btn:hover {
-  color: #111827;
+  background-color: #fef2f2;
+  color: #b91c1c;
 }
 
 /* Navbar Styles */

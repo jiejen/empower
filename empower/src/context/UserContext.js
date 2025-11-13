@@ -12,11 +12,16 @@ export function UserProvider({ children }) {
     // Listen for Firebase auth state changes
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
-        // Get user profile from local auth
+        // Get user profile from local auth or create from Firebase data
         const session = authService.getCurrentSession();
-        const userProfile = session?.user || {
-          name: firebaseUser.displayName || firebaseUser.email,
+        const userProfile = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || session?.user?.name || firebaseUser.email?.split('@')[0] || '',
           email: firebaseUser.email,
+          phone: firebaseUser.phoneNumber || session?.user?.phone || '',
+          photoURL: firebaseUser.photoURL || '',
+          location: session?.user?.location || '',
+          profile: session?.user?.profile || {}
         };
 
         setUser(userProfile);
@@ -34,6 +39,10 @@ export function UserProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  const updateUser = (updates) => {
+    setUser(prev => prev ? { ...prev, ...updates } : null);
+  };
+
   const logout = async () => {
     try {
       // Sign out from Firebase
@@ -48,7 +57,7 @@ export function UserProvider({ children }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, logout }}>
+    <UserContext.Provider value={{ user, loading, logout, updateUser }}>
       {children}
     </UserContext.Provider>
   );
