@@ -9,6 +9,7 @@ import CreateReport from './frontend/pages/createReport';
 import AddAppliance from './frontend/pages/addAppliance';
 import Profile from './frontend/pages/profile';
 import ReportView from './frontend/pages/ReportView';
+import Reports from './frontend/pages/Reports';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/add-appliance" element={<AddAppliance />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/report-view" element={<ReportView />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
       </BrowserRouter>
     </UserProvider>
