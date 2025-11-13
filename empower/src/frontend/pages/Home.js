@@ -117,12 +117,12 @@ function Home() {
             <div className="contact-card">
               <div className="contact-item">
                 <strong>Address</strong>
-                <div>TODO!</div>
+                <div>800 W Campbell Rd, Richardson, TX 75080</div>
               </div>
 
               <div className="contact-item">
                 <strong>Phone</strong>
-                <div>TODO!</div>
+                <div>(972) 883-2111</div>
               </div>
             </div>
           </div>
