@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, PieChart, BarChart3, TrendingUp, FileText, Sparkles } from 'lucide-react';
 import '../components/Layout.css';
@@ -20,8 +21,15 @@ function CreateReport() {
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dateError, setDateError] = useState('');
 
-  // Fetch appliances from backend
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Fetch appliances from Firestore
   useEffect(() => {
     const fetchAppliances = async () => {
       try {
@@ -30,15 +38,15 @@ function CreateReport() {
           throw new Error('Not authenticated');
         }
         
-        const response = await fetch('http://localhost:3001/api/appliances', {
-          headers: { 'x-user-uid': uid }
+        const appliancesRef = collection(db, 'users', uid, 'appliances');
+        const snapshot = await getDocs(appliancesRef);
+        
+        const appliancesData = [];
+        snapshot.forEach((doc) => {
+          appliancesData.push({ id: doc.id, ...doc.data() });
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch appliances');
-        }
-        const data = await response.json();
-        setAppliances(data);
+        setAppliances(appliancesData);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching appliances:', err);
@@ -47,8 +55,10 @@ function CreateReport() {
       }
     };
 
-    fetchAppliances();
-  }, []);
+    if (user) {
+      fetchAppliances();
+    }
+  }, [user]);
 
   const handleApplianceToggle = (applianceId) => {
     setSelectedAppliances(prev =>
@@ -56,6 +66,46 @@ function CreateReport() {
         ? prev.filter(id => id !== applianceId)
         : [...prev, applianceId]
     );
+  };
+
+  const validateDates = (start, end) => {
+    const today = getTodayDate();
+    
+    if (start > today) {
+      setDateError('Start date cannot be in the future');
+      return false;
+    }
+    
+    if (end > today) {
+      setDateError('End date cannot be in the future');
+      return false;
+    }
+    
+    if (start > end) {
+      setDateError('Start date cannot be after end date');
+      return false;
+    }
+    
+    setDateError('');
+    return true;
+  };
+
+  const handleStartDateChange = (newStartDate) => {
+    setStartDate(newStartDate);
+    if (endDate) {
+      validateDates(newStartDate, endDate);
+    }
+    // Auto-adjust end date if it's before the new start date
+    if (endDate && newStartDate > endDate) {
+      setEndDate(newStartDate);
+    }
+  };
+
+  const handleEndDateChange = (newEndDate) => {
+    setEndDate(newEndDate);
+    if (startDate) {
+      validateDates(startDate, newEndDate);
+    }
   };
 
   const handleSubmit = () => {
@@ -206,6 +256,19 @@ function CreateReport() {
                   Date Range *
                 </h3>
               </div>
+              {dateError && (
+                <div style={{
+                  padding: '10px 12px',
+                  marginBottom: '12px',
+                  backgroundColor: '#fee2e2',
+                  color: '#991b1b',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '500'
+                }}>
+                  {dateError}
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{
@@ -220,12 +283,8 @@ function CreateReport() {
                   <input
                     type="date"
                     value={startDate}
-                    onChange={(e) => {
-                      setStartDate(e.target.value);
-                      if (endDate && e.target.value > endDate) {
-                        setEndDate(e.target.value);
-                      }
-                    }}
+                    max={getTodayDate()}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
                     style={{
                       width: '100%',
                       padding: '12px',
@@ -251,8 +310,9 @@ function CreateReport() {
                   <input
                     type="date"
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
                     min={startDate}
+                    max={getTodayDate()}
+                    onChange={(e) => handleEndDateChange(e.target.value)}
                     disabled={!startDate}
                     style={{
                       width: '100%',

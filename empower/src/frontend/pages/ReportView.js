@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Calendar, TrendingUp, Zap, DollarSign, Download, Share2, ArrowLeft } from 'lucide-react';
+import { Calendar, TrendingUp, Zap, DollarSign, Save, ArrowLeft } from 'lucide-react';
+import { auth, db } from '../../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import '../components/Layout.css';
 
 function ReportView() {
@@ -12,6 +14,9 @@ function ReportView() {
   const navigate = useNavigate();
   const [chartData, setChartData] = useState([]);
   const reportData = location.state?.reportData;
+  const reportRef = useRef();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
     if (!reportData) {
@@ -19,11 +24,9 @@ function ReportView() {
       return;
     }
 
-    // Process the energy data based on selected parameters
     let processedData;
     
     if (reportData.chartType === 'pie') {
-      // For pie chart, compare appliances
       processedData = processApplianceComparison(
         reportData.appliances,
         reportData.startDate,
@@ -31,7 +34,6 @@ function ReportView() {
         reportData.yAxis
       );
     } else {
-      // For line and bar charts, show data over time
       processedData = processEnergyData(
         reportData.appliances,
         reportData.startDate,
@@ -47,7 +49,7 @@ function ReportView() {
   const processApplianceComparison = (appliances, startDate, endDate, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const costPerKwh = 0.12; // $0.12 per kWh
+    const costPerKwh = 0.12;
 
     const comparisonData = appliances.map(appliance => {
       let totalValue = 0;
@@ -57,13 +59,10 @@ function ReportView() {
         appliance.energyData.forEach(dataPoint => {
           const pointDate = new Date(dataPoint.time);
           
-          // Filter by date range
           if (pointDate >= start && pointDate <= end) {
             if (yAxis === 'power') {
-              // For power, calculate average
               totalValue += dataPoint.kwh;
             } else {
-              // For cost, calculate total
               totalValue += dataPoint.kwh * costPerKwh;
             }
             dataPointCount++;
@@ -71,7 +70,6 @@ function ReportView() {
         });
       }
 
-      // For power (average), divide by count; for cost (total), use sum
       const finalValue = yAxis === 'power' 
         ? (dataPointCount > 0 ? totalValue / dataPointCount : 0)
         : totalValue;
@@ -90,9 +88,8 @@ function ReportView() {
   const processEnergyData = (appliances, startDate, endDate, xAxis, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const costPerKwh = 0.12; // $0.12 per kWh
+    const costPerKwh = 0.12;
 
-    // Combine all appliances' energy data
     const allData = [];
     
     appliances.forEach(appliance => {
@@ -100,7 +97,6 @@ function ReportView() {
         appliance.energyData.forEach(dataPoint => {
           const pointDate = new Date(dataPoint.time);
           
-          // Filter by date range
           if (pointDate >= start && pointDate <= end) {
             const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
             
@@ -114,10 +110,7 @@ function ReportView() {
       }
     });
 
-    // Sort by time
     allData.sort((a, b) => a.time - b.time);
-
-    // Group data based on xAxis selection
     const grouped = groupDataByTimeInterval(allData, xAxis);
     
     return grouped;
@@ -161,11 +154,53 @@ function ReportView() {
       grouped[key].count += 1;
     });
 
-    // Convert to array and calculate averages
     return Object.values(grouped).map(group => ({
       name: group.name,
       value: parseFloat((group.value / group.count).toFixed(2))
     }));
+  };
+
+  const handleSaveReport = async () => {
+    if (!reportData) return;
+    
+    setIsSaving(true);
+    setSaveMessage('');
+    
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) {
+        throw new Error('User not authenticated');
+      }
+
+      // Create report data object
+      const reportToSave = {
+        reportName: reportData.reportName,
+        startDate: reportData.startDate,
+        endDate: reportData.endDate,
+        appliances: reportData.appliances,
+        chartType: reportData.chartType,
+        yAxis: reportData.yAxis,
+        xAxis: reportData.xAxis,
+        notes: reportData.notes,
+        chartData: chartData,
+        stats: calculateStats(),
+        createdAt: new Date().toISOString()
+      };
+
+      // Save report to Firestore
+      const reportsRef = collection(db, 'users', uid, 'reports');
+      const docRef = await addDoc(reportsRef, reportToSave);
+      
+      setSaveMessage('Report saved successfully!');
+      setTimeout(() => {
+        navigate('/reports');
+      }, 1500);
+    } catch (error) {
+      console.error('Error saving report:', error);
+      setSaveMessage('Failed to save report. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderChart = () => {
@@ -261,7 +296,6 @@ function ReportView() {
     }
   };
 
-  // Calculate summary stats
   const calculateStats = () => {
     if (!chartData || chartData.length === 0) {
       return { totalEnergy: 0, avgEnergy: 0, totalCost: 0 };
@@ -294,7 +328,7 @@ function ReportView() {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Back Button */}
           <button
-            onClick={() => navigate('/create-report')}
+            onClick={() => navigate('/dashboard')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -320,314 +354,315 @@ function ReportView() {
             }}
           >
             <ArrowLeft size={16} />
-            Back to Create Report
+            Back to Dashboard
           </button>
 
-          {/* Header Section */}
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            marginBottom: '24px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            border: '2px solid #f4f0a4'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
-              <div style={{ flex: 1, minWidth: '300px' }}>
-                <h1 style={{
-                  margin: '0 0 12px 0',
-                  fontSize: '32px',
-                  fontWeight: '800',
-                  background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>
-                  {reportData.reportName}
-                </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666' }}>
-                    <Calendar size={18} color="#4d8be9" />
-                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                      {new Date(reportData.startDate).toLocaleDateString()} - {new Date(reportData.endDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div style={{
-                    padding: '4px 12px',
-                    background: 'linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%)',
-                    borderRadius: '20px',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    color: '#059669'
-                  }}>
-                    {reportData.chartType.charAt(0).toUpperCase() + reportData.chartType.slice(1)} Chart
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button style={{
-                  padding: '10px 16px',
-                  background: 'white',
-                  border: '2px solid #e6e6e6',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  color: '#333',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.borderColor = '#4d8be9';
-                  e.target.style.color = '#4d8be9';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.borderColor = '#e6e6e6';
-                  e.target.style.color = '#333';
-                }}>
-                  <Share2 size={16} />
-                  <span>Share</span>
-                </button>
-                <button style={{
-                  padding: '10px 16px',
-                  background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  color: 'white',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 2px 8px rgba(77, 139, 233, 0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(77, 139, 233, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 2px 8px rgba(77, 139, 233, 0.3)';
-                }}>
-                  <Download size={16} />
-                  <span>Export</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '2px solid #93c5fd',
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#3b82f6',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Zap size={22} color="white" />
-                </div>
-                <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e40af' }}>Total Energy</span>
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#1e3a8a' }}>
-                {stats.totalEnergy} kWh
-              </div>
-            </div>
-
-            <div style={{
-              background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '2px solid #6ee7b7',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#10b981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <TrendingUp size={22} color="white" />
-                </div>
-                <span style={{ fontSize: '14px', fontWeight: '600', color: '#065f46' }}>Average Usage</span>
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b' }}>
-                {stats.avgEnergy} kWh
-              </div>
-            </div>
-
-            <div style={{
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '2px solid #fcd34d',
-              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#f59e0b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <DollarSign size={22} color="white" />
-                </div>
-                <span style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>Total Cost</span>
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#78350f' }}>
-                ${stats.totalCost}
-              </div>
-            </div>
-          </div>
-
-          {/* Chart Section */}
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            marginBottom: '24px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            border: '2px solid #e5e7eb'
-          }}>
-            <h2 style={{
-              margin: '0 0 24px 0',
-              fontSize: '22px',
-              fontWeight: '700',
-              color: '#1f2937'
-            }}>
-              Energy Visualization
-            </h2>
-            <div style={{
-              background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
-              borderRadius: '12px',
-              padding: '24px',
-              border: '1px solid #e5e7eb'
-            }}>
-              {renderChart()}
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
-            {/* Appliances Section */}
+          {/* Report Content */}
+          <div ref={reportRef}>
+            {/* Header Section */}
             <div style={{
               background: 'white',
               borderRadius: '16px',
-              padding: '28px',
+              padding: '32px',
+              marginBottom: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: '2px solid #f4f0a4'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                  <h1 style={{
+                    margin: '0 0 12px 0',
+                    fontSize: '32px',
+                    fontWeight: '800',
+                    background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>
+                    {reportData.reportName}
+                  </h1>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666' }}>
+                      <Calendar size={18} color="#4d8be9" />
+                      <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                        {new Date(reportData.startDate).toLocaleDateString()} - {new Date(reportData.endDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div style={{
+                      padding: '4px 12px',
+                      background: 'linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%)',
+                      borderRadius: '20px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: '#059669'
+                    }}>
+                      {reportData.chartType.charAt(0).toUpperCase() + reportData.chartType.slice(1)} Chart
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  {saveMessage && (
+                    <div style={{
+                      padding: '10px 16px',
+                      marginBottom: '12px',
+                      backgroundColor: saveMessage.includes('successfully') ? '#d1fae5' : '#fee2e2',
+                      color: saveMessage.includes('successfully') ? '#065f46' : '#991b1b',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      textAlign: 'center'
+                    }}>
+                      {saveMessage}
+                    </div>
+                  )}
+                  <button 
+                    onClick={handleSaveReport}
+                    disabled={isSaving}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'linear-gradient(135deg, #4d8be9 0%, #28a745 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontWeight: '600',
+                      color: 'white',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 8px rgba(77, 139, 233, 0.3)',
+                      opacity: isSaving ? 0.6 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSaving) {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 4px 12px rgba(77, 139, 233, 0.4)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSaving) {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 8px rgba(77, 139, 233, 0.3)';
+                      }
+                    }}
+                  >
+                    <Save size={16} />
+                    <span>{isSaving ? 'Saving...' : 'Save Report'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '2px solid #93c5fd',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: '#3b82f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Zap size={22} color="white" />
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e40af' }}>Total Energy</span>
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: '800', color: '#1e3a8a' }}>
+                  {stats.totalEnergy} kWh
+                </div>
+              </div>
+
+              <div style={{
+                background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '2px solid #6ee7b7',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: '#10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <TrendingUp size={22} color="white" />
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#065f46' }}>Average Usage</span>
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: '800', color: '#064e3b' }}>
+                  {stats.avgEnergy} kWh
+                </div>
+              </div>
+
+              <div style={{
+                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                borderRadius: '16px',
+                padding: '24px',
+                border: '2px solid #fcd34d',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: '#f59e0b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <DollarSign size={22} color="white" />
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>Total Cost</span>
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: '800', color: '#78350f' }}>
+                  ${stats.totalCost}
+                </div>
+              </div>
+            </div>
+
+            {/* Chart Section */}
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              marginBottom: '24px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               border: '2px solid #e5e7eb'
             }}>
-              <h3 style={{
-                margin: '0 0 20px 0',
-                fontSize: '18px',
+              <h2 style={{
+                margin: '0 0 24px 0',
+                fontSize: '22px',
                 fontWeight: '700',
                 color: '#1f2937'
               }}>
-                📱 Monitored Appliances ({reportData.appliances.length})
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {reportData.appliances.map((appliance, idx) => {
-                  const colors = ['#4d8be9', '#28a745', '#f59e0b', '#ef4444', '#8b5cf6'];
-                  return (
-                    <div
-                      key={appliance.id}
-                      style={{
-                        padding: '16px',
-                        background: `linear-gradient(135deg, ${colors[idx % colors.length]}10 0%, ${colors[idx % colors.length]}05 100%)`,
-                        border: `2px solid ${colors[idx % colors.length]}30`,
-                        borderRadius: '10px',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                      }}>
+                Energy Visualization
+              </h2>
+              <div style={{
+                background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
+                borderRadius: '12px',
+                padding: '24px',
+                border: '1px solid #e5e7eb'
+              }}>
+                {renderChart()}
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
+              {/* Appliances Section */}
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '28px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                border: '2px solid #e5e7eb'
+              }}>
+                <h3 style={{
+                  margin: '0 0 20px 0',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: '#1f2937'
+                }}>
+                  📱 Monitored Appliances ({reportData.appliances.length})
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {reportData.appliances.map((appliance, idx) => {
+                    const colors = ['#4d8be9', '#28a745', '#f59e0b', '#ef4444', '#8b5cf6'];
+                    return (
+                      <div
+                        key={appliance.id}
+                        style={{
+                          padding: '16px',
+                          background: `linear-gradient(135deg, ${colors[idx % colors.length]}10 0%, ${colors[idx % colors.length]}05 100%)`,
+                          border: `2px solid ${colors[idx % colors.length]}30`,
+                          borderRadius: '10px'
+                        }}
+                      >
                         <div style={{
-                          width: '10px',
-                          height: '10px',
-                          borderRadius: '50%',
-                          background: colors[idx % colors.length]
-                        }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '15px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
-                            {appliance.name}
-                          </div>
-                          <div style={{ fontSize: '13px', color: '#6b7280' }}>
-                            {appliance.applianceType} • {appliance.location}
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px'
+                        }}>
+                          <div style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            background: colors[idx % colors.length]
+                          }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '15px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>
+                              {appliance.name}
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                              {appliance.applianceType} • {appliance.location}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Notes Section */}
-            <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '28px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              border: '2px solid #e5e7eb'
-            }}>
-              <h3 style={{
-                margin: '0 0 16px 0',
-                fontSize: '18px',
-                fontWeight: '700',
-                color: '#1f2937'
+              {/* Notes Section */}
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '28px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                border: '2px solid #e5e7eb'
               }}>
-                📝 Notes & Observations
-              </h3>
-              {reportData.notes ? (
-                <div style={{
-                  padding: '16px',
-                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                  border: '2px solid #fcd34d',
-                  borderRadius: '10px',
-                  fontSize: '15px',
-                  color: '#78350f',
-                  lineHeight: '1.6',
-                  whiteSpace: 'pre-wrap'
+                <h3 style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: '#1f2937'
                 }}>
-                  {reportData.notes}
-                </div>
-              ) : (
-                <div style={{
-                  padding: '24px',
-                  textAlign: 'center',
-                  color: '#9ca3af',
-                  fontSize: '14px',
-                  fontStyle: 'italic'
-                }}>
-                  No notes added for this report
-                </div>
-              )}
+                  📝 Notes & Observations
+                </h3>
+                {reportData.notes ? (
+                  <div style={{
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                    border: '2px solid #fcd34d',
+                    borderRadius: '10px',
+                    fontSize: '15px',
+                    color: '#78350f',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap'
+                  }}>
+                    {reportData.notes}
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '24px',
+                    textAlign: 'center',
+                    color: '#9ca3af',
+                    fontSize: '14px',
+                    fontStyle: 'italic'
+                  }}>
+                    No notes added for this report
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

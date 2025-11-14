@@ -10,9 +10,20 @@ export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { id: 'appliances', label: 'Appliances', path: '/appliances' },
+    { id: 'reports', label: 'Reports', path: '/reports' },
     { id: 'create-report', label: 'Create Report', path: '/create-report' },
     { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
   ];
+
+  const handleLogout = async () => {
+    try {
+      await onLogout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/');
+    }
+  };
 
   return (
     <div className="sidebar">
@@ -33,7 +44,7 @@ export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={onLogout}>Log Out</button>
+        <button className="logout-btn" onClick={handleLogout}>Log Out</button>
       </div>
     </div>
   );
