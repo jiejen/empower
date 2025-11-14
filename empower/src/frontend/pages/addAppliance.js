@@ -174,20 +174,7 @@ function AddAppliance() {
             Add New Appliance
           </h2>
 
-          {message && (
-            <div style={{
-              padding: '12px 16px',
-              marginBottom: '24px',
-              backgroundColor: '#fee2e2',
-              color: '#991b1b',
-              borderRadius: '6px',
-              border: '1px solid #fecaca',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              {message}
-            </div>
-          )}
+
 
           {/* Bottom Centered Toast Notification */}
           {showToast && (
@@ -404,11 +391,13 @@ function AddAppliance() {
                     color: '#059669',
                     fontWeight: '500'
                   }}>
-                    ✓ {csvData.length} data points loaded
+                    ✓ {csvFile.name} uploaded successfully
                   </p>
                 )}
               </div>
             </div>
+
+
 
             {/* Submit Button */}
             <div>
@@ -431,6 +420,22 @@ function AddAppliance() {
                 Add Appliance
               </button>
             </div>
+
+            {/* Submit message */}
+            {message && (
+            <div style={{
+              padding: '12px 16px',
+              marginTop: '24px',
+              backgroundColor: '#fee2e2',
+              color: '#991b1b',
+              borderRadius: '6px',
+              border: '1px solid #fecaca',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              {message}
+            </div>
+          )}
           </form>
         </div>
       </div>
