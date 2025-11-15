@@ -55,17 +55,11 @@
 .brand-logo {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #28a74522 0%, #ffcc3322 100%);
   border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 44px;
-  font-weight: 900;
-  color: #28a745;
+  object-fit: contain;
+  display: block;
   margin: 0 auto 24px;
   box-shadow: 0 2px 12px rgba(40,167,69,0.08);
-  backdrop-filter: blur(10px);
 }
 
 .brand-title {
@@ -550,7 +544,6 @@
   .brand-logo {
     width: 60px;
     height: 60px;
-    font-size: 32px;
   }
 
   .brand-title {

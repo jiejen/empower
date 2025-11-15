@@ -32,13 +32,8 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #e6e6e6 60%, #f4f0a4 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  color: #28a745;
-  font-size: 1.5rem;
+  object-fit: contain;
+  display: block;
   box-shadow: 0 2px 8px rgba(40,167,69,0.07);
 }
 

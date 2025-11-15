@@ -9,6 +9,7 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 import './Login.css';
+import empowerLogo from '../assets/empower.png';
 
 function Login() {
   const navigate = useNavigate();
@@ -180,6 +181,7 @@ function Login() {
       <div className="login-left">
         <button className="back-home-btn" onClick={() => navigate('/')}>← Back to Home</button>
         <div className="brand-section">
+          <img src={empowerLogo} alt="Empower Logo" className="brand-logo" />
           <h1 className="brand-title">Empower</h1>
           <p className="brand-subtitle">
             Take control of your energy usage. Save money, reduce waste, and make smarter decisions about your home's power consumption.
