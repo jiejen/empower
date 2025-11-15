@@ -304,7 +304,25 @@ function CreateReport() {
                 </div>
               ) : appliances.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
-                  No appliances available. Please add appliances first.
+                  No appliances available. Please add appliances first. <br/><br/>
+                    <button
+                      onClick={() => navigate('/add-appliance')}
+                    style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                    >
+                        + Add Appliance
+                    </button>
                 </div>
               ) : (
                 appliances.map((appliance) => (
