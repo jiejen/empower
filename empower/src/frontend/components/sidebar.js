@@ -1,21 +1,42 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, User, ChevronDown, LogOut, UserCircle } from 'lucide-react';
+import { User, ChevronDown, LogOut, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Layout.css';
 
-// Sidebar Component
-export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
+export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboard' }) => {
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isReportsDropdownOpen, setIsReportsDropdownOpen] = useState(false);
+  const [isAppliancesDropdownOpen, setIsAppliancesDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  const reportsDropdownRef = useRef(null);
+  const appliancesDropdownRef = useRef(null);
   const navigate = useNavigate();
-  
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-    { id: 'appliances', label: 'Appliances', path: '/appliances' },
-    { id: 'reports', label: 'Reports', path: '/reports' },
-    { id: 'create-report', label: 'Create Report', path: '/create-report' },
-    { id: 'add-appliance', label: 'Add Appliance', path: '/add-appliance' }
-  ];
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setIsProfileDropdownOpen(false);
+      }
+      if (reportsDropdownRef.current && !reportsDropdownRef.current.contains(event.target)) {
+        setIsReportsDropdownOpen(false);
+      }
+      if (appliancesDropdownRef.current && !appliancesDropdownRef.current.contains(event.target)) {
+        setIsAppliancesDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleProfileClick = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/profile');
+  };
 
   const handleLogout = async () => {
+    setIsProfileDropdownOpen(false);
     try {
       await onLogout();
       navigate('/');
@@ -26,94 +47,82 @@ export const Sidebar = ({ activePage = 'Dashboard', onLogout }) => {
   };
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-logo">
-        <h1>EMPOWER</h1>
-      </div>
-
-      <nav className="sidebar-nav">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => navigate(item.path)}
-            className={`sidebar-item ${activePage === item.label ? 'active' : ''}`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
-
-      <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout}>Log Out</button>
-      </div>
-    </div>
-  );
-};
-
-export const Navbar = ({ userName = 'User name', onLogout }) => {
-  const [searchValue, setSearchValue] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleProfileClick = () => {
-    setIsDropdownOpen(false);
-    navigate('/profile');
-  };
-
-  const handleLogout = () => {
-    setIsDropdownOpen(false);
-    onLogout();
-  };
-
-  return (
     <div className="navbar">
-      <div className="search-container">
-        <div className="search-wrapper">
-          <Search className="search-icon" size={20} />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="search-input"
-          />
-          {searchValue && (
-            <button onClick={() => setSearchValue('')} className="clear-btn">
-              <X size={16} />
-            </button>
+      {/* Left: Logo and App Name */}
+      <div className="navbar-brand">
+        <div className="app-symbol">E</div>
+        <span className="app-name">Empower</span>
+      </div>
+
+      {/* Center: Navigation Menu */}
+      <nav className="navbar-menu">
+        <button 
+          className={`nav-item ${activePage === 'Dashboard' ? 'active' : ''}`}
+          onClick={() => navigate('/dashboard')}
+        >
+          Dashboard
+        </button>
+
+        {/* Reports Dropdown */}
+        <div className="nav-dropdown" ref={reportsDropdownRef}>
+          <button 
+            className={`nav-item ${activePage === 'Reports' || activePage === 'Create Report' ? 'active' : ''}`}
+            onClick={() => setIsReportsDropdownOpen(!isReportsDropdownOpen)}
+          >
+            Reports
+            <ChevronDown size={16} className={`nav-chevron ${isReportsDropdownOpen ? 'open' : ''}`} />
+          </button>
+          {isReportsDropdownOpen && (
+            <div className="nav-dropdown-menu">
+              <button className="nav-dropdown-item" onClick={() => { navigate('/reports'); setIsReportsDropdownOpen(false); }}>
+                All Reports
+              </button>
+              <button className="nav-dropdown-item" onClick={() => { navigate('/create-report'); setIsReportsDropdownOpen(false); }}>
+                Create Report
+              </button>
+            </div>
           )}
         </div>
-      </div>
 
-      <div className="user-profile" ref={dropdownRef}>
+        {/* Appliances Dropdown */}
+        <div className="nav-dropdown" ref={appliancesDropdownRef}>
+          <button 
+            className={`nav-item ${activePage === 'Appliances' || activePage === 'Add Appliance' ? 'active' : ''}`}
+            onClick={() => setIsAppliancesDropdownOpen(!isAppliancesDropdownOpen)}
+          >
+            Appliances
+            <ChevronDown size={16} className={`nav-chevron ${isAppliancesDropdownOpen ? 'open' : ''}`} />
+          </button>
+          {isAppliancesDropdownOpen && (
+            <div className="nav-dropdown-menu">
+              <button className="nav-dropdown-item" onClick={() => { navigate('/appliances'); setIsAppliancesDropdownOpen(false); }}>
+                All Appliances
+              </button>
+              <button className="nav-dropdown-item" onClick={() => { navigate('/add-appliance'); setIsAppliancesDropdownOpen(false); }}>
+                Add Appliance
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Right: User Profile */}
+      <div className="user-profile" ref={profileDropdownRef}>
         <button 
           className="user-profile-btn"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
         >
           <div className="user-avatar">
-            <User size={24} />
+            <User size={20} />
           </div>
           <span className="user-name">{userName}</span>
           <ChevronDown 
-            size={20} 
-            className={`dropdown-icon ${isDropdownOpen ? 'open' : ''}`}
+            size={18} 
+            className={`dropdown-icon ${isProfileDropdownOpen ? 'open' : ''}`}
           />
         </button>
 
-        {isDropdownOpen && (
+        {isProfileDropdownOpen && (
           <div className="dropdown-menu">
             <button className="dropdown-item" onClick={handleProfileClick}>
               <UserCircle size={18} />
