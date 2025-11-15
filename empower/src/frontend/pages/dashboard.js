@@ -10,7 +10,7 @@ import '../components/Layout.css';
 import './Dashboard.css';
 
 function Dashboard() {
-  const { user, logout } = useUser();
+  const { user, loading: authLoading, logout } = useUser();
   const navigate = useNavigate();
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +32,8 @@ function Dashboard() {
   const [reports, setReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isRankOpen, setIsRankOpen] = useState(false);
+  const [isTimeOpen, setIsTimeOpen] = useState(false);
 
   const toggleFilter = (filterValue) => {
     setFilterBy(prev => 
@@ -41,7 +43,7 @@ function Dashboard() {
     );
   };
 
-  // position tooltip intelligently to stay within viewport
+  // so that tooltip stays within viewport
   const updateTooltipPosition = () => {
     if (iconRef.current && tooltipRef.current) {
       const iconRect = iconRef.current.getBoundingClientRect();
@@ -413,6 +415,8 @@ function Dashboard() {
 
   // load appliances on mount and when user changes
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to complete
+    
     if (user) {
       fetchAppliances();
       fetchReports();
@@ -420,7 +424,7 @@ function Dashboard() {
       navigate('/');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
 
   // re-rank appliances when filters change
   useEffect(() => {
@@ -429,6 +433,10 @@ function Dashboard() {
     }
   }, [rankBy, filterBy, timeFilter, appliances, rankAppliances]);
 
+  if (authLoading) {
+    return <div>Loading...</div>;
+  }
+
   if (!user) {
     navigate('/');
     return null;
@@ -436,8 +444,21 @@ function Dashboard() {
 
   return (
     <Layout activePage="Dashboard" userName={user?.name || user?.email || 'User'} onLogout={logout}>
-      <div className="dashboard-container">
-        <h2 className="dashboard-title">Dashboard</h2>
+      <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb',
+          padding: '32px'
+        }}>
+          <h2 style={{ 
+            margin: '0 0 32px 0', 
+            fontSize: '24px', 
+            fontWeight: '600', 
+            color: '#1f2937' 
+          }}>
+            Dashboard
+          </h2>
 
         {error && (
           <div style={{
@@ -536,10 +557,29 @@ function Dashboard() {
                 <div className="ranking-filters">
                   <div className="filter-group">
                     <label>Rank By:</label>
-                    <select value={rankBy} onChange={(e) => setRankBy(e.target.value)}>
-                      <option value="kwh">Energy (kWh)</option>
-                      <option value="price">Cost ($)</option>
-                    </select>
+                    <div className="filter-dropdown">
+                      <div 
+                        className="filter-dropdown-toggle"
+                        onClick={() => setIsRankOpen(!isRankOpen)}
+                      >
+                        <span>{rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}</span>
+                        <span className="dropdown-arrow">{isRankOpen ? '▲' : '▼'}</span>
+                      </div>
+                      {isRankOpen && (
+                        <div className="filter-options">
+                          <div className="filter-section">
+                            <label className="filter-option" onClick={() => { setRankBy('kwh'); setIsRankOpen(false); }}>
+                              <input type="radio" checked={rankBy === 'kwh'} readOnly />
+                              <span>Energy (kWh)</span>
+                            </label>
+                            <label className="filter-option" onClick={() => { setRankBy('price'); setIsRankOpen(false); }}>
+                              <input type="radio" checked={rankBy === 'price'} readOnly />
+                              <span>Cost ($)</span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="filter-group">
@@ -624,13 +664,46 @@ function Dashboard() {
 
                   <div className="filter-group">
                     <label>Time:</label>
-                    <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
-                      <option value="today">Today</option>
-                      <option value="this-week">This Week</option>
-                      <option value="this-month">This Month</option>
-                      <option value="this-year">This Year</option>
-                      <option value="all-time">All Time</option>
-                    </select>
+                    <div className="filter-dropdown">
+                      <div 
+                        className="filter-dropdown-toggle"
+                        onClick={() => setIsTimeOpen(!isTimeOpen)}
+                      >
+                        <span>
+                          {timeFilter === 'today' ? 'Today' :
+                           timeFilter === 'this-week' ? 'This Week' :
+                           timeFilter === 'this-month' ? 'This Month' :
+                           timeFilter === 'last-month' ? 'Last Month' : 'All Time'}
+                        </span>
+                        <span className="dropdown-arrow">{isTimeOpen ? '▲' : '▼'}</span>
+                      </div>
+                      {isTimeOpen && (
+                        <div className="filter-options">
+                          <div className="filter-section">
+                            <label className="filter-option" onClick={() => { setTimeFilter('today'); setIsTimeOpen(false); }}>
+                              <input type="radio" checked={timeFilter === 'today'} readOnly />
+                              <span>Today</span>
+                            </label>
+                            <label className="filter-option" onClick={() => { setTimeFilter('this-week'); setIsTimeOpen(false); }}>
+                              <input type="radio" checked={timeFilter === 'this-week'} readOnly />
+                              <span>This Week</span>
+                            </label>
+                            <label className="filter-option" onClick={() => { setTimeFilter('this-month'); setIsTimeOpen(false); }}>
+                              <input type="radio" checked={timeFilter === 'this-month'} readOnly />
+                              <span>This Month</span>
+                            </label>
+                            <label className="filter-option" onClick={() => { setTimeFilter('last-month'); setIsTimeOpen(false); }}>
+                              <input type="radio" checked={timeFilter === 'last-month'} readOnly />
+                              <span>Last Month</span>
+                            </label>
+                            <label className="filter-option" onClick={() => { setTimeFilter('all-time'); setIsTimeOpen(false); }}>
+                              <input type="radio" checked={timeFilter === 'all-time'} readOnly />
+                              <span>All Time</span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -803,6 +876,7 @@ function Dashboard() {
             </div>
           </>
         )}
+        </div>
       </div>
     </Layout>
   );

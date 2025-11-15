@@ -19,38 +19,10 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: '' });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
-
-  const calculatePasswordStrength = (pwd) => {
-    if (!pwd) return { score: 0, feedback: '' };
-    
-    let score = 0;
-    const feedback = [];
-    
-    if (pwd.length >= 8) score++;
-    else feedback.push('at least 8 characters');
-    
-    if (pwd.length >= 12) score++;
-    
-    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
-    else feedback.push('uppercase and lowercase letters');
-    
-    if (/\d/.test(pwd)) score++;
-    else feedback.push('a number');
-    
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++;
-    else feedback.push('a special character');
-    
-    const feedbackText = feedback.length > 0 
-      ? `Add ${feedback.join(', ')} for a stronger password` 
-      : 'Strong password!';
-    
-    return { score, feedback: feedbackText };
-  };
 
   const validate = () => {
     const e = {};
@@ -238,10 +210,7 @@ function Login() {
                   className="input" 
                   type={showPassword ? "text" : "password"} 
                   value={password} 
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setPasswordStrength(calculatePasswordStrength(e.target.value));
-                  }}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                 />
                 <button 
@@ -262,19 +231,6 @@ function Login() {
                 </button>
               </div>
               {errors.password && <div className="error">{errors.password}</div>}
-              {password && (
-                <div className="password-strength">
-                  <div className="strength-bars">
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <div 
-                        key={level} 
-                        className={`strength-bar ${passwordStrength.score >= level ? 'active' : ''} ${passwordStrength.score >= level ? `level-${passwordStrength.score}` : ''}`}
-                      />
-                    ))}
-                  </div>
-                  <div className="strength-feedback">{passwordStrength.feedback}</div>
-                </div>
-              )}
             </div>
             
             <button 

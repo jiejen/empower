@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 import { getFirestore } from "firebase/firestore";
 
@@ -18,8 +18,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
+// Set persistence to LOCAL so user stays logged in after page refresh
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Error setting persistence:", error);
+});
+
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
 
 export default app;
-

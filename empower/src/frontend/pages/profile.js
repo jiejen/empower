@@ -22,7 +22,7 @@ const formatPhoneNumber = (value) => {
 };
 
 function Profile() {
-  const { user, logout, updateUser } = useUser();
+  const { user, loading: authLoading, logout, updateUser } = useUser();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState({
@@ -37,6 +37,8 @@ function Profile() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to complete
+    
     if (!user) {
       navigate('/');
       return;
@@ -82,7 +84,7 @@ function Profile() {
     };
 
     loadUserData();
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -206,16 +208,7 @@ function Profile() {
             {!isEditing ? (
               <button
                 onClick={handleEdit}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
+                className="profile-edit-btn"
               >
                 Edit Profile
               </button>
@@ -223,31 +216,13 @@ function Profile() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={handleCancel}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}
+                  className="profile-cancel-btn"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}
+                  className="profile-save-btn"
                 >
                   Save Changes
                 </button>
