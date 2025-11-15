@@ -38,10 +38,9 @@
 }
 
 .login-left {
-  width: 80%; /* Use percentage for flexible width */
+  width: 50%; /* Use percentage for flexible width */
   max-width: 800px; /* Set a maximum width */
   min-height: 300px; /* Set a minimum height */
-  max-height: 90vh; /* Set a maximum height relative to viewport height */
   border-radius: 12px; /* Add rounded corners */
   background-color: #f4f0a4; /* Ensure background color is set */
   padding: 5%; /* Use percentage for padding to make it responsive */

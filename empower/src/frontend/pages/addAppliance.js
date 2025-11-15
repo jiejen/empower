@@ -364,13 +364,16 @@ function AddAppliance() {
                   style={{
                     display: 'inline-block',
                     padding: '8px 16px',
-                    backgroundColor: '#3b82f6',
+                    backgroundColor: '#28a745',
                     color: 'white',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    transition: 'background-color 0.2s'
                   }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
                 >
                   {csvFile ? csvFile.name : 'Choose CSV File'}
                 </label>
@@ -403,7 +406,7 @@ function AddAppliance() {
                 type="submit"
                 style={{
                   padding: '12px 32px',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: '#28a745',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -412,8 +415,8 @@ function AddAppliance() {
                   cursor: 'pointer',
                   transition: 'background-color 0.2s'
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
               >
                 Add Appliance
               </button>

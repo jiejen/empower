@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, ChevronDown, LogOut, UserCircle } from 'lucide-react';
+import { User, ChevronDown, LogOut, UserCircle, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Layout.css';
 import empowerLogo from '../assets/empower.png';
@@ -34,6 +34,11 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
   const handleProfileClick = () => {
     setIsProfileDropdownOpen(false);
     navigate('/profile');
+  };
+
+  const handleCostDataClick = () => {
+    setIsProfileDropdownOpen(false);
+    navigate('/cost-data');
   };
 
   const handleLogout = async () => {
@@ -128,6 +133,10 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
             <button className="dropdown-item" onClick={handleProfileClick}>
               <UserCircle size={18} />
               <span>Profile</span>
+            </button>
+            <button className="dropdown-item" onClick={handleCostDataClick}>
+              <DollarSign size={18} />
+              <span>Cost Data</span>
             </button>
             <div className="dropdown-divider" />
             <button className="dropdown-item logout" onClick={handleLogout}>

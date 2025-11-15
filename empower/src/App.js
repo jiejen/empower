@@ -9,6 +9,7 @@ import Appliances from './frontend/pages/appliances';
 import CreateReport from './frontend/pages/createReport';
 import AddAppliance from './frontend/pages/addAppliance';
 import Profile from './frontend/pages/profile';
+import CostData from './frontend/pages/costData';
 import ReportView from './frontend/pages/ReportView';
 import Reports from './frontend/pages/Reports';
 import './App.css';
@@ -27,6 +28,7 @@ function App() {
           <Route path="/create-report" element={<CreateReport />} />
           <Route path="/add-appliance" element={<AddAppliance />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/cost-data" element={<CostData />} />
           <Route path="/report-view" element={<ReportView />} />
           <Route path="/reports" element={<Reports />} />
         </Routes>

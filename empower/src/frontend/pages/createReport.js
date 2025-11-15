@@ -21,6 +21,7 @@ function CreateReport() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dateError, setDateError] = useState('');
+  const [applianceValidationError, setApplianceValidationError] = useState('');
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -59,7 +60,45 @@ function CreateReport() {
     }
   }, [user]);
 
+  // Clear validation error when dates are cleared
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      setApplianceValidationError('');
+    }
+  }, [startDate, endDate]);
+
+  // Check if an appliance has data for the selected date range
+  const applianceHasDataForDateRange = (appliance, start, end) => {
+    if (!start || !end) return true; // If dates not selected, allow selection
+    
+    if (!appliance.energyData || !Array.isArray(appliance.energyData) || appliance.energyData.length === 0) {
+      return false;
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    // Set end date to end of day for inclusive comparison
+    endDate.setHours(23, 59, 59, 999);
+
+    // Check if any data point falls within the date range
+    return appliance.energyData.some(dataPoint => {
+      if (!dataPoint.time) return false;
+      const pointDate = new Date(dataPoint.time);
+      return pointDate >= startDate && pointDate <= endDate;
+    });
+  };
+
   const handleApplianceToggle = (applianceId) => {
+    // Don't allow toggling if dates are selected and appliance doesn't have data
+    if (startDate && endDate) {
+      const appliance = appliances.find(app => app.id === applianceId);
+      if (appliance && !applianceHasDataForDateRange(appliance, startDate, endDate)) {
+        setApplianceValidationError(`"${appliance.name}" does not have data for the selected date range.`);
+        return;
+      }
+    }
+    
+    setApplianceValidationError('');
     setSelectedAppliances(prev =>
       prev.includes(applianceId)
         ? prev.filter(id => id !== applianceId)
@@ -98,12 +137,42 @@ function CreateReport() {
     if (endDate && newStartDate > endDate) {
       setEndDate(newStartDate);
     }
+    
+    // Clear selected appliances that don't have data for the new date range
+    if (newStartDate && endDate) {
+      const validAppliances = selectedAppliances.filter(appId => {
+        const appliance = appliances.find(app => app.id === appId);
+        return appliance && applianceHasDataForDateRange(appliance, newStartDate, endDate);
+      });
+      
+      if (validAppliances.length !== selectedAppliances.length) {
+        setSelectedAppliances(validAppliances);
+        setApplianceValidationError('Some selected appliances were removed because they don\'t have data for the selected date range.');
+      } else {
+        setApplianceValidationError('');
+      }
+    }
   };
 
   const handleEndDateChange = (newEndDate) => {
     setEndDate(newEndDate);
     if (startDate) {
       validateDates(startDate, newEndDate);
+    }
+    
+    // Clear selected appliances that don't have data for the new date range
+    if (startDate && newEndDate) {
+      const validAppliances = selectedAppliances.filter(appId => {
+        const appliance = appliances.find(app => app.id === appId);
+        return appliance && applianceHasDataForDateRange(appliance, startDate, newEndDate);
+      });
+      
+      if (validAppliances.length !== selectedAppliances.length) {
+        setSelectedAppliances(validAppliances);
+        setApplianceValidationError('Some selected appliances were removed because they don\'t have data for the selected date range.');
+      } else {
+        setApplianceValidationError('');
+      }
     }
   };
 
@@ -122,10 +191,20 @@ function CreateReport() {
       return;
     }
 
-    // Get selected appliance data
+    // Validate that all selected appliances have data for the date range
     const selectedApplianceData = appliances.filter(app => 
       selectedAppliances.includes(app.id)
     );
+
+    const appliancesWithoutData = selectedApplianceData.filter(app => 
+      !applianceHasDataForDateRange(app, startDate, endDate)
+    );
+
+    if (appliancesWithoutData.length > 0) {
+      const applianceNames = appliancesWithoutData.map(app => app.name).join(', ');
+      alert(`The following appliances do not have data for the selected date range: ${applianceNames}. Please select different appliances or adjust the date range.`);
+      return;
+    }
 
     // Create report data object
     const reportData = {
@@ -286,6 +365,31 @@ function CreateReport() {
             }}>
               Select Appliances * ({selectedAppliances.length} selected)
             </label>
+            {applianceValidationError && (
+              <div style={{
+                padding: '10px 12px',
+                marginBottom: '12px',
+                backgroundColor: '#fef3c7',
+                color: '#92400e',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontWeight: '500'
+              }}>
+                {applianceValidationError}
+              </div>
+            )}
+            {startDate && endDate && (
+              <div style={{
+                padding: '8px 12px',
+                marginBottom: '12px',
+                backgroundColor: '#e0f2fe',
+                color: '#0c4a6e',
+                borderRadius: '6px',
+                fontSize: '12px'
+              }}>
+                Only appliances with data for the selected date range can be selected.
+              </div>
+            )}
             <div style={{
               border: '1px solid #d1d5db',
               borderRadius: '6px',
@@ -309,7 +413,7 @@ function CreateReport() {
                       onClick={() => navigate('/add-appliance')}
                     style={{
                             padding: '10px 20px',
-                            backgroundColor: '#3b82f6',
+                            backgroundColor: '#28a745',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
@@ -318,50 +422,82 @@ function CreateReport() {
                             cursor: 'pointer',
                             transition: 'background-color 0.2s'
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
                     >
                         + Add Appliance
                     </button>
                 </div>
               ) : (
-                appliances.map((appliance) => (
-                  <label
-                    key={appliance.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '12px',
-                      cursor: 'pointer',
-                      borderRadius: '6px',
-                      marginBottom: '8px',
-                      transition: 'all 0.2s',
-                      backgroundColor: selectedAppliances.includes(appliance.id) ? '#dbeafe' : 'white',
-                      border: `1px solid ${selectedAppliances.includes(appliance.id) ? '#3b82f6' : '#e5e7eb'}`
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAppliances.includes(appliance.id)}
-                      onChange={() => handleApplianceToggle(appliance.id)}
+                appliances.map((appliance) => {
+                  const hasData = !startDate || !endDate || applianceHasDataForDateRange(appliance, startDate, endDate);
+                  const isSelected = selectedAppliances.includes(appliance.id);
+                  const isDisabled = startDate && endDate && !hasData;
+                  
+                  return (
+                    <label
+                      key={appliance.id}
                       style={{
-                        width: '18px',
-                        height: '18px',
-                        marginRight: '12px',
-                        cursor: 'pointer',
-                        accentColor: '#3b82f6'
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '12px',
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                        borderRadius: '6px',
+                        marginBottom: '8px',
+                        transition: 'all 0.2s',
+                        backgroundColor: isDisabled 
+                          ? '#f3f4f6' 
+                          : isSelected 
+                            ? '#dbeafe' 
+                            : 'white',
+                        border: `1px solid ${isDisabled 
+                          ? '#e5e7eb' 
+                          : isSelected 
+                            ? '#3b82f6' 
+                            : '#e5e7eb'}`,
+                        opacity: isDisabled ? 0.6 : 1
                       }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '15px', fontWeight: '500', color: '#1f2937', marginBottom: '2px' }}>
-                        {appliance.name}
+                      title={isDisabled ? 'This appliance does not have data for the selected date range' : ''}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleApplianceToggle(appliance.id)}
+                        disabled={isDisabled}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          marginRight: '12px',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          accentColor: '#3b82f6'
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          fontSize: '15px', 
+                          fontWeight: '500', 
+                          color: isDisabled ? '#9ca3af' : '#1f2937', 
+                          marginBottom: '2px' 
+                        }}>
+                          {appliance.name}
+                          {isDisabled && (
+                            <span style={{ 
+                              marginLeft: '8px', 
+                              fontSize: '12px', 
+                              color: '#dc2626',
+                              fontWeight: '400'
+                            }}>
+                              (No data for date range)
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '13px', color: isDisabled ? '#9ca3af' : '#6b7280' }}>
+                          {appliance.applianceType} • {appliance.location}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '13px', color: '#6b7280' }}>
-                        {appliance.applianceType} • {appliance.location}
-                      </div>
-                    </div>
-                  </label>
-                ))
+                    </label>
+                  );
+                })
               )}
             </div>
           </div>
@@ -554,7 +690,7 @@ function CreateReport() {
             onClick={handleSubmit}
             style={{
               padding: '12px 32px',
-              backgroundColor: '#3b82f6',
+              backgroundColor: '#28a745',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -563,8 +699,8 @@ function CreateReport() {
               cursor: 'pointer',
               transition: 'background-color 0.2s'
             }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
           >
             Generate Report
           </button>

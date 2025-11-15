@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { auth, db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { getCostForDate, getCostForDateRange } from '../../services/costService';
 import '../components/Layout.css';
 
 function ReportView()
@@ -17,14 +18,17 @@ function ReportView()
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  const processApplianceComparison = useCallback((appliances, startDate, endDate, yAxis) => {
+  const processApplianceComparison = useCallback(async (appliances, startDate, endDate, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const costPerKwh = 0.12;
+    
+    // Get average cost for the date range
+    const avgCostPerKwh = await getCostForDateRange(start, end);
 
-    const comparisonData = appliances.map(appliance => {
+    const comparisonDataPromises = appliances.map(async (appliance) => {
       let totalValue = 0;
       let dataPointCount = 0;
+      const costPromises = [];
 
       if (appliance.energyData && Array.isArray(appliance.energyData))
       {
@@ -37,11 +41,33 @@ function ReportView()
             {
               totalValue += dataPoint.kwh;
             } else {
-              totalValue += dataPoint.kwh * costPerKwh;
+              // Get cost for this specific date
+              costPromises.push(
+                getCostForDate(pointDate).then(rate => ({ kwh: dataPoint.kwh, rate }))
+              );
             }
             dataPointCount++;
           }
         });
+      }
+
+      if (yAxis === 'cost') {
+        // Wait for all cost calculations
+        const costData = await Promise.all(costPromises);
+        totalValue = costData.reduce((sum, { kwh, rate }) => sum + (kwh * rate), 0);
+        
+        // Fallback to average if no cost calculated
+        if (totalValue === 0 && dataPointCount > 0) {
+          // Recalculate with average rate
+          let totalKwh = 0;
+          appliance.energyData?.forEach(dataPoint => {
+            const pointDate = new Date(dataPoint.time);
+            if (pointDate >= start && pointDate <= end) {
+              totalKwh += dataPoint.kwh;
+            }
+          });
+          totalValue = totalKwh * avgCostPerKwh;
+        }
       }
 
       const finalValue = yAxis === 'power' ? (dataPointCount > 0 ? totalValue/dataPointCount : 0) : totalValue;
@@ -54,7 +80,7 @@ function ReportView()
       };
     });
 
-    return comparisonData;
+    return await Promise.all(comparisonDataPromises);
   }, []);
 
   const groupDataByTimeInterval = useCallback((data, interval) => {
@@ -103,12 +129,11 @@ function ReportView()
     }));
   }, []);
 
-  const processEnergyData = useCallback((appliances, startDate, endDate, xAxis, yAxis) => {
+  const processEnergyData = useCallback(async (appliances, startDate, endDate, xAxis, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const costPerKwh = 0.12;
 
-    const allData = [];
+    const allDataPromises = [];
     
     appliances.forEach(appliance => {
       if (appliance.energyData && Array.isArray(appliance.energyData))
@@ -118,14 +143,28 @@ function ReportView()
           
           if (pointDate >= start && pointDate <= end)
           {
-            const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
-            
-            allData.push({time: pointDate, value: value, applianceName: appliance.name});
+            if (yAxis === 'power') {
+              allDataPromises.push(Promise.resolve({
+                time: pointDate, 
+                value: dataPoint.kwh, 
+                applianceName: appliance.name
+              }));
+            } else {
+              // Get cost for this specific date
+              allDataPromises.push(
+                getCostForDate(pointDate).then(rate => ({
+                  time: pointDate,
+                  value: dataPoint.kwh * rate,
+                  applianceName: appliance.name
+                }))
+              );
+            }
           }
         });
       }
     });
 
+    const allData = await Promise.all(allDataPromises);
     allData.sort((a, b) => a.time - b.time);
     const grouped = groupDataByTimeInterval(allData, xAxis);
     
@@ -139,18 +178,24 @@ function ReportView()
       return;
     }
 
-    let processedData;
-    
-    if (reportData.chartType === 'pie')
-    {
-      processedData = processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
-    }
-    else
-    {
-      processedData = processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
-    }
-    
-    setChartData(processedData);
+    const loadData = async () => {
+      let processedData;
+      
+      if (reportData.chartType === 'pie')
+      {
+        processedData = await processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
+      }
+      else
+      {
+        processedData = await processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
+      }
+      
+      setChartData(processedData);
+    };
+
+    loadData().catch(err => {
+      console.error('Error processing report data:', err);
+    });
   }, [reportData, navigate, processApplianceComparison, processEnergyData]);
 
   const handleSaveReport = async () => {
@@ -177,7 +222,7 @@ function ReportView()
         xAxis: reportData.xAxis,
         notes: reportData.notes,
         chartData: chartData,
-        stats: calculateStats(),
+        stats: await calculateStats(),
         createdAt: new Date().toISOString()
       };
 
@@ -261,24 +306,65 @@ function ReportView()
     }
   };
 
-  const calculateStats = () => {
-    if (!chartData || chartData.length === 0)
+  const calculateStats = useCallback(async () => {
+    if (!chartData || chartData.length === 0 || !reportData)
     {
       return { totalEnergy: 0, avgEnergy: 0, totalCost: 0 };
     }
 
-    const totalEnergy = chartData.reduce((sum, point) => sum + (point.value || 0), 0);
-    const avgEnergy = totalEnergy/chartData.length;
-    const totalCost = reportData.yAxis === 'cost' ? totalEnergy : totalEnergy * 0.12;
+    // Calculate total energy from original appliance data
+    let totalEnergy = 0;
+    const start = new Date(reportData.startDate);
+    const end = new Date(reportData.endDate);
+    
+    reportData.appliances.forEach(appliance => {
+      if (appliance.energyData && Array.isArray(appliance.energyData)) {
+        appliance.energyData.forEach(dataPoint => {
+          const pointDate = new Date(dataPoint.time);
+          if (pointDate >= start && pointDate <= end) {
+            totalEnergy += parseFloat(dataPoint.kwh) || 0;
+          }
+        });
+      }
+    });
+
+    const avgEnergy = chartData.length > 0 ? totalEnergy / chartData.length : 0;
+    
+    // Calculate total cost
+    let totalCost = 0;
+    if (reportData.yAxis === 'cost') {
+      // If yAxis is cost, sum the cost values from chartData
+      totalCost = chartData.reduce((sum, point) => sum + (point.value || 0), 0);
+    } else {
+      // If yAxis is power, calculate cost using date range
+      const avgCostPerKwh = await getCostForDateRange(start, end);
+      totalCost = totalEnergy * avgCostPerKwh;
+    }
 
     return {
       totalEnergy: totalEnergy.toFixed(2),
       avgEnergy: avgEnergy.toFixed(2),
       totalCost: totalCost.toFixed(2)
     };
-  };
+  }, [chartData, reportData]);
 
-  const stats = calculateStats();
+  const [stats, setStats] = useState({ totalEnergy: 0, avgEnergy: 0, totalCost: 0 });
+
+  useEffect(() => {
+    if (reportData && chartData && chartData.length > 0) {
+      const loadStats = async () => {
+        try {
+          const calculatedStats = await calculateStats();
+          setStats(calculatedStats);
+        } catch (err) {
+          console.error('Error calculating stats:', err);
+        }
+      };
+      loadStats();
+    } else {
+      setStats({ totalEnergy: 0, avgEnergy: 0, totalCost: 0 });
+    }
+  }, [reportData, chartData, calculateStats]);
 
   if (!reportData)
   {
@@ -349,7 +435,7 @@ function ReportView()
               <button onClick={handleSaveReport} disabled={isSaving}
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: '#28a745',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
@@ -360,10 +446,10 @@ function ReportView()
                   opacity: isSaving ? 0.6 : 1
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSaving) e.target.style.backgroundColor = '#2563eb';
+                  if (!isSaving) e.target.style.backgroundColor = '#218838';
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSaving) e.target.style.backgroundColor = '#3b82f6';
+                  if (!isSaving) e.target.style.backgroundColor = '#28a745';
                 }}
               >
                 {isSaving ? 'Saving...' : 'Save Report'}

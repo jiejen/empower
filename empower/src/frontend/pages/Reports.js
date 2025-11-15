@@ -138,7 +138,7 @@ function Reports() {
               onClick={() => navigate('/create-report')}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#3b82f6',
+                backgroundColor: '#28a745',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -147,8 +147,8 @@ function Reports() {
                 cursor: 'pointer',
                 transition: 'background-color 0.2s'
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
             >
               + Create New Report
             </button>

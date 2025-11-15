@@ -5,6 +5,7 @@ import { useUser } from '../../context/UserContext';
 import { auth, db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { Info } from 'lucide-react';
+import { getCostForDate, getCostForDateRange } from '../../services/costService';
 import '../components/Layout.css';
 import './Dashboard.css';
 
@@ -83,14 +84,13 @@ function Dashboard() {
   }, [showTooltip]);
 
   // calculate all the dashboard stats from appliance data
-  const calculateStats = useCallback((applianceData) => {
+  const calculateStats = useCallback(async (applianceData) => {
     let totalKwh = 0;
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-    const rate = 0.14;
     
     // Collect data by month for all available data
     const monthlyData = {}; // key: 'YYYY-MM', value: { kwh, dataPoints }
@@ -139,6 +139,11 @@ function Dashboard() {
       const dayOfMonth = now.getDate();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const projectedMonthlyKwh = (currentMonthKwh / dayOfMonth) * daysInMonth;
+      
+      // Get cost for current month
+      const monthStart = new Date(currentYear, currentMonth, 1);
+      const monthEnd = new Date(currentYear, currentMonth + 1, 0);
+      const rate = await getCostForDateRange(monthStart, monthEnd);
       estimatedBill = projectedMonthlyKwh * rate;
       billDataSource = `${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (current month)`;
     } else {
@@ -150,6 +155,11 @@ function Dashboard() {
         const [year, month] = monthKey.split('-').map(Number);
         // Skip current month (we already know it's empty)
         if (year === currentYear && month === currentMonth + 1) continue;
+        
+        // Get cost for that month
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0);
+        const rate = await getCostForDateRange(monthStart, monthEnd);
         
         // Use this month's data as estimate
         estimatedBill = monthlyData[monthKey].kwh * rate;
@@ -168,7 +178,7 @@ function Dashboard() {
   }, []);
 
   // rank appliances based on selected criteria
-  const rankAppliances = useCallback((applianceData, rankCriteria, filter, time) => {
+  const rankAppliances = useCallback(async (applianceData, rankCriteria, filter, time) => {
     // use current date from system (November 14, 2025)
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -212,24 +222,41 @@ function Dashboard() {
       endDate: endDate.toISOString()
     });
 
-    const ranked = applianceData.map(appliance => {
+    // Get average cost for the time range
+    const avgRate = await getCostForDateRange(startDate, endDate);
+    
+    // Process appliances with async cost calculations
+    const rankedPromises = applianceData.map(async (appliance) => {
       let totalKwh = 0;
       let dataPointCount = 0;
+      const costPromises = [];
 
       if (appliance.energyData && Array.isArray(appliance.energyData)) {
-        appliance.energyData.forEach(dataPoint => {
+        appliance.energyData.forEach((dataPoint) => {
           const pointDate = new Date(dataPoint.time);
           
           // only include data points within the selected time range
           if (pointDate >= startDate && pointDate <= endDate) {
-            totalKwh += parseFloat(dataPoint.kwh) || 0;
+            const kwh = parseFloat(dataPoint.kwh) || 0;
+            totalKwh += kwh;
             dataPointCount++;
+            
+            // Get cost for this specific date (async)
+            costPromises.push(
+              getCostForDate(pointDate).then(rate => ({ kwh, rate }))
+            );
           }
         });
       }
 
-      const rate = 0.14; // average rate for price calculation
-      const totalCost = totalKwh * rate;
+      // Wait for all cost calculations
+      const costData = await Promise.all(costPromises);
+      let totalCost = costData.reduce((sum, { kwh, rate }) => sum + (kwh * rate), 0);
+
+      // Fallback: if no cost calculated, use average rate
+      if (totalCost === 0 && totalKwh > 0) {
+        totalCost = totalKwh * avgRate;
+      }
 
       return {
         ...appliance,
@@ -238,6 +265,8 @@ function Dashboard() {
         dataPointCount
       };
     });
+    
+    const ranked = await Promise.all(rankedPromises);
 
     // apply filters - when no filters selected, show all with data
     let filtered = ranked.filter(a => a.totalKwh > 0);
@@ -338,7 +367,9 @@ function Dashboard() {
         // calculate stats if we have appliances with energy data
         if (data.length > 0) {
           calculateStats(data);
-          rankAppliances(data, rankBy, filterBy, timeFilter);
+          rankAppliances(data, rankBy, filterBy, timeFilter).catch(err => {
+            console.error('Error ranking appliances:', err);
+          });
         }
       } else {
         setError('Failed to load appliances');
