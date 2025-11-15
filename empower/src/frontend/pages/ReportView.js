@@ -10,19 +10,69 @@ import '../components/Layout.css';
 
 function ReportView()
 {
-  const { user, logout } = useUser();
+  const {user, logout} = useUser();
   const location = useLocation();
   const navigate = useNavigate();
   const [chartData, setChartData] = useState([]);
   const reportData = location.state?.reportData;
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [isReportSaved, setIsReportSaved] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true);
+  const [showNavigationConfirm, setShowNavigationConfirm] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges)
+      {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      // Find if the click is on a link
+      const link = e.target.closest('a');
+      if (link && link.href && !link.href.includes('javascript:') && hasUnsavedChanges) {
+        e.preventDefault();
+        setPendingNavigation(link.href);
+        setShowNavigationConfirm(true);
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    
+    return () => {
+      document.removeEventListener('click', handleClick);
+    };
+  }, [hasUnsavedChanges]);
+
+  const handleNavigationConfirm = (confirmed) => {
+    if (confirmed && pendingNavigation)
+    {
+      setHasUnsavedChanges(false);
+      setTimeout(() => {
+        window.location.href = pendingNavigation;
+      }, 100);
+    }
+    setShowNavigationConfirm(false);
+    setPendingNavigation(null);
+  };
 
   const processApplianceComparison = useCallback(async (appliances, startDate, endDate, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     
-    // Get average cost for the date range
     const avgCostPerKwh = await getCostForDateRange(start, end);
 
     const comparisonDataPromises = appliances.map(async (appliance) => {
@@ -40,29 +90,28 @@ function ReportView()
             if (yAxis === 'power')
             {
               totalValue += dataPoint.kwh;
-            } else {
-              // Get cost for this specific date
-              costPromises.push(
-                getCostForDate(pointDate).then(rate => ({ kwh: dataPoint.kwh, rate }))
-              );
+            }
+            else
+            {
+              costPromises.push(getCostForDate(pointDate).then(rate => ({kwh: dataPoint.kwh, rate})));
             }
             dataPointCount++;
           }
         });
       }
 
-      if (yAxis === 'cost') {
-        // Wait for all cost calculations
+      if (yAxis === 'cost')
+      {
         const costData = await Promise.all(costPromises);
-        totalValue = costData.reduce((sum, { kwh, rate }) => sum + (kwh * rate), 0);
+        totalValue = costData.reduce((sum, {kwh, rate}) => sum + (kwh * rate), 0);
         
-        // Fallback to average if no cost calculated
-        if (totalValue === 0 && dataPointCount > 0) {
-          // Recalculate with average rate
+        if (totalValue === 0 && dataPointCount > 0)
+        {
           let totalKwh = 0;
           appliance.energyData?.forEach(dataPoint => {
             const pointDate = new Date(dataPoint.time);
-            if (pointDate >= start && pointDate <= end) {
+            if (pointDate >= start && pointDate <= end)
+            {
               totalKwh += dataPoint.kwh;
             }
           });
@@ -105,7 +154,7 @@ function ReportView()
           key = `Week ${weekNum} - ${date.getMonth() + 1}/${date.getFullYear()}`;
           break;
         case 'month':
-          key = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+          key = `${date.toLocaleString('default', {month: 'short'})} ${date.getFullYear()}`;
           break;
         case 'year':
           key = `${date.getFullYear()}`;
@@ -116,7 +165,7 @@ function ReportView()
 
       if (!grouped[key])
       {
-        grouped[key] = { name: key, value: 0, count: 0 };
+        grouped[key] = {name: key, value: 0, count: 0};
       }
       
       grouped[key].value += point.value;
@@ -143,21 +192,13 @@ function ReportView()
           
           if (pointDate >= start && pointDate <= end)
           {
-            if (yAxis === 'power') {
-              allDataPromises.push(Promise.resolve({
-                time: pointDate, 
-                value: dataPoint.kwh, 
-                applianceName: appliance.name
-              }));
-            } else {
-              // Get cost for this specific date
-              allDataPromises.push(
-                getCostForDate(pointDate).then(rate => ({
-                  time: pointDate,
-                  value: dataPoint.kwh * rate,
-                  applianceName: appliance.name
-                }))
-              );
+            if (yAxis === 'power')
+            {
+              allDataPromises.push(Promise.resolve({time: pointDate, value: dataPoint.kwh, applianceName: appliance.name}));
+            }
+            else
+            {
+              allDataPromises.push(getCostForDate(pointDate).then(rate => ({time: pointDate, value: dataPoint.kwh * rate, applianceName: appliance.name})));
             }
           }
         });
@@ -180,7 +221,6 @@ function ReportView()
 
     const loadData = async () => {
       let processedData;
-      
       if (reportData.chartType === 'pie')
       {
         processedData = await processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
@@ -189,7 +229,6 @@ function ReportView()
       {
         processedData = await processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
       }
-      
       setChartData(processedData);
     };
 
@@ -230,6 +269,9 @@ function ReportView()
       await addDoc(reportsRef, reportToSave);
       
       setSaveMessage('Report saved successfully!');
+      setIsReportSaved(true);
+      setHasUnsavedChanges(false);
+
       setTimeout(() => {
         navigate('/reports');
       }, 1500);
@@ -244,11 +286,26 @@ function ReportView()
     }
   };
 
+  const handleBackButton = () => {
+    if (hasUnsavedChanges)
+    {
+      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+      if (confirmed)
+      {
+        navigate('/reports');
+      }
+    }
+    else
+    {
+      navigate('/reports');
+    }
+  };
+
   const renderChart = () => {
     if (!reportData || chartData.length === 0)
     {
       return (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
+        <div style={{textAlign: 'center', padding: '60px', color: '#6b7280'}}>
           No data available for the selected date range and appliances.
         </div>
       );
@@ -265,10 +322,10 @@ function ReportView()
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb"/>
               <XAxis dataKey="name" stroke="#6b7280"/>
-              <YAxis label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }} stroke="#6b7280"/>
+              <YAxis label={{value: yAxisLabel, angle: -90, position: 'insideLeft'}} stroke="#6b7280"/>
               <Tooltip contentStyle={{backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}/>
               <Legend/>
-              <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} activeDot={{ r: 6 }} name={yAxisLabel}/>
+              <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{fill: '#3b82f6', r: 4}} activeDot={{r: 6}} name={yAxisLabel}/>
             </LineChart>
           </ResponsiveContainer>
         );
@@ -279,7 +336,7 @@ function ReportView()
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb"/>
               <XAxis dataKey="name" stroke="#6b7280"/>
-              <YAxis label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }} stroke="#6b7280"/>
+              <YAxis label={{value: yAxisLabel, angle: -90, position: 'insideLeft'}} stroke="#6b7280"/>
               <Tooltip contentStyle={{backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}/>
               <Legend/>
               <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} name={yAxisLabel}/>
@@ -292,7 +349,7 @@ function ReportView()
         return (
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
-              <Pie data={chartData} cx="50%" cy="50%" labelLine={true} label={({ name, value }) => `${name}: ${value}`} outerRadius={120} fill="#8884d8" dataKey="value">
+              <Pie data={chartData} cx="50%" cy="50%" labelLine={true} label={({name, value}) => `${name}: ${value}`} outerRadius={120} fill="#8884d8" dataKey="value">
                 {chartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={colors[index % colors.length]}/>))}
               </Pie>
               <Tooltip formatter={(value) => [`${value} ${reportData.yAxis === 'power' ? 'kW' : '$'}`, metricLabel]}/>
@@ -309,34 +366,35 @@ function ReportView()
   const calculateStats = useCallback(async () => {
     if (!chartData || chartData.length === 0 || !reportData)
     {
-      return { totalEnergy: 0, avgEnergy: 0, totalCost: 0 };
+      return {totalEnergy: 0, avgEnergy: 0, totalCost: 0};
     }
 
-    // Calculate total energy from original appliance data
     let totalEnergy = 0;
     const start = new Date(reportData.startDate);
     const end = new Date(reportData.endDate);
     
     reportData.appliances.forEach(appliance => {
-      if (appliance.energyData && Array.isArray(appliance.energyData)) {
+      if (appliance.energyData && Array.isArray(appliance.energyData))
+      {
         appliance.energyData.forEach(dataPoint => {
           const pointDate = new Date(dataPoint.time);
-          if (pointDate >= start && pointDate <= end) {
+          if (pointDate >= start && pointDate <= end)
+          {
             totalEnergy += parseFloat(dataPoint.kwh) || 0;
           }
         });
       }
     });
 
-    const avgEnergy = chartData.length > 0 ? totalEnergy / chartData.length : 0;
+    const avgEnergy = chartData.length > 0 ? totalEnergy/chartData.length : 0;
     
-    // Calculate total cost
     let totalCost = 0;
-    if (reportData.yAxis === 'cost') {
-      // If yAxis is cost, sum the cost values from chartData
+    if (reportData.yAxis === 'cost')
+    {
       totalCost = chartData.reduce((sum, point) => sum + (point.value || 0), 0);
-    } else {
-      // If yAxis is power, calculate cost using date range
+    }
+    else
+    {
       const avgCostPerKwh = await getCostForDateRange(start, end);
       totalCost = totalEnergy * avgCostPerKwh;
     }
@@ -348,21 +406,27 @@ function ReportView()
     };
   }, [chartData, reportData]);
 
-  const [stats, setStats] = useState({ totalEnergy: 0, avgEnergy: 0, totalCost: 0 });
+  const [stats, setStats] = useState({totalEnergy: 0, avgEnergy: 0, totalCost: 0});
 
   useEffect(() => {
-    if (reportData && chartData && chartData.length > 0) {
+    if (reportData && chartData && chartData.length > 0)
+    {
       const loadStats = async () => {
-        try {
+        try
+        {
           const calculatedStats = await calculateStats();
           setStats(calculatedStats);
-        } catch (err) {
+        }
+        catch (err)
+        {
           console.error('Error calculating stats:', err);
         }
       };
       loadStats();
-    } else {
-      setStats({ totalEnergy: 0, avgEnergy: 0, totalCost: 0 });
+    }
+    else
+    {
+      setStats({totalEnergy: 0, avgEnergy: 0, totalCost: 0});
     }
   }, [reportData, chartData, calculateStats]);
 
@@ -373,8 +437,29 @@ function ReportView()
 
   return (
     <Layout activePage="Create Report" userName={user?.name || user?.email || 'User'} onLogout={logout}>
-      <div style={{ padding: '32px', maxWidth: '1200px' }}>
-        <button onClick={() => navigate('/dashboard')}
+      {showNavigationConfirm && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}}>
+          <div style={{backgroundColor: 'white', padding: '24px', borderRadius: '8px', maxWidth: '400px', width: '90%'}}>
+            <h3 style={{margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600'}}>
+              Unsaved Changes
+            </h3>
+            <p style={{margin: '0 0 24px 0', color: '#6b7280'}}>
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            </p>
+            <div style={{display: 'flex', gap: '12px', justifyContent: 'flex-end'}}>
+              <button onClick={() => handleNavigationConfirm(false)} style={{padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer'}}>
+                Cancel
+              </button>
+              <button onClick={() => handleNavigationConfirm(true)} style={{padding: '8px 16px', border: 'none', borderRadius: '6px', backgroundColor: '#ef4444', color: 'white', cursor: 'pointer'}}>
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{padding: '32px', maxWidth: '1200px'}}>
+        <button onClick={handleBackButton}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -399,17 +484,17 @@ function ReportView()
             e.target.style.backgroundColor = 'white';
           }}
         >
-          ← Back to Dashboard
+          ← Back to Reports
         </button>
 
         <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '32px', marginBottom: '24px'}}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '16px'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '16px'}}>
             <div>
               <h1 style={{margin: '0 0 8px 0', fontSize: '24px', fontWeight: '600', color: '#1f2937'}}>
                 {reportData.reportName}
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'}}>
-                <div style={{ fontSize: '14px', color: '#6b7280'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'}}>
+                <div style={{fontSize: '14px', color: '#6b7280'}}>
                   {new Date(reportData.startDate).toLocaleDateString()} - {new Date(reportData.endDate).toLocaleDateString()}
                 </div>
                 <div style={{padding: '2px 8px', backgroundColor: '#dbeafe', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#1e40af'}}>
@@ -419,32 +504,12 @@ function ReportView()
             </div>
             <div>
               {saveMessage && (
-                <div style={{
-                  padding: '8px 12px',
-                  marginBottom: '8px',
-                  backgroundColor: saveMessage.includes('successfully') ? '#d1fae5' : '#fee2e2',
-                  color: saveMessage.includes('successfully') ? '#065f46' : '#991b1b',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  textAlign: 'center'
-                }}>
+                <div style={{padding: '8px 12px', marginBottom: '8px', backgroundColor: saveMessage.includes('successfully') ? '#d1fae5' : '#fee2e2', color: saveMessage.includes('successfully') ? '#065f46' : '#991b1b', borderRadius: '6px', fontSize: '13px', fontWeight: '500', textAlign: 'center'}}>
                   {saveMessage}
                 </div>
               )}
               <button onClick={handleSaveReport} disabled={isSaving}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#28a745',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  fontSize: '14px',
-                  color: 'white',
-                  transition: 'background-color 0.2s',
-                  opacity: isSaving ? 0.6 : 1
-                }}
+                style={{padding: '10px 20px', backgroundColor: '#28a745', border: 'none', borderRadius: '6px', cursor: isSaving ? 'not-allowed' : 'pointer', fontWeight: '500', fontSize: '14px', color: 'white', transition: 'background-color 0.2s', opacity: isSaving ? 0.6 : 1}}
                 onMouseEnter={(e) => {
                   if (!isSaving) e.target.style.backgroundColor = '#218838';
                 }}
@@ -460,28 +525,28 @@ function ReportView()
 
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px'}}>
           <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '20px'}}>
-            <div style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px'}}>
+            <div style={{fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px'}}>
               Total Energy
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937'}}>
+            <div style={{fontSize: '28px', fontWeight: '600', color: '#1f2937'}}>
               {stats.totalEnergy} kWh
             </div>
           </div>
 
           <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '20px'}}>
-            <div style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px'}}>
+            <div style={{fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px'}}>
               Average Usage
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937'}}>
+            <div style={{fontSize: '28px', fontWeight: '600', color: '#1f2937'}}>
               {stats.avgEnergy} kWh
             </div>
           </div>
 
           <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '20px'}}>
-            <div style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px'}}>
+            <div style={{fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px'}}>
               Total Cost
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '600', color: '#1f2937'}}>
+            <div style={{fontSize: '28px', fontWeight: '600', color: '#1f2937'}}>
               ${stats.totalCost}
             </div>
           </div>
@@ -496,18 +561,18 @@ function ReportView()
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px'}}>
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px'}}>
           <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px'}}>
             <h3 style={{margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937'}}>
               Monitored Appliances ({reportData.appliances.length})
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px'}}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
               {reportData.appliances.map((appliance, idx) => (
                 <div key={appliance.id} style={{padding: '12px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px'}}>
-                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', marginBottom: '4px'}}>
+                  <div style={{fontSize: '14px', fontWeight: '500', color: '#1f2937', marginBottom: '4px'}}>
                     {appliance.name}
                   </div>
-                  <div style={{ fontSize: '13px', color: '#6b7280'}}>
+                  <div style={{fontSize: '13px', color: '#6b7280'}}>
                     {appliance.applianceType} • {appliance.location}
                   </div>
                 </div>
