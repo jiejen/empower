@@ -26,7 +26,7 @@ function ReportView()
 
     let processedData;
     
-    if (reportData.chartType == 'pie')
+    if (reportData.chartType === 'pie')
     {
       processedData = processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
     }
@@ -54,7 +54,7 @@ function ReportView()
           
           if (pointDate >= start && pointDate <= end)
           {
-            if (yAxis == 'power')
+            if (yAxis === 'power')
             {
               totalValue += dataPoint.kwh;
             } else {
@@ -65,7 +65,7 @@ function ReportView()
         });
       }
 
-      const finalValue = yAxis == 'power' ? (dataPointCount > 0 ? totalValue/dataPointCount : 0) : totalValue;
+      const finalValue = yAxis === 'power' ? (dataPointCount > 0 ? totalValue/dataPointCount : 0) : totalValue;
 
       return {
         name: appliance.name,
@@ -93,7 +93,7 @@ function ReportView()
           
           if (pointDate >= start && pointDate <= end)
           {
-            const value = yAxis == 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
+            const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
             
             allData.push({time: pointDate, value: value, applianceName: appliance.name});
           }
@@ -108,7 +108,7 @@ function ReportView()
   };
 
   const groupDataByTimeInterval = (data, interval) => {
-    if (data.length == 0) return [];
+    if (data.length === 0) return [];
 
     const grouped = {};
 
@@ -200,7 +200,7 @@ function ReportView()
   };
 
   const renderChart = () => {
-    if (!reportData || chartData.length == 0)
+    if (!reportData || chartData.length === 0)
     {
       return (
         <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
@@ -210,7 +210,7 @@ function ReportView()
     }
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-    const yAxisLabel = reportData.yAxis == 'power' ? 'Power (kW)' : 'Cost ($)';
+    const yAxisLabel = reportData.yAxis === 'power' ? 'Power (kW)' : 'Cost ($)';
 
     switch (reportData.chartType)
     {
@@ -243,14 +243,14 @@ function ReportView()
         );
       
       case 'pie':
-        const metricLabel = reportData.yAxis == 'power' ? 'Avg Power (kW)' : 'Total Cost ($)';
+        const metricLabel = reportData.yAxis === 'power' ? 'Avg Power (kW)' : 'Total Cost ($)';
         return (
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie data={chartData} cx="50%" cy="50%" labelLine={true} label={({ name, value }) => `${name}: ${value}`} outerRadius={120} fill="#8884d8" dataKey="value">
                 {chartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={colors[index % colors.length]}/>))}
               </Pie>
-              <Tooltip formatter={(value) => [`${value} ${reportData.yAxis == 'power' ? 'kW' : '$'}`, metricLabel]}/>
+              <Tooltip formatter={(value) => [`${value} ${reportData.yAxis === 'power' ? 'kW' : '$'}`, metricLabel]}/>
               <Legend/>
             </PieChart>
           </ResponsiveContainer>
@@ -262,14 +262,14 @@ function ReportView()
   };
 
   const calculateStats = () => {
-    if (!chartData || chartData.length == 0)
+    if (!chartData || chartData.length === 0)
     {
       return { totalEnergy: 0, avgEnergy: 0, totalCost: 0 };
     }
 
     const totalEnergy = chartData.reduce((sum, point) => sum + (point.value || 0), 0);
     const avgEnergy = totalEnergy/chartData.length;
-    const totalCost = reportData.yAxis == 'cost' ? totalEnergy : totalEnergy * 0.12;
+    const totalCost = reportData.yAxis === 'cost' ? totalEnergy : totalEnergy * 0.12;
 
     return {
       totalEnergy: totalEnergy.toFixed(2),
