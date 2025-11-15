@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/static/css/main.a34233ac.css",
+    "main.js": "/static/js/main.d21c1a6a.js",
+    "static/js/453.f802f566.chunk.js": "/static/js/453.f802f566.chunk.js",
+    "static/media/Green-energy-lightbulb.jpg": "/static/media/Green-energy-lightbulb.dee8cad4f7972b076475.jpg",
+    "static/media/vivi.png": "/static/media/vivi.641e44cf3c46b9dd1029.png",
+    "static/media/thuyan.png": "/static/media/thuyan.c2aa721a428c5785dee1.png",
+    "static/media/josh.png": "/static/media/josh.ae17a7f5d333b02d2c0b.png",
+    "static/media/abbas.png": "/static/media/abbas.8d580eb83d6d757f73ef.png",
+    "static/media/jenni.png": "/static/media/jenni.a919d752a4d44e76af16.png",
+    "static/media/Saving_Hub_House.png": "/static/media/Saving_Hub_House.61fc9b3faa4c937f1b8e.png",
+    "static/media/logo.png": "/static/media/logo.008d57ddba4d70cb54c2.png",
+    "index.html": "/index.html",
+    "main.a34233ac.css.map": "/static/css/main.a34233ac.css.map",
+    "main.d21c1a6a.js.map": "/static/js/main.d21c1a6a.js.map",
+    "453.f802f566.chunk.js.map": "/static/js/453.f802f566.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a34233ac.css",
+    "static/js/main.d21c1a6a.js"
+  ]
+}
