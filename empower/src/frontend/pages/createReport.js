@@ -81,9 +81,8 @@ function CreateReport() {
       return false;
     }
 
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    endDate.setHours(23, 59, 59, 999);
+    const startDate = new Date(start + 'T00:00:00');
+    const endDate = new Date(end + 'T23:59:59');
 
     return appliance.energyData.some(dataPoint => {
       if (!dataPoint.time) return false;
@@ -222,8 +221,8 @@ function CreateReport() {
 
     const reportData = {
       reportName,
-      startDate,
-      endDate,
+      startDate: startDate + 'T00:00:00',
+      endDate: endDate + 'T23:59:59',
       appliances: selectedApplianceData,
       chartType,
       yAxis,
