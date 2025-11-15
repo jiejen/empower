@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth } from '../../firebase';
@@ -8,10 +8,13 @@ import '../components/Layout.css';
 function Appliances() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [highlightId, setHighlightId] = useState(null);
+  const applianceRefs = useRef({});
 
   useEffect(() => {
     if (user) {
@@ -20,6 +23,30 @@ function Appliances() {
       navigate('/');
     }
   }, [navigate, user]);
+
+  // Handle highlight effect from dashboard navigation
+  useEffect(() => {
+    if (location.state?.highlightId && appliances.length > 0) {
+      const id = location.state.highlightId;
+      setHighlightId(id);
+      
+      // Scroll to the appliance
+      setTimeout(() => {
+        if (applianceRefs.current[id]) {
+          applianceRefs.current[id].scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }
+      }, 100);
+      
+      // remove highlight after 2 seconds
+      setTimeout(() => {
+        setHighlightId(null);
+        navigate(location.pathname, { replace: true, state: {} });
+      }, 2000);
+    }
+  }, [location.state, appliances, navigate, location.pathname]);
 
   const fetchAppliances = async () => {
     try {
@@ -222,24 +249,30 @@ function Appliances() {
               {appliances.map((appliance) => {
                 const stats = getEnergyStats(appliance);
                 const isDeleting = deletingId === appliance.id;
+                const isHighlighted = highlightId === appliance.id;
                 
                 return (
                   <div 
-                    key={appliance.id} 
+                    key={appliance.id}
+                    ref={(el) => applianceRefs.current[appliance.id] = el}
                     style={{ 
-                      border: '1px solid #e5e7eb', 
+                      border: isHighlighted ? '3px solid #28a745' : '1px solid #e5e7eb', 
                       borderRadius: '8px', 
                       padding: '24px',
-                      backgroundColor: '#fff',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                      transition: 'box-shadow 0.2s',
+                      backgroundColor: isHighlighted ? '#f0fdf4' : '#fff',
+                      boxShadow: isHighlighted ? '0 8px 24px rgba(40, 167, 69, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
                       position: 'relative'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                      if (!isHighlighted) {
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                      if (!isHighlighted) {
+                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                      }
                     }}
                   >
                     {/* Delete Button */}
@@ -444,4 +477,3 @@ function Appliances() {
 }
 
 export default Appliances;
-

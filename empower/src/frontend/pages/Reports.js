@@ -255,6 +255,26 @@ function Reports() {
                       </h3>
                     </div>
                 
+                    {/* Display chart image if available */}
+                    {report.chartImage && (
+                      <div style={{ 
+                        marginBottom: '16px',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <img 
+                          src={report.chartImage} 
+                          alt={`${report.reportName} chart`}
+                          style={{ 
+                            width: '100%', 
+                            height: 'auto',
+                            display: 'block'
+                          }}
+                        />
+                      </div>
+                    )}
+                
                     <div style={{ marginBottom: '12px' }}>
                       <span style={{ 
                         fontSize: '13px', 

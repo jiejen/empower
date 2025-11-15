@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { auth, db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import html2canvas from 'html2canvas';
 import '../components/Layout.css';
 
 function ReportView()
@@ -16,29 +17,9 @@ function ReportView()
   const reportData = location.state?.reportData;
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const chartRef = useRef(null);
 
-  useEffect(() => {
-    if (!reportData)
-    {
-      navigate('/create-report');
-      return;
-    }
-
-    let processedData;
-    
-    if (reportData.chartType === 'pie')
-    {
-      processedData = processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
-    }
-    else
-    {
-      processedData = processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
-    }
-    
-    setChartData(processedData);
-  }, [reportData, navigate]);
-
-  const processApplianceComparison = (appliances, startDate, endDate, yAxis) => {
+  const processApplianceComparison = useCallback((appliances, startDate, endDate, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const costPerKwh = 0.12;
@@ -76,38 +57,9 @@ function ReportView()
     });
 
     return comparisonData;
-  };
+  }, []);
 
-  const processEnergyData = (appliances, startDate, endDate, xAxis, yAxis) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const costPerKwh = 0.12;
-
-    const allData = [];
-    
-    appliances.forEach(appliance => {
-      if (appliance.energyData && Array.isArray(appliance.energyData))
-      {
-        appliance.energyData.forEach(dataPoint => {
-          const pointDate = new Date(dataPoint.time);
-          
-          if (pointDate >= start && pointDate <= end)
-          {
-            const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
-            
-            allData.push({time: pointDate, value: value, applianceName: appliance.name});
-          }
-        });
-      }
-    });
-
-    allData.sort((a, b) => a.time - b.time);
-    const grouped = groupDataByTimeInterval(allData, xAxis);
-    
-    return grouped;
-  };
-
-  const groupDataByTimeInterval = (data, interval) => {
+  const groupDataByTimeInterval = useCallback((data, interval) => {
     if (data.length === 0) return [];
 
     const grouped = {};
@@ -151,7 +103,57 @@ function ReportView()
       name: group.name,
       value: parseFloat((group.value/group.count).toFixed(2))
     }));
-  };
+  }, []);
+
+  const processEnergyData = useCallback((appliances, startDate, endDate, xAxis, yAxis) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const costPerKwh = 0.12;
+
+    const allData = [];
+    
+    appliances.forEach(appliance => {
+      if (appliance.energyData && Array.isArray(appliance.energyData))
+      {
+        appliance.energyData.forEach(dataPoint => {
+          const pointDate = new Date(dataPoint.time);
+          
+          if (pointDate >= start && pointDate <= end)
+          {
+            const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
+            
+            allData.push({time: pointDate, value: value, applianceName: appliance.name});
+          }
+        });
+      }
+    });
+
+    allData.sort((a, b) => a.time - b.time);
+    const grouped = groupDataByTimeInterval(allData, xAxis);
+    
+    return grouped;
+  }, [groupDataByTimeInterval]);
+
+  useEffect(() => {
+    if (!reportData)
+    {
+      navigate('/create-report');
+      return;
+    }
+
+    let processedData;
+    
+    if (reportData.chartType === 'pie')
+    {
+      processedData = processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
+    }
+    else
+    {
+      processedData = processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
+    }
+    
+    setChartData(processedData);
+  }, [reportData, navigate, processApplianceComparison, processEnergyData]);
 
   const handleSaveReport = async () => {
     if (!reportData) return;
@@ -167,6 +169,34 @@ function ReportView()
         throw new Error('User not authenticated');
       }
 
+      // Capture chart as image
+      let chartImageUrl = null;
+      if (chartRef.current) {
+        try {
+          const canvas = await html2canvas(chartRef.current, {
+            backgroundColor: '#ffffff',
+            scale: 2, // Higher quality
+            logging: false
+          });
+          
+          // Convert canvas to blob
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          
+          // Convert blob to base64
+          const reader = new FileReader();
+          const base64Promise = new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          
+          chartImageUrl = await base64Promise;
+        } catch (error) {
+          console.error('Error capturing chart image:', error);
+          // Continue saving even if image capture fails
+        }
+      }
+
       const reportToSave = {
         reportName: reportData.reportName,
         startDate: reportData.startDate,
@@ -177,6 +207,7 @@ function ReportView()
         xAxis: reportData.xAxis,
         notes: reportData.notes,
         chartData: chartData,
+        chartImage: chartImageUrl, // Save the base64 image
         stats: calculateStats(),
         createdAt: new Date().toISOString()
       };
@@ -405,7 +436,9 @@ function ReportView()
           <h2 style={{margin: '0 0 24px 0', fontSize: '18px', fontWeight: '600', color: '#1f2937'}}>
             Energy Visualization
           </h2>
-          {renderChart()}
+          <div ref={chartRef}>
+            {renderChart()}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px'}}>
