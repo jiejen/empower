@@ -19,7 +19,6 @@ function ReportView()
   const [saveMessage, setSaveMessage] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true);
   const [showNavigationModal, setShowNavigationModal] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
   const navigationRef = useRef(null);
 
   useEffect(() => {
