@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,28 +17,7 @@ function ReportView()
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  useEffect(() => {
-    if (!reportData)
-    {
-      navigate('/create-report');
-      return;
-    }
-
-    let processedData;
-    
-    if (reportData.chartType === 'pie')
-    {
-      processedData = processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
-    }
-    else
-    {
-      processedData = processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
-    }
-    
-    setChartData(processedData);
-  }, [reportData, navigate]);
-
-  const processApplianceComparison = (appliances, startDate, endDate, yAxis) => {
+  const processApplianceComparison = useCallback((appliances, startDate, endDate, yAxis) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const costPerKwh = 0.12;
@@ -76,38 +55,9 @@ function ReportView()
     });
 
     return comparisonData;
-  };
+  }, []);
 
-  const processEnergyData = (appliances, startDate, endDate, xAxis, yAxis) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const costPerKwh = 0.12;
-
-    const allData = [];
-    
-    appliances.forEach(appliance => {
-      if (appliance.energyData && Array.isArray(appliance.energyData))
-      {
-        appliance.energyData.forEach(dataPoint => {
-          const pointDate = new Date(dataPoint.time);
-          
-          if (pointDate >= start && pointDate <= end)
-          {
-            const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
-            
-            allData.push({time: pointDate, value: value, applianceName: appliance.name});
-          }
-        });
-      }
-    });
-
-    allData.sort((a, b) => a.time - b.time);
-    const grouped = groupDataByTimeInterval(allData, xAxis);
-    
-    return grouped;
-  };
-
-  const groupDataByTimeInterval = (data, interval) => {
+  const groupDataByTimeInterval = useCallback((data, interval) => {
     if (data.length === 0) return [];
 
     const grouped = {};
@@ -151,7 +101,57 @@ function ReportView()
       name: group.name,
       value: parseFloat((group.value/group.count).toFixed(2))
     }));
-  };
+  }, []);
+
+  const processEnergyData = useCallback((appliances, startDate, endDate, xAxis, yAxis) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const costPerKwh = 0.12;
+
+    const allData = [];
+    
+    appliances.forEach(appliance => {
+      if (appliance.energyData && Array.isArray(appliance.energyData))
+      {
+        appliance.energyData.forEach(dataPoint => {
+          const pointDate = new Date(dataPoint.time);
+          
+          if (pointDate >= start && pointDate <= end)
+          {
+            const value = yAxis === 'power' ? dataPoint.kwh : dataPoint.kwh * costPerKwh;
+            
+            allData.push({time: pointDate, value: value, applianceName: appliance.name});
+          }
+        });
+      }
+    });
+
+    allData.sort((a, b) => a.time - b.time);
+    const grouped = groupDataByTimeInterval(allData, xAxis);
+    
+    return grouped;
+  }, [groupDataByTimeInterval]);
+
+  useEffect(() => {
+    if (!reportData)
+    {
+      navigate('/create-report');
+      return;
+    }
+
+    let processedData;
+    
+    if (reportData.chartType === 'pie')
+    {
+      processedData = processApplianceComparison(reportData.appliances, reportData.startDate, reportData.endDate, reportData.yAxis);
+    }
+    else
+    {
+      processedData = processEnergyData(reportData.appliances, reportData.startDate, reportData.endDate, reportData.xAxis, reportData.yAxis);
+    }
+    
+    setChartData(processedData);
+  }, [reportData, navigate, processApplianceComparison, processEnergyData]);
 
   const handleSaveReport = async () => {
     if (!reportData) return;
@@ -405,7 +405,9 @@ function ReportView()
           <h2 style={{margin: '0 0 24px 0', fontSize: '18px', fontWeight: '600', color: '#1f2937'}}>
             Energy Visualization
           </h2>
-          {renderChart()}
+          <div>
+            {renderChart()}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px'}}>
