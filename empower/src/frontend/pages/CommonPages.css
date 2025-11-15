@@ -1,0 +1,326 @@
+/* Common responsive styles for all application pages */
+
+/* Page Containers - Centered */
+.appliances-container,
+.reports-container,
+.create-report-container {
+  padding: 32px;
+  max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.add-appliance-container,
+.profile-container,
+.report-view-container {
+  padding: 32px;
+  max-width: 1000px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* Responsive overrides for inline styles */
+@media (max-width: 1600px) {
+  /* Ensure content stays centered on all laptop screens */
+  div[style*="maxWidth: '1400px'"],
+  div[style*="max-width: 1400px"],
+  div[style*="maxWidth: '1000px'"],
+  div[style*="max-width: 1000px"],
+  div[style*="padding: '32px'"] {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  /* Adjust max-width containers */
+  div[style*="maxWidth: '1400px'"],
+  div[style*="max-width: 1400px"] {
+    max-width: 100% !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  div[style*="maxWidth: '1000px'"],
+  div[style*="max-width: 1000px"] {
+    max-width: 100% !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Reduce padding on containers */
+  .appliances-container,
+  .reports-container,
+  .create-report-container,
+  div[style*="padding: '32px'"] {
+    padding: 24px !important;
+  }
+
+  .add-appliance-container,
+  .profile-container,
+  .report-view-container {
+    padding: 24px 20px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile padding */
+  .appliances-container,
+  .reports-container,
+  .create-report-container,
+  div[style*="padding: '32px'"] {
+    padding: 16px !important;
+  }
+
+  .add-appliance-container,
+  .profile-container,
+  .report-view-container {
+    padding: 16px !important;
+  }
+
+  /* Stack flex containers vertically */
+  div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"],
+  div[style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  /* Make grid layouts single column */
+  div[style*="gridTemplateColumns: '1fr 1fr'"],
+  div[style*="gridTemplateColumns: 'repeat(3, 1fr)'"],
+  div[style*="grid-template-columns: repeat(3, 1fr)"],
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Make buttons full width */
+  button[style*="padding"] {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  /* Adjust header spacing */
+  div[style*="marginBottom: '32px'"],
+  div[style*="margin-bottom: 32px"] {
+    margin-bottom: 16px !important;
+  }
+
+  /* Reduce card padding */
+  div[style*="padding: '40px'"] {
+    padding: 24px !important;
+  }
+
+  /* Make charts responsive */
+  .recharts-wrapper {
+    width: 100% !important;
+    margin: 0 auto;
+  }
+
+  /* Appliance cards grid */
+  div[style*="display: 'grid'"][style*="gap: '24px'"] {
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small screens */
+  .appliances-container,
+  .reports-container,
+  .create-report-container,
+  .add-appliance-container,
+  .profile-container,
+  .report-view-container,
+  div[style*="padding: '32px'"],
+  div[style*="padding: '24px'"],
+  div[style*="padding: '16px'"] {
+    padding: 12px !important;
+  }
+
+  /* Reduce heading sizes */
+  h1 {
+    font-size: 24px !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
+  }
+
+  h3 {
+    font-size: 18px !important;
+  }
+
+  /* More compact cards */
+  div[style*="padding: '24px'"],
+  div[style*="padding: '20px'"] {
+    padding: 16px !important;
+  }
+
+  /* Adjust button padding */
+  button[style*="padding"] {
+    padding: 12px 16px !important;
+  }
+
+  /* Smaller font sizes */
+  div[style*="fontSize: '18px'"] {
+    font-size: 16px !important;
+  }
+
+  div[style*="fontSize: '16px'"] {
+    font-size: 14px !important;
+  }
+}
+
+/* Ensure all content is scrollable and doesn't overflow */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make tables responsive */
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  table {
+    font-size: 14px;
+  }
+
+  th,
+  td {
+    padding: 8px !important;
+  }
+}
+
+/* Responsive grid utilities */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modal responsiveness */
+.modal {
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 20px !important;
+  }
+}
+
+/* Input field responsiveness */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* Responsive spacing utilities */
+@media (max-width: 768px) {
+  .mt-32,
+  div[style*="marginTop: '32px'"] {
+    margin-top: 16px !important;
+  }
+
+  .mb-32,
+  div[style*="marginBottom: '32px'"] {
+    margin-bottom: 16px !important;
+  }
+
+  .py-32 {
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+  }
+
+  .px-32 {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+/* Card hover effects should be disabled on touch devices */
+@media (hover: none) {
+  div[style*="cursor: 'pointer'"]:hover,
+  button:hover {
+    transform: none !important;
+  }
+}
+
+/* Ensure dropdowns and select elements work on mobile */
+@media (max-width: 768px) {
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3e%3cpath fill='%236b7280' d='M6 9L1 4h10z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px !important;
+  }
+}
+
+/* Fix for appliance cards on mobile */
+@media (max-width: 768px) {
+  div[style*="position: 'relative'"] {
+    min-height: auto !important;
+  }
+
+  /* Delete button positioning on mobile */
+  button[style*="position: 'absolute'"][style*="top: '16px'"] {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+  }
+}
