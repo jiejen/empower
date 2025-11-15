@@ -9,6 +9,7 @@ import viviImg from '../assets/vivi.png';
 import jenniImg from '../assets/jenni.png';
 import thuyanImg from '../assets/thuyan.png';
 import abbasImg from '../assets/abbas.png';
+import empowerLogo from '../assets/empower.png';
 
 function Home() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ function Home() {
         <header className="home-header">
           <div className="header-inner">
             <div className="brand">
-              <div className="app-symbol" aria-hidden="true">E</div>
+              <img src={empowerLogo} alt="Empower Logo" className="app-symbol" />
               <span className="app-name">Empower</span>
             </div>
 

@@ -25,19 +25,17 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  background: transparent;
 }
 
 .app-symbol {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  background: #e6e6e6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: #444;
-  font-size: 18px;
+  object-fit: contain;
+  display: block;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
 }
 
 .app-name {
@@ -294,7 +292,6 @@
   .app-symbol {
     width: 32px;
     height: 32px;
-    font-size: 16px;
   }
 
   .user-name {
