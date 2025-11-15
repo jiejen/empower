@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { auth, db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import html2canvas from 'html2canvas';
 import '../components/Layout.css';
 
 function ReportView()
@@ -17,7 +16,6 @@ function ReportView()
   const reportData = location.state?.reportData;
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const chartRef = useRef(null);
 
   const processApplianceComparison = useCallback((appliances, startDate, endDate, yAxis) => {
     const start = new Date(startDate);
@@ -169,34 +167,6 @@ function ReportView()
         throw new Error('User not authenticated');
       }
 
-      // Capture chart as image
-      let chartImageUrl = null;
-      if (chartRef.current) {
-        try {
-          const canvas = await html2canvas(chartRef.current, {
-            backgroundColor: '#ffffff',
-            scale: 2, // Higher quality
-            logging: false
-          });
-          
-          // Convert canvas to blob
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-          
-          // Convert blob to base64
-          const reader = new FileReader();
-          const base64Promise = new Promise((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-          
-          chartImageUrl = await base64Promise;
-        } catch (error) {
-          console.error('Error capturing chart image:', error);
-          // Continue saving even if image capture fails
-        }
-      }
-
       const reportToSave = {
         reportName: reportData.reportName,
         startDate: reportData.startDate,
@@ -207,7 +177,6 @@ function ReportView()
         xAxis: reportData.xAxis,
         notes: reportData.notes,
         chartData: chartData,
-        chartImage: chartImageUrl, // Save the base64 image
         stats: calculateStats(),
         createdAt: new Date().toISOString()
       };
@@ -436,7 +405,7 @@ function ReportView()
           <h2 style={{margin: '0 0 24px 0', fontSize: '18px', fontWeight: '600', color: '#1f2937'}}>
             Energy Visualization
           </h2>
-          <div ref={chartRef}>
+          <div>
             {renderChart()}
           </div>
         </div>
