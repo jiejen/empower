@@ -330,3 +330,52 @@
     font-size: 0.95rem;
   }
 }
+
+/* Profile Page Buttons */
+.profile-edit-btn {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.profile-edit-btn:hover {
+  background-color: #218838;
+}
+
+.profile-cancel-btn {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.profile-cancel-btn:hover {
+  background-color: #c82333;
+}
+
+.profile-save-btn {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.profile-save-btn:hover {
+  background-color: #218838;
+}

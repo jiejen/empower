@@ -239,6 +239,9 @@
   gap: 16px;
   max-height: 500px;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  margin: -8px;
 }
 
 .report-preview-card {
@@ -250,12 +253,12 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .report-preview-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .report-chart-image {
@@ -341,8 +344,10 @@
   font-size: 13px;
   font-weight: 600;
   color: #6b7280;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
+  margin-bottom: 0;
+  line-height: 1;
 }
 
 .filter-group select {
@@ -392,6 +397,7 @@
   font-size: 13px;
   background-color: white;
   color: #1f2937;
+  font-weight: 600;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   display: flex;
@@ -430,7 +436,7 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background-color: white;
-  max-height: 300px;
+  max-height: 200px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -454,7 +460,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #6b7280;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   margin-bottom: 2px;
 }
@@ -464,7 +470,8 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #1f2937;
+  color: #374151;
+  font-weight: 600;
   cursor: pointer;
   padding: 2px 0;
   transition: color 0.2s;
@@ -474,7 +481,8 @@
   color: #28a745;
 }
 
-.filter-option input[type="checkbox"] {
+.filter-option input[type="checkbox"],
+.filter-option input[type="radio"] {
   width: 14px;
   height: 14px;
   cursor: pointer;
@@ -492,6 +500,9 @@
   gap: 12px;
   max-height: 500px;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  margin: -8px;
 }
 
 .ranked-item {
@@ -500,14 +511,16 @@
   gap: 16px;
   padding: 16px;
   background-color: #f9fafb;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #e5e7eb;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: box-shadow 0.2s;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
 }
 
 .ranked-item:hover {
-  background-color: #f3f4f6;
-  transform: translateX(4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .rank-number {
@@ -522,23 +535,34 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .appliance-name {
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .appliance-kwh {
   font-size: 13px;
   font-weight: 500;
   color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .appliance-location {
   font-size: 13px;
   color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .appliance-cost {
@@ -550,9 +574,9 @@
 }
 
 .appliance-percentage {
-  font-size: 16px;
-  font-weight: 700;
-  color: #28a745;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
   min-width: 60px;
   text-align: right;
 }
@@ -573,17 +597,16 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.2s;
   white-space: nowrap;
 }
 
 .create-report-btn:hover {
   background-color: #218838;
-  transform: translateY(-2px);
 }
 
 .create-report-btn:active {
-  transform: translateY(0);
+  background-color: #1e7e34;
 }
 
 .reports-header h2 {
@@ -599,22 +622,24 @@
   gap: 16px;
   max-height: 500px;
   overflow-y: auto;
+  padding: 8px;
+  margin: -8px;
 }
 
 .report-card {
-  background-color: #f9fafb;
+  background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: box-shadow 0.2s;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .report-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .report-thumbnail {

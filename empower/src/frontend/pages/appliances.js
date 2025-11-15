@@ -6,7 +6,7 @@ import { auth } from '../../firebase';
 import '../components/Layout.css';
 
 function Appliances() {
-  const { user, logout } = useUser();
+  const { user, loading: authLoading, logout } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const [appliances, setAppliances] = useState([]);
@@ -17,12 +17,14 @@ function Appliances() {
   const applianceRefs = useRef({});
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to complete
+    
     if (user) {
       fetchAppliances();
     } else {
       navigate('/');
     }
-  }, [navigate, user]);
+  }, [navigate, user, authLoading]);
 
   // Handle highlight effect from dashboard navigation
   useEffect(() => {
@@ -256,11 +258,11 @@ function Appliances() {
                     key={appliance.id}
                     ref={(el) => applianceRefs.current[appliance.id] = el}
                     style={{ 
-                      border: isHighlighted ? '3px solid #28a745' : '1px solid #e5e7eb', 
+                      border: isHighlighted ? '1px solid #6b7280' : '1px solid #e5e7eb', 
                       borderRadius: '8px', 
                       padding: '24px',
-                      backgroundColor: isHighlighted ? '#f0fdf4' : '#fff',
-                      boxShadow: isHighlighted ? '0 8px 24px rgba(40, 167, 69, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+                      backgroundColor: isHighlighted ? '#f9fafb' : '#fff',
+                      boxShadow: isHighlighted ? '0 4px 12px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
                       transition: 'all 0.3s ease',
                       position: 'relative'
                     }}

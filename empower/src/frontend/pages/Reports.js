@@ -7,7 +7,7 @@ import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import '../components/Layout.css';
 
 function Reports() {
-  const { user, logout } = useUser();
+  const { user, loading: authLoading, logout } = useUser();
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,12 +15,14 @@ function Reports() {
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to complete
+    
     if (user) {
       fetchReports();
     } else {
       navigate('/');
     }
-  }, [navigate, user]);
+  }, [navigate, user, authLoading]);
 
   const fetchReports = async () => {
     try {

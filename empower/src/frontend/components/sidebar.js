@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, ChevronDown, LogOut, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Layout.css';
+import logo from '../assets/logo.png';
 
 export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboard' }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -50,7 +51,7 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
     <div className="navbar">
       {/* Left: Logo and App Name */}
       <div className="navbar-brand">
-        <div className="app-symbol">E</div>
+        <img src={logo} alt="Empower Logo" style={{ height: '40px', marginRight: '-4px', transform: 'rotate(220deg)' }} />
         <span className="app-name">Empower</span>
       </div>
 

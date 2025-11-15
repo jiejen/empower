@@ -9,23 +9,34 @@ import viviImg from '../assets/vivi.png';
 import jenniImg from '../assets/jenni.png';
 import thuyanImg from '../assets/thuyan.png';
 import abbasImg from '../assets/abbas.png';
+import logo from '../assets/logo.png';
 
 function Home() {
   const navigate = useNavigate();
+
+  const handleSignUp = () => {
+    navigate('/signup');
+    window.scrollTo(0, 0);
+  };
+
+  const handleTryNow = () => {
+    navigate('/signup');
+    window.scrollTo(0, 0);
+  };
 
   return (
     <div className="home-page">
         <header className="home-header">
           <div className="header-inner">
             <div className="brand">
-              <div className="app-symbol" aria-hidden="true">E</div>
+              <img src={logo} alt="Empower Logo" style={{ height: '40px', marginRight: '-4px', transform: 'rotate(220deg)' }} />
               <span className="app-name">Empower</span>
             </div>
 
             <nav className="header-nav">
               <a className="nav-link" href="#about">About Us</a>
               <a className="nav-link" href="#contact">Contact Us</a>
-              <button className="signin-btn" onClick={() => navigate('/login')}>Sign In/Up</button>
+              <button className="signin-btn" onClick={() => navigate('/login')}>Sign In</button>
             </nav>
           </div>
         </header>
@@ -38,7 +49,7 @@ function Home() {
               <p className="hero-subtitle">Empowering homeowners to be efficient.</p>
               <button
                 className="signup-btn"
-                onClick={() => navigate('/login')}
+                onClick={handleSignUp}
               >
                 Sign Up for free
               </button>
@@ -63,7 +74,7 @@ function Home() {
               <p className="feature-subtitle">
                 Empower yourself with appliance-level energy breakdowns and analytics. Explore interactive dashboards and create reports with actionable fix suggestions.
               </p>
-              <button className="try-btn" onClick={() => navigate('/login')}>Try it now!</button>
+              <button className="try-btn" onClick={handleTryNow}>Try it now!</button>
             </div>
           </div>
         </section>
