@@ -23,6 +23,15 @@ function ReportView()
   const [pendingNavigation, setPendingNavigation] = useState(null);
 
   useEffect(() => {
+    if (reportData)
+    {
+      const isExistingReport = reportData.id || reportData.createdAt;
+      setHasUnsavedChanges(!isExistingReport);
+      setIsReportSaved(!!isExistingReport);
+    }
+  }, [reportData]);
+
+  useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges)
       {
@@ -41,9 +50,9 @@ function ReportView()
 
   useEffect(() => {
     const handleClick = (e) => {
-      // Find if the click is on a link
       const link = e.target.closest('a');
-      if (link && link.href && !link.href.includes('javascript:') && hasUnsavedChanges) {
+      if (link && link.href && !link.href.includes('javascript:') && hasUnsavedChanges)
+      {
         e.preventDefault();
         setPendingNavigation(link.href);
         setShowNavigationConfirm(true);
@@ -281,7 +290,8 @@ function ReportView()
       console.error('Error saving report:', error);
       setSaveMessage('Failed to save report. Please try again.');
     }
-    finally {
+    finally
+    {
       setIsSaving(false);
     }
   };
@@ -500,6 +510,11 @@ function ReportView()
                 <div style={{padding: '2px 8px', backgroundColor: '#dbeafe', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#1e40af'}}>
                   {reportData.chartType.charAt(0).toUpperCase() + reportData.chartType.slice(1)} Chart
                 </div>
+                {isReportSaved && (
+                  <div style={{padding: '2px 8px', backgroundColor: '#d1fae5', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#065f46'}}>
+                    Saved
+                  </div>
+                )}
               </div>
             </div>
             <div>
@@ -508,17 +523,19 @@ function ReportView()
                   {saveMessage}
                 </div>
               )}
-              <button onClick={handleSaveReport} disabled={isSaving}
-                style={{padding: '10px 20px', backgroundColor: '#28a745', border: 'none', borderRadius: '6px', cursor: isSaving ? 'not-allowed' : 'pointer', fontWeight: '500', fontSize: '14px', color: 'white', transition: 'background-color 0.2s', opacity: isSaving ? 0.6 : 1}}
-                onMouseEnter={(e) => {
-                  if (!isSaving) e.target.style.backgroundColor = '#218838';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSaving) e.target.style.backgroundColor = '#28a745';
-                }}
-              >
-                {isSaving ? 'Saving...' : 'Save Report'}
-              </button>
+              {hasUnsavedChanges && (
+                <button onClick={handleSaveReport} disabled={isSaving}
+                  style={{padding: '10px 20px', backgroundColor: '#28a745', border: 'none', borderRadius: '6px', cursor: isSaving ? 'not-allowed' : 'pointer', fontWeight: '500', fontSize: '14px', color: 'white', transition: 'background-color 0.2s', opacity: isSaving ? 0.6 : 1}}
+                  onMouseEnter={(e) => {
+                    if (!isSaving) e.target.style.backgroundColor = '#218838';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSaving) e.target.style.backgroundColor = '#28a745';
+                  }}
+                >
+                  {isSaving ? 'Saving...' : 'Save Report'}
+                </button>
+              )}
             </div>
           </div>
         </div>
