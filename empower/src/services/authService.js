@@ -1,11 +1,31 @@
 import { userStore } from './userStore';
 
 const SESSION_KEY = 'empower_session';
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 // Load session from localStorage
 const loadSession = () => {
   const stored = localStorage.getItem(SESSION_KEY);
-  return stored ? JSON.parse(stored) : null;
+  if (!stored) return null;
+  
+  try {
+    const session = JSON.parse(stored);
+    
+    // Check if session has expired due to inactivity
+    if (session.lastActivity) {
+      const timeSinceLastActivity = Date.now() - new Date(session.lastActivity).getTime();
+      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
+        // Session expired due to inactivity
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+    }
+    
+    return session;
+  } catch (error) {
+    console.error('Error loading session:', error);
+    return null;
+  }
 };
 
 // Save session to localStorage
@@ -28,7 +48,7 @@ export const authService = {
       currentSession = {
         user,
         token: btoa(`${email}:${Date.now()}`), // Simple token generation
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        lastActivity: new Date().toISOString()
       };
       saveSession(currentSession);
       return currentSession;
@@ -44,7 +64,7 @@ export const authService = {
       currentSession = {
         user,
         token: btoa(`${email}:${Date.now()}`),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        lastActivity: new Date().toISOString()
       };
       saveSession(currentSession);
       return currentSession;
@@ -63,13 +83,24 @@ export const authService = {
   getCurrentSession: () => {
     if (!currentSession) return null;
     
-    // Check if session is expired
-    if (new Date(currentSession.expiresAt) < new Date()) {
-      authService.signOut();
-      return null;
+    // Check if session has expired due to inactivity
+    if (currentSession.lastActivity) {
+      const timeSinceLastActivity = Date.now() - new Date(currentSession.lastActivity).getTime();
+      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
+        authService.signOut();
+        return null;
+      }
     }
     
     return currentSession;
+  },
+
+  // Update last activity timestamp
+  updateLastActivity: () => {
+    if (currentSession) {
+      currentSession.lastActivity = new Date().toISOString();
+      saveSession(currentSession);
+    }
   },
 
   // Update user profile
@@ -80,6 +111,7 @@ export const authService = {
 
     const profile = userStore.updateUserProfile(currentSession.user.id, updates);
     currentSession.user.profile = profile;
+    currentSession.lastActivity = new Date().toISOString();
     saveSession(currentSession);
     return profile;
   }
