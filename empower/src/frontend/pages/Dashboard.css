@@ -509,7 +509,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
+  padding: 24px 16px;
+  min-height: 80px;
   background-color: #f9fafb;
   border-radius: 8px;
   border: 1px solid #e5e7eb;

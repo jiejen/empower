@@ -8,7 +8,7 @@ import {
   fetchSignInMethodsForEmail
 } from 'firebase/auth';
 import './Signup.css';
-import empowerLogo from '../assets/empower.png';
+import logo from '../assets/logo.png';
 
 function Signup() {
   const navigate = useNavigate();
@@ -141,7 +141,7 @@ function Signup() {
       <div className="login-left">
         <button className="back-home-btn" onClick={() => navigate('/')}>← Back to Home</button>
         <div className="brand-section">
-          <img src={empowerLogo} alt="Empower Logo" className="brand-logo" />
+          <img src={logo} alt="Empower Logo" className="brand-logo" />
           <h1 className="brand-title">Empower</h1>
           <p className="brand-subtitle">
             Join thousands of users taking control of their energy usage. Start saving money and reducing your environmental impact today.
