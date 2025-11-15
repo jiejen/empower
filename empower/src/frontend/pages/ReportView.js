@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,17 +17,16 @@ function ReportView()
   const reportData = location.state?.reportData;
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [isReportSaved, setIsReportSaved] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true);
-  const [showNavigationConfirm, setShowNavigationConfirm] = useState(false);
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const navigationRef = useRef(null);
 
   useEffect(() => {
     if (reportData)
     {
-      const isExistingReport = reportData.id || reportData.createdAt;
+      const isExistingReport = reportData.id || (reportData.createdAt && reportData.chartImage);
       setHasUnsavedChanges(!isExistingReport);
-      setIsReportSaved(!!isExistingReport);
     }
   }, [reportData]);
 
@@ -49,33 +48,49 @@ function ReportView()
   }, [hasUnsavedChanges]);
 
   useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
     const handleClick = (e) => {
-      const link = e.target.closest('a');
-      if (link && link.href && !link.href.includes('javascript:') && hasUnsavedChanges)
+      const link = e.target.closest('a, button');
+      if (!link) return;
+
+      const isNavigationButton = link.textContent?.toLowerCase().includes('dashboard') || link.textContent?.toLowerCase().includes('reports') || link.textContent?.toLowerCase().includes('appliance') || link.textContent?.toLowerCase().includes('profile') || link.textContent?.toLowerCase().includes('cost data') || link.textContent?.toLowerCase().includes('log out');
+
+      if (isNavigationButton)
       {
         e.preventDefault();
-        setPendingNavigation(link.href);
-        setShowNavigationConfirm(true);
+        e.stopPropagation();
+        
+        navigationRef.current = () => {
+          setHasUnsavedChanges(false);
+          setTimeout(() => {
+            link.click();
+          }, 100);
+        };
+        
+        setShowNavigationModal(true);
       }
     };
 
-    document.addEventListener('click', handleClick);
-    
+    document.addEventListener('click', handleClick, true);
+
     return () => {
-      document.removeEventListener('click', handleClick);
+      document.removeEventListener('click', handleClick, true);
     };
   }, [hasUnsavedChanges]);
 
-  const handleNavigationConfirm = (confirmed) => {
-    if (confirmed && pendingNavigation)
+  const handleNavigationConfirm = () => {
+    if (navigationRef.current)
     {
-      setHasUnsavedChanges(false);
-      setTimeout(() => {
-        window.location.href = pendingNavigation;
-      }, 100);
+      navigationRef.current();
+      navigationRef.current = null;
     }
-    setShowNavigationConfirm(false);
-    setPendingNavigation(null);
+    setShowNavigationModal(false);
+  };
+
+  const handleNavigationCancel = () => {
+    navigationRef.current = null;
+    setShowNavigationModal(false);
   };
 
   const processApplianceComparison = useCallback(async (appliances, startDate, endDate, yAxis) => {
@@ -278,12 +293,7 @@ function ReportView()
       await addDoc(reportsRef, reportToSave);
       
       setSaveMessage('Report saved successfully!');
-      setIsReportSaved(true);
       setHasUnsavedChanges(false);
-
-      setTimeout(() => {
-        navigate('/reports');
-      }, 1500);
     }
     catch (error)
     {
@@ -447,21 +457,21 @@ function ReportView()
 
   return (
     <Layout activePage="Create Report" userName={user?.name || user?.email || 'User'} onLogout={logout}>
-      {showNavigationConfirm && (
+      {showNavigationModal && (
         <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}}>
-          <div style={{backgroundColor: 'white', padding: '24px', borderRadius: '8px', maxWidth: '400px', width: '90%'}}>
-            <h3 style={{margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600'}}>
+          <div style={{backgroundColor: 'white', padding: '24px', borderRadius: '8px', maxWidth: '400px', width: '90%', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'}}>
+            <h3 style={{margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#1f2937'}}>
               Unsaved Changes
             </h3>
-            <p style={{margin: '0 0 24px 0', color: '#6b7280'}}>
-              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            <p style={{margin: '0 0 24px 0', color: '#6b7280', lineHeight: '1.5'}}>
+              You have unsaved changes. Are you sure you want to leave? Your report will be lost.
             </p>
             <div style={{display: 'flex', gap: '12px', justifyContent: 'flex-end'}}>
-              <button onClick={() => handleNavigationConfirm(false)} style={{padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer'}}>
+              <button onClick={handleNavigationCancel} style={{padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#374151'}}>
                 Cancel
               </button>
-              <button onClick={() => handleNavigationConfirm(true)} style={{padding: '8px 16px', border: 'none', borderRadius: '6px', backgroundColor: '#ef4444', color: 'white', cursor: 'pointer'}}>
-                Leave
+              <button onClick={handleNavigationConfirm} style={{padding: '8px 16px', border: 'none', borderRadius: '6px', backgroundColor: '#ef4444', color: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: '500'}}>
+                Leave Without Saving
               </button>
             </div>
           </div>
@@ -510,7 +520,7 @@ function ReportView()
                 <div style={{padding: '2px 8px', backgroundColor: '#dbeafe', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#1e40af'}}>
                   {reportData.chartType.charAt(0).toUpperCase() + reportData.chartType.slice(1)} Chart
                 </div>
-                {isReportSaved && (
+                {!hasUnsavedChanges && (
                   <div style={{padding: '2px 8px', backgroundColor: '#d1fae5', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#065f46'}}>
                     Saved
                   </div>
