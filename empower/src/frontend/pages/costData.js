@@ -232,7 +232,7 @@ function CostData() {
                   onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
                 >
-                  {csvFile ? csvFile.name : 'Choose CSV File'}
+                  {csvFile ? csvFile.name : 'Upload Cost Data'}
                 </label>
                 <p style={{
                   marginTop: '12px',

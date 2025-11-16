@@ -367,7 +367,7 @@ function AddAppliance() {
                   onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
                 >
-                  {csvFile ? csvFile.name : 'Choose CSV File'}
+                  {csvFile ? csvFile.name : 'Upload Energy Data for Appliance'}
                 </label>
                 <p style={{
                   marginTop: '12px',
