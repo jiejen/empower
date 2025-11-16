@@ -141,7 +141,7 @@ function Signup() {
       <div className="login-left">
         <button className="back-home-btn" onClick={() => navigate('/')}>← Back to Home</button>
         <div className="brand-section">
-          <img src={logo} alt="Empower Logo" className="brand-logo" />
+          <img src={logo} alt="Empower Logo" className="brand-logo" style={{transform: 'rotate(220deg)' }}/>
           <h1 className="brand-title">Empower</h1>
           <p className="brand-subtitle">
             Join thousands of users taking control of their energy usage. Start saving money and reducing your environmental impact today.

@@ -8,13 +8,10 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import '../components/Layout.css';
 
 const formatPhoneNumber = (value) => {
-  // Remove all non-digits
   const digits = value.replace(/\D/g, '');
   
-  // Limit to 10 digits
   const limited = digits.slice(0, 10);
   
-  // Format as +1 (XXX) XXX-XXXX
   if (limited.length === 0) return '';
   if (limited.length <= 3) return `+1 (${limited}`;
   if (limited.length <= 6) return `+1 (${limited.slice(0, 3)}) ${limited.slice(3)}`;
@@ -37,7 +34,7 @@ function Profile() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to complete
+    if (authLoading) return;
     
     if (!user) {
       navigate('/');
@@ -47,7 +44,6 @@ function Profile() {
     const loadUserData = async () => {
       let firestoreData = {};
       
-      // Try to load from Firestore
       if (auth.currentUser) {
         try {
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -55,7 +51,6 @@ function Profile() {
           if (userDoc.exists()) {
             firestoreData = userDoc.data();
           } else {
-            // Create initial user document if it doesn't exist
             const initialData = {
               email: auth.currentUser.email,
               name: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || '',
@@ -70,7 +65,6 @@ function Profile() {
         }
       }
 
-      // Prioritize Firestore data, then Firebase auth, then user context
       const initialInfo = {
         name: firestoreData.name || auth.currentUser?.displayName || user.name || user.email?.split('@')[0] || '',
         email: auth.currentUser?.email || user.email || '',
@@ -102,7 +96,6 @@ function Profile() {
         state: editedInfo.state
       };
       
-      // Save to Firestore (works for both Google and email/password users)
       if (auth.currentUser) {
         try {
           const userDocRef = doc(db, 'users', auth.currentUser.uid);
@@ -119,7 +112,6 @@ function Profile() {
         }
       }
       
-      // Update the context
       updateUser(updates);
       setUserInfo({ ...editedInfo });
       setIsEditing(false);
@@ -231,7 +223,6 @@ function Profile() {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Name */}
             <div>
               <label style={{ 
                 display: 'block', 
@@ -263,7 +254,6 @@ function Profile() {
               )}
             </div>
 
-            {/* Email */}
             <div>
               <label style={{ 
                 display: 'block', 
@@ -297,7 +287,6 @@ function Profile() {
               )}
             </div>
 
-            {/* Phone */}
             <div>
               <label style={{ 
                 display: 'block', 
@@ -330,7 +319,6 @@ function Profile() {
               )}
             </div>
 
-            {/* City */}
             <div>
               <label style={{ 
                 display: 'block', 
@@ -363,7 +351,6 @@ function Profile() {
               )}
             </div>
 
-            {/* State */}
             <div>
               <label style={{ 
                 display: 'block', 

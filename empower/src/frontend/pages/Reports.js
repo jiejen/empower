@@ -214,7 +214,6 @@ function Reports() {
                     }}
                     onClick={() => handleViewReport(report)}
                   >
-                    {/* Delete Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -257,7 +256,6 @@ function Reports() {
                       </h3>
                     </div>
                 
-                    {/* Display chart image if available */}
                     {report.chartImage && (
                       <div style={{ 
                         marginBottom: '16px',
