@@ -863,13 +863,36 @@ function Dashboard() {
                           />
                         )}
                         <div className="report-info">
-                          <p className="report-name">{report.reportName}</p>
-                          <p className="report-date">
-                            {new Date(report.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <p className="report-name">{report.reportName}</p>
+                            {report.startDate && report.endDate && (
+                              <p className="report-date" style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                Created on: {new Date(report.createdAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            )}
+                          </div>
+                          <p className="report-date" style={{ textAlign: 'right' }}>
+                            {report.startDate && report.endDate ? (
+                              `${new Date(report.startDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })} - ${new Date(report.endDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}`
+                            ) : (
+                              new Date(report.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })
+                            )}
                           </p>
                         </div>
                       </div>
