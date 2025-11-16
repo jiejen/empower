@@ -84,6 +84,26 @@ Use the following files for test data:
 Watch the demo video for a full walkthrough of the UI and its main interactions:  
 **YouTube:** https://www.youtube.com/watch?v=bua7GuxK80U
 
+### Installation
+
+1. Clone the repository:
+ ```bash
+ git clone https://github.com/jiejen/empower.git
+ ```
+2. Navigate to the project directory:   
+  ```bash
+  cd empower/empower
+  ```
+3. Install dependencies:
+  ```bash
+  npm install
+  ```
+4. Start the development server:
+  ```bash
+  npm start
+  ```
+5. Open the local server link displayed in the terminal (http://localhost:3000).
+
 The video demonstrates:
 - Logging in
 - Adding an appliance and uploading energy data
