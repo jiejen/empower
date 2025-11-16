@@ -188,7 +188,7 @@ function Appliances() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
             <h2 style={{ 
               margin: 0, 
-              fontSize: '24px', 
+              fontSize: '25px', 
               fontWeight: '600', 
               color: '#1f2937' 
             }}>
@@ -378,7 +378,8 @@ function Appliances() {
                           </div>
                           
                           <div style={{
-                            backgroundColor: '#f0f9ff',
+                            // Changed from blue (#f0f9ff) to green (#f0fdf4)
+                            backgroundColor: '#f0fdf4',
                             padding: '12px',
                             borderRadius: '6px',
                             marginBottom: '16px'
@@ -386,7 +387,13 @@ function Appliances() {
                             <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
                               Total Energy Consumption
                             </div>
-                            <div style={{ fontSize: '18px', fontWeight: '600', color: '#1e40af', marginBottom: '4px' }}>
+                            <div style={{ 
+                              fontSize: '18px', 
+                              fontWeight: '600', 
+                              // Changed from blue (#28a745) to green (#059669)
+                              color: '#059669', 
+                              marginBottom: '4px' 
+                            }}>
                               {stats.totalKwh} kWh
                             </div>
                             <div style={{ fontSize: '11px', color: '#6b7280' }}>
