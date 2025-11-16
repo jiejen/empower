@@ -139,8 +139,6 @@ app.put('/api/appliances/:id', async (req, res) => {
       return res.status(404).json({ error: 'Appliance not found' });
     }
 
-    const currentData = applianceSnap.data();
-
     const updateData = {
       updatedAt: new Date().toISOString(),
     };
