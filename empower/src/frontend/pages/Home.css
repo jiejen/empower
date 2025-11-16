@@ -75,21 +75,19 @@
   font-weight: 600;
   font-size: 1rem;
   box-shadow: 0 2px 8px rgba(40,167,69,0.07);
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s;
 }
 
 .signin-btn:hover {
   background: #218838;
-  transform: scale(1.04);
-  opacity: 0.98;
 }
 
 .hero {
   background: #fcf8b0;
-  min-height: 65vh;
+  min-height: 70vh;
   display: flex;
   align-items: center;
-  padding: 24px 40px;
+  padding: 80px 40px;
   box-shadow: 0 4px 24px rgba(40,167,69,0.07);
 }
 
@@ -97,7 +95,7 @@
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 0 40px;
   display: flex;
   gap: 40px;
   align-items: center;
@@ -129,14 +127,12 @@
   font-weight: 700;
   font-size: 1.15rem;
   margin-top: 32px;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s;
   box-shadow: 0 2px 8px rgba(40,167,69,0.08);
 }
 
 .signup-btn:hover {
   background: #218838;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .hero-right {
@@ -212,7 +208,7 @@
 
 .white-section {
   background: #fff;
-  padding: 48px 0;
+  padding: 0px 40px; /* be efficient image has a lotta white space so i changed it!  */
   border-radius: 18px;
   margin: 32px 0;
 }
@@ -220,7 +216,7 @@
 .white-inner {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0;
   display: flex;
   gap: 40px;
   align-items: center;
@@ -268,15 +264,11 @@
   margin-top: 24px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(40,167,69,0.08);
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s;
 }
 
 .try-btn:hover {
   background: #218838;
-  color: #fff;
-  opacity: 0.98;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 @media (max-width: 800px) {
@@ -307,7 +299,7 @@
 
 .about-section {
   background: #e6f7d4; /* lighter green */
-  padding: 48px 0;
+  padding: 48px 40px;
   margin: 32px 0;
   box-shadow: 0 4px 24px rgba(40,167,69,0.07);
 }
@@ -315,7 +307,7 @@
 .about-inner {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0;
   text-align: center;
 }
 
@@ -422,7 +414,7 @@
 
 .testimonials {
   background: #fff;
-  padding: 48px 0;
+  padding: 48px 40px;
   border-radius: 18px;
   margin: 32px 0;
   /* box-shadow: 0 4px 24px rgba(40,167,69,0.07); */
@@ -431,35 +423,35 @@
 .testimonials-inner {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0;
 }
 
 .testimonials-title {
-  padding: 18px;
+  padding: 0;
+  margin: 0 0 32px 0;
   font-size: 2.2rem;
-  margin: 0;
   text-align: center;
   font-weight: 900;
   color: #222;
 }
 
 .testimonials-cards {
-  padding: 18px;
+  padding: 0;
   display: flex;
-  gap: 70px;
+  gap: 40px;
   justify-content: center;
 }
 
 .contact-section {
   background: #fcf8b0;
-  padding: 48px 0;
+  padding: 48px 40px 64px 40px;
   box-shadow: 0 4px 24px rgba(40,167,69,0.1);
 }
 
 .contact-inner {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0;
   text-align: center;
 }
 
@@ -480,9 +472,9 @@
 .contact-card {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
   background: #fafafa;
-  padding: 22px 32px;
+  padding: 32px;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(40,167,69,0.06);
   max-width: 500px;

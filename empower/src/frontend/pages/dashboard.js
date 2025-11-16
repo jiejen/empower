@@ -22,9 +22,17 @@ function Dashboard() {
     billDataSource: null // tracks which month's data was used for estimation
   });
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showTooltipEnergy, setShowTooltipEnergy] = useState(false);
+  const [showTooltipChange, setShowTooltipChange] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [tooltipPositionEnergy, setTooltipPositionEnergy] = useState({ top: 0, left: 0 });
+  const [tooltipPositionChange, setTooltipPositionChange] = useState({ top: 0, left: 0 });
   const tooltipRef = useRef(null);
+  const tooltipRefEnergy = useRef(null);
+  const tooltipRefChange = useRef(null);
   const iconRef = useRef(null);
+  const iconRefEnergy = useRef(null);
+  const iconRefChange = useRef(null);
   const [rankBy, setRankBy] = useState('kwh');
   const [filterBy, setFilterBy] = useState([]);
   const [timeFilter, setTimeFilter] = useState('all-time');
@@ -70,10 +78,40 @@ function Dashboard() {
       
       setTooltipPosition({ top, left });
     }
+    if (iconRefEnergy.current && tooltipRefEnergy.current) {
+      const iconRect = iconRefEnergy.current.getBoundingClientRect();
+      const tooltipRect = tooltipRefEnergy.current.getBoundingClientRect();
+      
+      let left = iconRect.left + iconRect.width / 2 - tooltipRect.width / 2;
+      let top = iconRect.top - tooltipRect.height - 8;
+      
+      if (left < 16) left = 16;
+      if (left + tooltipRect.width > window.innerWidth - 16) {
+        left = window.innerWidth - tooltipRect.width - 16;
+      }
+      if (top < 16) top = iconRect.bottom + 8;
+      
+      setTooltipPositionEnergy({ top, left });
+    }
+    if (iconRefChange.current && tooltipRefChange.current) {
+      const iconRect = iconRefChange.current.getBoundingClientRect();
+      const tooltipRect = tooltipRefChange.current.getBoundingClientRect();
+      
+      let left = iconRect.left + iconRect.width / 2 - tooltipRect.width / 2;
+      let top = iconRect.top - tooltipRect.height - 8;
+      
+      if (left < 16) left = 16;
+      if (left + tooltipRect.width > window.innerWidth - 16) {
+        left = window.innerWidth - tooltipRect.width - 16;
+      }
+      if (top < 16) top = iconRect.bottom + 8;
+      
+      setTooltipPositionChange({ top, left });
+    }
   };
 
   useEffect(() => {
-    if (showTooltip) {
+    if (showTooltip || showTooltipEnergy || showTooltipChange) {
       updateTooltipPosition();
       window.addEventListener('resize', updateTooltipPosition);
       window.addEventListener('scroll', updateTooltipPosition);
@@ -83,7 +121,7 @@ function Dashboard() {
         window.removeEventListener('scroll', updateTooltipPosition);
       };
     }
-  }, [showTooltip]);
+  }, [showTooltip, showTooltipEnergy, showTooltipChange]);
 
   // calculate all the dashboard stats from appliance data
   const calculateStats = useCallback(async (applianceData) => {
@@ -495,7 +533,29 @@ function Dashboard() {
             <div className="stats-grid">
               {/* total energy used card */}
               <div className="stat-card">
-                <h3 className="stat-title">Total Energy Used</h3>
+                <div className="stat-header">
+                  <h3 className="stat-title">Total Energy Used</h3>
+                  <div 
+                    ref={iconRefEnergy}
+                    className="tooltip-container"
+                    onMouseEnter={() => setShowTooltipEnergy(true)}
+                    onMouseLeave={() => setShowTooltipEnergy(false)}
+                  >
+                    <Info size={16} color="#6b7280" className="info-icon" />
+                    {showTooltipEnergy && (
+                      <div 
+                        ref={tooltipRefEnergy}
+                        className="tooltip"
+                        style={{
+                          top: `${tooltipPositionEnergy.top}px`,
+                          left: `${tooltipPositionEnergy.left}px`
+                        }}
+                      >
+                        Total sum of all energy usage (kWh) across all your appliances based on the data you've provided.
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="stat-divider"></div>
                 <p className="stat-value">
                   {stats.totalEnergy.toFixed(2)}
@@ -505,7 +565,29 @@ function Dashboard() {
 
               {/* monthly change card */}
               <div className="stat-card">
-                <h3 className="stat-title">Energy Usage Change vs. Last Month</h3>
+                <div className="stat-header">
+                  <h3 className="stat-title">Energy Usage Change vs. Last Month</h3>
+                  <div 
+                    ref={iconRefChange}
+                    className="tooltip-container"
+                    onMouseEnter={() => setShowTooltipChange(true)}
+                    onMouseLeave={() => setShowTooltipChange(false)}
+                  >
+                    <Info size={16} color="#6b7280" className="info-icon" />
+                    {showTooltipChange && (
+                      <div 
+                        ref={tooltipRefChange}
+                        className="tooltip"
+                        style={{
+                          top: `${tooltipPositionChange.top}px`,
+                          left: `${tooltipPositionChange.left}px`
+                        }}
+                      >
+                        Compares current month's energy usage to last month's. Negative % (green) means less energy used this month. Positive % (red) means more energy used. 0% (gray) means same usage.
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="stat-divider"></div>
                 {stats.monthlyChange !== null ? (
                   <p className={`stat-value ${stats.monthlyChange > 0 ? 'red' : stats.monthlyChange < 0 ? 'green' : 'gray'}`}>
@@ -539,10 +621,10 @@ function Dashboard() {
                         }}
                       >
                         {stats.billDataSource && stats.billDataSource.includes('current month') 
-                          ? 'Projected based on your current monthly usage using $0.14 per kWh.'
+                          ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'
                           : stats.billDataSource
-                          ? `Estimated using data from ${stats.billDataSource} since no current month data is available.`
-                          : 'Projected based on your monthly usage using $0.14 per kWh.'}
+                          ? `Estimated using data from ${stats.billDataSource} since no current month data is available. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.`
+                          : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'}
                       </div>
                     )}
                   </div>
