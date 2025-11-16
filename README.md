@@ -84,6 +84,8 @@ Use the following files for test data:
 Watch the demo video for a full walkthrough of the UI and its main interactions:  
 **YouTube:** https://www.youtube.com/watch?v=bua7GuxK80U
 
+---
+
 ### Installation
 
 1. Clone the repository:
