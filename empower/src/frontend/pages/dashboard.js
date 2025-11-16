@@ -505,10 +505,10 @@ function Dashboard() {
 
               {/* monthly change card */}
               <div className="stat-card">
-                <h3 className="stat-title">% Change From Last Month</h3>
+                <h3 className="stat-title">Energy Usage Change vs. Last Month</h3>
                 <div className="stat-divider"></div>
                 {stats.monthlyChange !== null ? (
-                  <p className={`stat-value ${stats.monthlyChange > 0 ? 'red' : 'green'}`}>
+                  <p className={`stat-value ${stats.monthlyChange > 0 ? 'red' : stats.monthlyChange < 0 ? 'green' : 'gray'}`}>
                     {stats.monthlyChange > 0 ? '+' : ''}{stats.monthlyChange.toFixed(2)}%
                   </p>
                 ) : (

@@ -24,10 +24,64 @@ function Login() {
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
 
+  const validateEmailDomain = (email) => {
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (!domain || domain.length < 3) {
+      return 'Please enter a valid email domain';
+    }
+    
+    // Check if domain has valid TLD
+    const domainParts = domain.split('.');
+    const tld = domainParts[domainParts.length - 1];
+    const validTLDs = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'io', 'co', 'uk', 'us', 'ca', 'au', 'de', 'fr', 'jp', 'cn', 'in', 'br', 'ru', 'za', 'es', 'it', 'nl', 'se', 'no', 'dk', 'fi', 'be', 'ch', 'at', 'pl', 'cz', 'ie', 'nz', 'sg', 'hk', 'kr', 'mx', 'ar', 'cl', 'pt', 'gr', 'tr', 'il', 'ae', 'sa', 'th', 'vn', 'ph', 'id', 'my', 'pk', 'bd', 'ng', 'ke', 'tz', 'ug', 'gh', 'zm', 'zw', 'biz', 'info', 'name', 'pro', 'aero', 'coop', 'museum', 'travel', 'jobs', 'mobi', 'tel', 'asia', 'cat', 'post', 'xxx', 'app', 'dev', 'tech', 'online', 'site', 'website', 'space', 'store', 'shop'];
+    
+    if (!validTLDs.includes(tld)) {
+      return 'Please enter a valid email domain';
+    }
+    
+    // Common email providers and their correct spellings
+    const commonProviders = {
+      'gmail': ['gmial', 'gmai', 'gmil', 'gmaill', 'gmailll', 'gnail', 'gmsil', 'gmali', 'gmaul'],
+      'yahoo': ['yaho', 'yahooo', 'yhoo', 'yajoo', 'yaoo', 'yahho', 'yahoou'],
+      'outlook': ['outlok', 'outllook', 'outlool', 'ouklook', 'outlokk', 'outloook'],
+      'hotmail': ['hotmial', 'hotmal', 'hotmil', 'hotmaill', 'hotmaii', 'hotmaii', 'hotmall'],
+      'icloud': ['iclod', 'icluod', 'iclould', 'iclou', 'iclowud', 'iclooud'],
+      'protonmail': ['protonmial', 'protonmal', 'protonmil', 'protonmaill'],
+      'aol': ['aoll', 'aol1', 'ao1'],
+      'live': ['livee', 'llive', 'liv'],
+      'msn': ['mssn', 'msnn'],
+      'mail': ['mial', 'maill', 'mali', 'maul']
+    };
+    
+    // Extract the provider name (before the TLD)
+    const providerPart = domainParts.slice(0, -1).join('.');
+    
+    // Check for exact typos in common providers
+    for (const [correct, typos] of Object.entries(commonProviders)) {
+      if (typos.includes(providerPart)) {
+        return `Did you mean ${correct}.${tld}?`;
+      }
+    }
+    
+    // Check for repeated characters (like gmailll, yahooo) - but allow valid repetitions
+    if (/(.)\1{2,}/.test(providerPart) && !providerPart.match(/^[a-z]+\.[a-z]+$/)) {
+      return 'Please check your email domain for typos';
+    }
+    
+    return null;
+  };
+
   const validate = () => {
     const e = {};
     if (!email) e.email = 'Email is required';
-    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) e.email = 'Invalid email';
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      e.email = 'Invalid email format';
+    } else {
+      const domainError = validateEmailDomain(email);
+      if (domainError) {
+        e.email = domainError;
+      }
+    }
 
     if (!password) e.password = 'Password is required';
 
@@ -43,6 +97,7 @@ function Login() {
     setErrors({});
     
     try {
+      // Attempt to sign in directly first
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
     } catch (error) {
@@ -50,21 +105,22 @@ function Login() {
       console.log('Error code:', error.code);
       console.log('Error message:', error.message);
       
-      // For invalid-credential, check if user exists but with different provider
-      // Firebase returns invalid-credential when trying to use email/password on a Google account
-      if (error.code === 'auth/invalid-credential') {
+      // If wrong password or invalid credential, check if account uses Google
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         try {
           const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-          console.log('Sign-in methods for invalid credential:', signInMethods);
+          console.log('Sign-in methods available:', signInMethods);
           
-          // Empty array with invalid-credential likely means Google account
-          // But only if it's a valid email domain (not typos like ggmail.com)
-          const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
-          const emailDomain = email.split('@')[1]?.toLowerCase();
+          // If account exists but uses Google only
+          if (signInMethods.length > 0 && !signInMethods.includes('password')) {
+            setErrors({ email: 'This account uses Google sign-in. Please click "Sign in with Google" below.' });
+            setLoading(false);
+            return;
+          }
           
-          if (signInMethods.length === 0 && commonDomains.includes(emailDomain)) {
-            // Likely a Google account with a real email domain
-            setErrors({ email: 'This account uses Google sign-in. Please use the "Sign in with Google" button.' });
+          // Account uses password, so it's just wrong password
+          if (signInMethods.includes('password')) {
+            setErrors({ password: 'Incorrect password. Try again or reset your password.' });
             setLoading(false);
             return;
           }
@@ -73,7 +129,7 @@ function Login() {
         }
       }
       
-      // Then handle specific error codes
+      // Handle specific error codes
       if (error.code === 'auth/user-not-found') {
         setErrors({ email: 'No account found with this email. Please create an account.' });
       } else if (error.code === 'auth/wrong-password') {
@@ -84,6 +140,8 @@ function Login() {
         setErrors({ email: 'Invalid email address.' });
       } else if (error.code === 'auth/too-many-requests') {
         setErrors({ email: 'Too many failed attempts. Please try again later or reset your password.' });
+      } else if (error.code === 'auth/user-disabled') {
+        setErrors({ email: 'This account has been disabled.' });
       } else {
         setErrors({ email: 'Login failed. Please check your credentials.' });
       }
@@ -127,52 +185,12 @@ function Login() {
     }
     
     try {
-      // First check if the account exists
-      const signInMethods = await fetchSignInMethodsForEmail(auth, resetEmail);
-      console.log('Sign-in methods for reset:', signInMethods);
-      
-      const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
-      const emailDomain = resetEmail.split('@')[1]?.toLowerCase();
-      
-      if (signInMethods.length === 0 && commonDomains.includes(emailDomain)) {
-        setResetError('This account may use Google sign-in. Password reset is not available. Please sign in with Google.');
-        return;
-      }
-      
-      // no account exists
-      if (signInMethods.length === 0) {
-        setResetError('No account found with this email address');
-        return;
-      }
-      
-      // If account exists but doesn't use password
-      if (!signInMethods.includes('password')) {
-        setResetError('This account uses Google sign-in. Password reset is not available. Please sign in with Google.');
-        return;
-      }
-      
-      // Account exists and uses password, send reset email
       await sendPasswordResetEmail(auth, resetEmail);
-      setResetMessage(`Password reset email sent to ${resetEmail}. Please check your inbox (and spam folder).`);
+      setResetMessage('If an account exists with this email, a password reset link has been sent. Check your inbox and spam folder.');
     } catch (error) {
       console.error('Password reset error:', error);
-      
-      if (error.code === 'auth/invalid-email') {
-        setResetError('Invalid email address');
-      } else if (error.code === 'auth/user-not-found') {
-        // Check if it might be a Google account 
-        const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
-        const emailDomain = resetEmail.split('@')[1]?.toLowerCase();
-        
-        if (commonDomains.includes(emailDomain)) {
-          setResetError('This account may use Google sign-in. Password reset is not available. Please sign in with Google.');
-        } else {
-          // Typo or non-existent account
-          setResetError('No account found with this email address');
-        }
-      } else {
-        setResetError('Failed to send reset email. Please try again.');
-      }
+      // Always show same message for security
+      setResetMessage('If an account exists with this email, a password reset link has been sent. Check your inbox and spam folder.');
     }
   };
 
