@@ -29,6 +29,21 @@ function ReportView()
     }
   }, [reportData]);
 
+  // useEffect(() => {
+  //   if (reportData)
+  //   {
+  //     console.log('Original dates received:',
+  //     {
+  //       startDate: reportData.startDate,
+  //       endDate: reportData.endDate,
+  //       startDateObj: new Date(reportData.startDate),
+  //       endDateObj: new Date(reportData.endDate),
+  //       startDateISO: new Date(reportData.startDate).toISOString(),
+  //       endDateISO: new Date(reportData.endDate).toISOString()
+  //     });
+  //   }
+  // }, [reportData]);
+
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges)
@@ -93,9 +108,16 @@ function ReportView()
   };
 
   const processApplianceComparison = useCallback(async (appliances, startDate, endDate, yAxis) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
+    const start = parseISOWithLocalTime(startDate);
+    const end = parseISOWithLocalTime(endDate);
+
+    // console.log('Processing comparison with dates:', {
+    //   originalStart: startDate,
+    //   originalEnd: endDate,
+    //   localStart: start,
+    //   localEnd: end
+    // });
+
     const avgCostPerKwh = await getCostForDateRange(start, end);
 
     const comparisonDataPromises = appliances.map(async (appliance) => {
@@ -155,6 +177,17 @@ function ReportView()
     return await Promise.all(comparisonDataPromises);
   }, []);
 
+  const parseISOWithLocalTime = (dateString) => {
+    if (dateString.includes('T'))
+    {
+      return new Date(dateString);
+    }
+    else
+    {
+      return new Date(dateString + 'T00:00:00');
+    }
+  };
+
   const groupDataByTimeInterval = useCallback((data, interval) => {
     if (data.length === 0) return [];
 
@@ -173,8 +206,15 @@ function ReportView()
           key = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
           break;
         case 'week':
-          const weekNum = Math.ceil((date.getDate())/7);
-          key = `Week ${weekNum} - ${date.getMonth() + 1}/${date.getFullYear()}`;
+          const firstDayOfWeek = new Date(date);
+          firstDayOfWeek.setDate(date.getDate() - date.getDay());
+          firstDayOfWeek.setHours(0, 0, 0, 0);
+          
+          const lastDayOfWeek = new Date(firstDayOfWeek);
+          lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+          lastDayOfWeek.setHours(23, 59, 59, 999);
+          
+          key = `Week of ${firstDayOfWeek.getMonth() + 1}/${firstDayOfWeek.getDate()}/${firstDayOfWeek.getFullYear()}`;
           break;
         case 'month':
           key = `${date.toLocaleString('default', {month: 'short'})} ${date.getFullYear()}`;
@@ -202,8 +242,8 @@ function ReportView()
   }, []);
 
   const processEnergyData = useCallback(async (appliances, startDate, endDate, xAxis, yAxis) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = parseISOWithLocalTime(startDate);
+    const end = parseISOWithLocalTime(endDate);
 
     const allDataPromises = [];
     
@@ -389,9 +429,9 @@ function ReportView()
     }
 
     let totalEnergy = 0;
-    const start = new Date(reportData.startDate);
-    const end = new Date(reportData.endDate);
-    
+    const start = parseISOWithLocalTime(reportData.startDate);
+    const end = parseISOWithLocalTime(reportData.endDate);
+
     reportData.appliances.forEach(appliance => {
       if (appliance.energyData && Array.isArray(appliance.energyData))
       {
