@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import '../components/Layout.css';
 
 function Appliances() {
@@ -59,14 +60,14 @@ function Appliances() {
         setLoading(false);
         return;
       }
-      const response = await fetch('/api/appliances', { headers: { 'x-user-uid': uid } });
-      if (response.ok) {
-        const data = await response.json();
-        setAppliances(data);
-        setError(null);
-      } else {
-        setError('Failed to load appliances');
-      }
+      const appliancesRef = collection(db, 'users', uid, 'appliances');
+      const snapshot = await getDocs(appliancesRef);
+      const appliances = [];
+      snapshot.forEach((doc) => {
+        appliances.push({ id: doc.id, ...doc.data() });
+      });
+      setAppliances(appliances);
+      setError(null);
     } catch (err) {
       console.error('Error fetching appliances:', err);
       setError('An error occurred while loading appliances');
@@ -88,18 +89,12 @@ function Appliances() {
         return;
       }
 
-      const response = await fetch(`/api/appliances/${applianceId}`, {
-        method: 'DELETE',
-        headers: { 'x-user-uid': uid }
-      });
-
-      if (response.ok || response.status === 204) {
-        // Remove the appliance from the local state
-        setAppliances(appliances.filter(a => a.id !== applianceId));
-        setError(null);
-      } else {
-        setError('Failed to delete appliance');
-      }
+      const applianceRef = doc(db, 'users', uid, 'appliances', applianceId);
+      await deleteDoc(applianceRef);
+      
+      // Remove the appliance from the local state
+      setAppliances(appliances.filter(a => a.id !== applianceId));
+      setError(null);
     } catch (err) {
       console.error('Error deleting appliance:', err);
       setError('An error occurred while deleting appliance');

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import '../components/Layout.css';
 
 function AddAppliance() {
@@ -124,30 +125,24 @@ function AddAppliance() {
       applianceType, 
       name, 
       location, 
-      notes,
-      energyData: csvData || []
+      notes: notes || '',
+      energyData: Array.isArray(csvData) ? csvData : [],
+      createdAt: new Date().toISOString()
     };
 
     try {
-      const response = await fetch('/api/appliances', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-uid': uid },
-        body: JSON.stringify(applianceData),
-      });
+      const appliancesRef = collection(db, 'users', uid, 'appliances');
+      await addDoc(appliancesRef, applianceData);
 
-      if (response.ok) {
-        showToastMessage('Appliance added successfully!');
-        setApplianceType('');
-        setName('');
-        setLocation('');
-        setNotes('');
-        setCsvFile(null);
-        setCsvData(null);
-        // Reset file input
-        document.getElementById('csvFile').value = '';
-      } else {
-        setMessage('Failed to add appliance.');
-      }
+      showToastMessage('Appliance added successfully!');
+      setApplianceType('');
+      setName('');
+      setLocation('');
+      setNotes('');
+      setCsvFile(null);
+      setCsvData(null);
+      // Reset file input
+      document.getElementById('csvFile').value = '';
     } catch (error) {
       console.error(error);
       setMessage('An error occurred while saving appliance.');

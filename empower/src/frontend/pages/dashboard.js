@@ -339,7 +339,7 @@ function Dashboard() {
     navigate('/appliances', { state: { highlightId: applianceId } });
   };
 
-  // fetch appliances from API endpoint
+  // fetch appliances from Firestore
   const fetchAppliances = async () => {
     try {
       setLoading(true);
@@ -350,31 +350,29 @@ function Dashboard() {
         return;
       }
       
-      const response = await fetch('/api/appliances', { 
-        headers: { 'x-user-uid': uid } 
+      const appliancesRef = collection(db, 'users', uid, 'appliances');
+      const snapshot = await getDocs(appliancesRef);
+      const data = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setAppliances(data);
-        setError(null);
-        
-        // debug: log appliance data structure
-        console.log('Loaded appliances:', data);
-        if (data.length > 0) {
-          console.log('First appliance structure:', data[0]);
-          console.log('First appliance energyData:', data[0].energyData);
-        }
-        
-        // calculate stats if we have appliances with energy data
-        if (data.length > 0) {
-          calculateStats(data);
-          rankAppliances(data, rankBy, filterBy, timeFilter).catch(err => {
-            console.error('Error ranking appliances:', err);
-          });
-        }
-      } else {
-        setError('Failed to load appliances');
+      setAppliances(data);
+      setError(null);
+      
+      // debug: log appliance data structure
+      console.log('Loaded appliances:', data);
+      if (data.length > 0) {
+        console.log('First appliance structure:', data[0]);
+        console.log('First appliance energyData:', data[0].energyData);
+      }
+      
+      // calculate stats if we have appliances with energy data
+      if (data.length > 0) {
+        calculateStats(data);
+        rankAppliances(data, rankBy, filterBy, timeFilter).catch(err => {
+          console.error('Error ranking appliances:', err);
+        });
       }
     } catch (err) {
       console.error('Error fetching appliances:', err);
