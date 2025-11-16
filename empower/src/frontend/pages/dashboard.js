@@ -487,7 +487,7 @@ function Dashboard() {
         ) : appliances.length === 0 ? (
           <div className="welcome-container">
             <p style={{ fontSize: '16px', marginBottom: '16px' }}>
-              No appliances found for the selected time period.
+              No appliances found.
             </p>
           </div>
         ) : (
