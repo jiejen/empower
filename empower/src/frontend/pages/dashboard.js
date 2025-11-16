@@ -823,7 +823,6 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* Previous Reports Section */}
               <div className="previous-reports-section">
                 <div className="reports-header">
                   <h3 style={{ margin: 0 }}>Past Reports</h3>
