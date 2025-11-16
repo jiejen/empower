@@ -339,27 +339,45 @@ function CreateReport() {
               Chart Type *
             </label>
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'}}>
-              {[{value: 'line', label: 'Line Chart'}, {value: 'bar', label: 'Bar Chart'}, {value: 'pie', label: 'Pie Chart'}].map((type) => {
+              {[
+                {value: 'line', label: 'Line Chart', description: 'Use this for tracking trends over time'},
+                {value: 'bar', label: 'Bar Chart', description: 'Use this for comparing values across categories'},
+                {value: 'pie', label: 'Pie Chart', description: 'Use this for showing proportions of a whole'}
+              ].map((type) => {
                 const isSelected = chartType === type.value;
                 return (
-                  <label key={type.value}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '16px',
-                      border: `2px solid ${isSelected ? '#28a745' : '#d1d5db'}`, // green border
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      backgroundColor: isSelected ? '#e6f7d4' : 'white', // light green background
-                      transition: 'all 0.2s',
-                      fontSize: '15px',
-                      fontWeight: '500',
-                      color: isSelected ? '#218838' : '#374151' // green text
-                    }}>
-                    <input type="radio" name="chartType" value={type.value} checked={isSelected} onChange={(e) => setChartType(e.target.value)} style={{display: 'none'}}/>
-                    {type.label}
-                  </label>
+                  <div key={type.value} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '16px',
+                        border: `2px solid ${isSelected ? '#28a745' : '#d1d5db'}`,
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        backgroundColor: isSelected ? '#e6f7d4' : 'white',
+                        transition: 'all 0.2s',
+                        fontSize: '15px',
+                        fontWeight: '500',
+                        color: isSelected ? '#218838' : '#374151'
+                      }}>
+                      <input type="radio" name="chartType" value={type.value} checked={isSelected} onChange={(e) => setChartType(e.target.value)} style={{display: 'none'}}/>
+                      {type.label}
+                    </label>
+                    {isSelected && (
+                      <p style={{
+                        margin: 0,
+                        fontSize: '13px',
+                        color: '#6b7280',
+                        textAlign: 'center',
+                        lineHeight: '1.4',
+                        fontStyle: 'italic'
+                      }}>
+                        {type.description}
+                      </p>
+                    )}
+                  </div>
                 );
               })}
             </div>
