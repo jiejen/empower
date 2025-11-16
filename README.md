@@ -84,6 +84,12 @@ Use the following files for test data:
 Watch the demo video for a full walkthrough of the UI and its main interactions:  
 **YouTube:** https://www.youtube.com/watch?v=bua7GuxK80U
 
+The video demonstrates:
+- Logging in
+- Adding an appliance and uploading energy data
+- Viewing appliance statistics
+- Creating and viewing a report with different chart types
+
 ---
 
 ### Installation
@@ -105,9 +111,3 @@ Watch the demo video for a full walkthrough of the UI and its main interactions:
   npm start
   ```
 5. Open the local server link displayed in the terminal (http://localhost:3000).
-
-The video demonstrates:
-- Logging in
-- Adding an appliance and uploading energy data
-- Viewing appliance statistics
-- Creating and viewing a report with different chart types
