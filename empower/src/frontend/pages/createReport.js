@@ -339,7 +339,8 @@ function CreateReport() {
               Chart Type *
             </label>
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'}}>
-              {[{value: 'line', label: 'Line Chart'}, {value: 'bar', label: 'Bar Chart'}, {value: 'pie', label: 'Pie Chart'}].map((type) => {const isSelected = chartType === type.value;
+              {[{value: 'line', label: 'Line Chart'}, {value: 'bar', label: 'Bar Chart'}, {value: 'pie', label: 'Pie Chart'}].map((type) => {
+                const isSelected = chartType === type.value;
                 return (
                   <label key={type.value}
                     style={{
@@ -347,14 +348,14 @@ function CreateReport() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       padding: '16px',
-                      border: `2px solid ${isSelected ? '#3b82f6' : '#d1d5db'}`,
+                      border: `2px solid ${isSelected ? '#28a745' : '#d1d5db'}`, // green border
                       borderRadius: '6px',
                       cursor: 'pointer',
-                      backgroundColor: isSelected ? '#dbeafe' : 'white',
+                      backgroundColor: isSelected ? '#e6f7d4' : 'white', // light green background
                       transition: 'all 0.2s',
                       fontSize: '15px',
                       fontWeight: '500',
-                      color: isSelected ? '#1e40af' : '#374151'
+                      color: isSelected ? '#218838' : '#374151' // green text
                     }}>
                     <input type="radio" name="chartType" value={type.value} checked={isSelected} onChange={(e) => setChartType(e.target.value)} style={{display: 'none'}}/>
                     {type.label}

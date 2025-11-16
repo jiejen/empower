@@ -4,10 +4,9 @@
 }
 
 .home-header {
-  /* background: #f4f0a4; */
-  background-color: white;
+  background-color: #fff;
   width: 100%;
-  /* box-shadow: 0 2px 8px rgba(40,167,69,0.04); */
+  box-shadow: 0 2px 8px rgba(40,167,69,0.04);
   border-bottom-left-radius: 18px;
   border-bottom-right-radius: 18px;
 }
@@ -62,7 +61,7 @@
 }
 
 .nav-link:hover {
-  background: #e3f6fc;
+  background: #fcf8b0; /* yellow instead of blue */
   color: #28a745;
 }
 
@@ -80,17 +79,17 @@
 }
 
 .signin-btn:hover {
-  background: linear-gradient(90deg, #218838 70%);
+  background: #218838;
   transform: scale(1.04);
   opacity: 0.98;
 }
 
 .hero {
-  background: #fcf8b0; /* top half background!! */
+  background: #fcf8b0;
   min-height: 65vh;
   display: flex;
   align-items: center;
-  padding: 24px 40px; /* Increase left/right padding */
+  padding: 24px 40px;
   box-shadow: 0 4px 24px rgba(40,167,69,0.07);
 }
 
@@ -121,7 +120,7 @@
 }
 
 .signup-btn {
-  background: #28a745; 
+  background: #28a745;
   color: #fff;
   border: none;
   padding: 18px 32px;
@@ -177,7 +176,7 @@
 
 @media (max-width: 800px) {
   .hero-image, .hero-image2 {
-    max-width: 60%; /* Adjust max-width for smaller screens */
+    max-width: 60%;
   }
 }
 
@@ -214,7 +213,6 @@
 .white-section {
   background: #fff;
   padding: 48px 0;
-  /* box-shadow: 0 4px 24px rgba(40,167,69,0.07); */
   border-radius: 18px;
   margin: 32px 0;
 }
@@ -260,12 +258,12 @@
 }
 
 .try-btn {
-  background: #ffcc33; 
-  color: #111;
+  background: #28a745; /* changed from yellow to green */
+  color: #fff;
   border: none;
   padding: 18px 32px;
   border-radius: 12px;
-  font-weight: 800;
+  font-weight: 700; /* match other buttons */
   font-size: 1.15rem;
   margin-top: 24px;
   cursor: pointer;
@@ -273,7 +271,13 @@
   transition: background 0.2s, transform 0.2s;
 }
 
-.try-btn:hover { opacity: 0.95; }
+.try-btn:hover {
+  background: #218838;
+  color: #fff;
+  opacity: 0.98;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
 
 @media (max-width: 800px) {
   .white-section {
