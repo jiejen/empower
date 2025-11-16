@@ -19,7 +19,7 @@ function Dashboard() {
     totalEnergy: 0,
     monthlyChange: null,
     estimatedBill: 0,
-    billDataSource: null // tracks which month's data was used for estimation
+    billDataSource: null
   });
   const [showTooltip, setShowTooltip] = useState(false);
   const [showTooltipEnergy, setShowTooltipEnergy] = useState(false);
@@ -132,8 +132,7 @@ function Dashboard() {
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
     
-    // Collect data by month for all available data
-    const monthlyData = {}; // key: 'YYYY-MM', value: { kwh, dataPoints }
+    const monthlyData = {};
     
     // go through each appliance and organize data by month
     applianceData.forEach(appliance => {
@@ -164,44 +163,44 @@ function Dashboard() {
     console.log('Current month kWh:', currentMonthKwh);
     console.log('Last month kWh:', lastMonthKwh);
 
-    // Calculate percentage change from last month
+    // calculate percentage change from last month
     let monthlyChange = null;
     if (lastMonthKwh > 0 && currentMonthKwh > 0) {
       monthlyChange = ((currentMonthKwh - lastMonthKwh) / lastMonthKwh) * 100;
     }
 
-    // Calculate estimated bill with fallback logic
+    // calculate estimated bill with fallback logic
     let estimatedBill = 0;
     let billDataSource = null;
     
     if (currentMonthKwh > 0) {
-      // We have current month data - project it to full month
+      // we have current month data, project it to full month
       const dayOfMonth = now.getDate();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const projectedMonthlyKwh = (currentMonthKwh / dayOfMonth) * daysInMonth;
       
-      // Get cost for current month
+      // get cost for current month
       const monthStart = new Date(currentYear, currentMonth, 1);
       const monthEnd = new Date(currentYear, currentMonth + 1, 0);
       const rate = await getCostForDateRange(monthStart, monthEnd);
       estimatedBill = projectedMonthlyKwh * rate;
       billDataSource = `${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (current month)`;
     } else {
-      // No current month data - look for historical data
-      // Try to find the most recent complete month
+      // no current month data, look for historical data
+      // try to find the most recent complete month
       const sortedMonths = Object.keys(monthlyData).sort().reverse();
       
       for (const monthKey of sortedMonths) {
         const [year, month] = monthKey.split('-').map(Number);
-        // Skip current month (we already know it's empty)
+        // skip current month (we already know it's empty)
         if (year === currentYear && month === currentMonth + 1) continue;
         
-        // Get cost for that month
+        // get cost for that month
         const monthStart = new Date(year, month - 1, 1);
         const monthEnd = new Date(year, month, 0);
         const rate = await getCostForDateRange(monthStart, monthEnd);
         
-        // Use this month's data as estimate
+        // use this month's data as estimate
         estimatedBill = monthlyData[monthKey].kwh * rate;
         const date = new Date(year, month - 1);
         billDataSource = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -219,12 +218,12 @@ function Dashboard() {
 
   // rank appliances based on selected criteria
   const rankAppliances = useCallback(async (applianceData, rankCriteria, filter, time) => {
-    // use current date from system (November 14, 2025)
+    // use current date from system
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
     const currentDate = now.getDate();
-    const currentDay = now.getDay(); // 0 = sunday
+    const currentDay = now.getDay();
     
     let startDate, endDate = new Date(now);
 
@@ -269,10 +268,10 @@ function Dashboard() {
       endDate: endDate.toISOString()
     });
 
-    // Get average cost for the time range
+    // get average cost for the time range
     const avgRate = await getCostForDateRange(startDate, endDate);
     
-    // Process appliances with async cost calculations
+    // process appliances with async cost calculations
     const rankedPromises = applianceData.map(async (appliance) => {
       let totalKwh = 0;
       let dataPointCount = 0;
@@ -288,7 +287,7 @@ function Dashboard() {
             totalKwh += kwh;
             dataPointCount++;
             
-            // Get cost for this specific date (async)
+            // get cost for this specific date (async)
             costPromises.push(
               getCostForDate(pointDate).then(rate => ({ kwh, rate }))
             );
@@ -296,11 +295,10 @@ function Dashboard() {
         });
       }
 
-      // Wait for all cost calculations
+      // wait for all cost calculations
       const costData = await Promise.all(costPromises);
       let totalCost = costData.reduce((sum, { kwh, rate }) => sum + (kwh * rate), 0);
 
-      // Fallback: if no cost calculated, use average rate
       if (totalCost === 0 && totalKwh > 0) {
         totalCost = totalKwh * avgRate;
       }
@@ -315,14 +313,13 @@ function Dashboard() {
     
     const ranked = await Promise.all(rankedPromises);
 
-    // apply filters - when no filters selected, show all with data
+    // apply filters, when no filters selected, show all with data
     let filtered = ranked.filter(a => a.totalKwh > 0);
     
     if (filter.length > 0) {
       filtered = ranked.filter(appliance => {
-        // An appliance passes only if it matches ALL selected filters
+        // an appliance passes only if it matches ALL selected filters
         return filter.every(f => {
-          // Appliance type filters
           const typeMap = {
             'refrigerator': 'Refrigerator',
             'washer': 'Washer',
@@ -336,7 +333,7 @@ function Dashboard() {
           if (typeMap[f]) {
             return appliance.applianceType === typeMap[f];
           }
-          // Energy usage filters
+          // energy usage filters
           else if (f === 'high-energy') {
             return appliance.totalKwh > 50;
           } else if (f === 'medium-energy') {
@@ -344,7 +341,7 @@ function Dashboard() {
           } else if (f === 'low-energy') {
             return appliance.totalKwh < 20 && appliance.totalKwh > 0;
           }
-          // Cost filters
+          // cost filters
           else if (f === 'high-cost') {
             return appliance.totalCost > 10;
           } else if (f === 'medium-cost') {
@@ -367,10 +364,10 @@ function Dashboard() {
       }
     });
 
-    // Calculate total kWh for percentage calculation
+    // calculate total kWh for percentage calculation
     const totalKwhSum = filtered.reduce((sum, a) => sum + a.totalKwh, 0);
     
-    // Add percentage to each appliance
+    // add percentage to each appliance
     const withPercentage = filtered.map(appliance => ({
       ...appliance,
       percentage: totalKwhSum > 0 ? (appliance.totalKwh / totalKwhSum) * 100 : 0
@@ -379,7 +376,7 @@ function Dashboard() {
     setRankedAppliances(withPercentage);
   }, []);
 
-  // Handle clicking on an appliance to navigate to appliances page
+  // handle clicking on an appliance to navigate to appliances page
   const handleApplianceClick = (applianceId) => {
     navigate('/appliances', { state: { highlightId: applianceId } });
   };
@@ -405,7 +402,6 @@ function Dashboard() {
       setAppliances(data);
       setError(null);
       
-      // debug: log appliance data structure
       console.log('Loaded appliances:', data);
       if (data.length > 0) {
         console.log('First appliance structure:', data[0]);
@@ -445,7 +441,7 @@ function Dashboard() {
         reportsData.push({ id: doc.id, ...doc.data() });
       });
       
-      // Sort by creation date, newest first
+      // sort by creation date, newest first
       reportsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
       setReports(reportsData);
@@ -458,7 +454,7 @@ function Dashboard() {
 
   // load appliances on mount and when user changes
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to complete
+    if (authLoading) return;
     
     if (user) {
       fetchAppliances();
@@ -812,12 +808,11 @@ function Dashboard() {
                                 ? 'this year'
                                 : 'the selected time period';
                               
-                              // FIRST: Check if ANY appliance has data in the selected time range
                               const hasAnyData = appliances.some(a => a.energyData && a.energyData.length > 0);
                               const noDataInTimeRange = appliances.every(a => {
                                 if (!a.energyData || a.energyData.length === 0) return true;
                                 
-                                // Check if this appliance has any data points in the time range
+                                // check if this appliance has any data points in the time range
                                 return !a.energyData.some(dataPoint => {
                                   const pointDate = new Date(dataPoint.time);
                                   const now = new Date();
@@ -855,12 +850,10 @@ function Dashboard() {
                                 });
                               });
                               
-                              // If appliances exist with data, but none in the time range, show time-based message
                               if (hasAnyData && noDataInTimeRange) {
                                 return `No energy data found ${timeMessage}. Your appliances have data from other time periods.`;
                               }
                               
-                              // Otherwise, show filter-specific messages
                               const filterMessages = {
                                 'refrigerator': 'No refrigerators',
                                 'washer': 'No washers',

@@ -370,7 +370,7 @@ function ReportView()
       );
     }
 
-    const colors = ['#28a745', '#059669', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']; // updated green theme
+    const colors = ['#28a745', '#059669', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
     const yAxisLabel = reportData.yAxis === 'power' ? 'Power (kW)' : 'Cost ($)';
 
     switch (reportData.chartType)
@@ -387,9 +387,9 @@ function ReportView()
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="#28a745" // green line
+                stroke="#28a745"
                 strokeWidth={2}
-                dot={{fill: '#059669', r: 4}} // green dots
+                dot={{fill: '#059669', r: 4}}
                 activeDot={{r: 6, fill: '#059669'}}
                 name={yAxisLabel}
               />
@@ -408,7 +408,7 @@ function ReportView()
               <Legend/>
               <Bar
                 dataKey="value"
-                fill="#28a745" // green bar
+                fill="#28a745"
                 radius={[6, 6, 0, 0]}
                 name={yAxisLabel}
               />
@@ -428,7 +428,7 @@ function ReportView()
                 labelLine={true}
                 label={({name, value}) => `${name}: ${value}`}
                 outerRadius={120}
-                fill="#28a745" // green fill
+                fill="#28a745"
                 dataKey="value"
               >
                 {chartData.map((entry, index) => (
@@ -580,14 +580,7 @@ function ReportView()
                 <div style={{fontSize: '14px', color: '#6b7280'}}>
                   {new Date(reportData.startDate).toLocaleDateString()} - {new Date(reportData.endDate).toLocaleDateString()}
                 </div>
-                <div style={{
-                  padding: '2px 8px',
-                  backgroundColor: '#fef9c3', // yellow background
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  color: '#b45309' // yellow/brown text
-                }}>
+                <div style={{padding: '2px 8px', backgroundColor: '#fef9c3', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#b45309'}}>
                   {reportData.chartType.charAt(0).toUpperCase() + reportData.chartType.slice(1)} Chart
                 </div>
                 {!hasUnsavedChanges && (

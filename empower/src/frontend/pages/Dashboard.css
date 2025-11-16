@@ -32,7 +32,6 @@
   width: 100%;
 }
 
-/* responsive breakpoints */
 @media (max-width: 1200px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -183,7 +182,6 @@
   border-top: 6px solid #1f2937;
 }
 
-/* dashboard sections - ranking and reports */
 .dashboard-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -197,7 +195,6 @@
   }
 }
 
-/* appliance ranking section */
 .ranking-section {
   background-color: white;
   border-radius: 8px;
@@ -207,7 +204,6 @@
   min-width: 0;
 }
 
-/* reports section */
 .reports-section {
   background-color: white;
   border-radius: 8px;
@@ -217,7 +213,6 @@
   min-width: 0;
 }
 
-/* previous reports section */
 .previous-reports-section {
   background-color: white;
   border-radius: 8px;

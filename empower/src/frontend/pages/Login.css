@@ -18,7 +18,7 @@
   max-width: 600px;
   min-height: 340px;
   border-radius: 18px;
-  background-color: #fcfcfc; /* Softer, neutral background */
+  background-color: #fcfcfc;
   padding: 5%;
   overflow: auto;
   position: relative;
@@ -75,7 +75,7 @@
   align-items: center;
   justify-content: center;
   padding: 60px;
-  background: #fcfcfc; /* Match left side for harmony */
+  background: #fcfcfc;
 }
 
 .login-form-container {
@@ -487,7 +487,6 @@
   background: #218838;
 }
 
-/* Responsive adjustments */
 @media (max-width: 900px) {
   .login-page {
     flex-direction: column;

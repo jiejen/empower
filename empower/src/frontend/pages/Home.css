@@ -176,7 +176,6 @@
   }
 }
 
-/* Responsive */
 @media (max-width: 800px) {
   .hero {
     min-height: 60vh;

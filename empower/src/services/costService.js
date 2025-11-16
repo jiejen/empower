@@ -1,9 +1,6 @@
 import { auth, db } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-/**
- * Parse a date string in various formats
- */
 const parseDate = (dateStr) => {
   const dateFormats = [
     /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
@@ -28,15 +25,12 @@ const parseDate = (dateStr) => {
   return null;
 };
 
-/**
- * Generate all dates between start and end (inclusive)
- */
+
 const generateDateRange = (startDate, endDate) => {
   const dates = [];
   const start = new Date(startDate);
   const end = new Date(endDate);
   
-  // Ensure we're working with dates at midnight
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
   
@@ -49,17 +43,10 @@ const generateDateRange = (startDate, endDate) => {
   return dates;
 };
 
-/**
- * Parse CSV file content into cost data
- * Expected format: dateRange,costPerKwh
- * Date range formats: "YYYY-MM-DD to YYYY-MM-DD" or single date "YYYY-MM-DD"
- * Date formats supported: YYYY-MM-DD, MM/DD/YYYY, MM-DD-YYYY
- */
 export const parseCostCSV = (csvContent) => {
   const lines = csvContent.trim().split('\n');
   const costData = [];
   
-  // Skip header row if present
   let startIndex = 0;
   if (lines.length > 0) {
     const firstLine = lines[0].toLowerCase();
@@ -72,8 +59,6 @@ export const parseCostCSV = (csvContent) => {
     const line = lines[i].trim();
     if (!line) continue;
     
-    // Handle CSV with quotes and commas
-    // Split by comma, but be careful with "to" in date ranges
     const parts = [];
     let currentPart = '';
     let inQuotes = false;
@@ -96,18 +81,15 @@ export const parseCostCSV = (csvContent) => {
     const dateRangeStr = parts[0];
     const costStr = parts[1];
     
-    // Parse cost
     const cost = parseFloat(costStr);
     if (isNaN(cost) || cost < 0) {
       console.warn(`Invalid cost value: ${costStr}`);
       continue;
     }
     
-    // Check if it's a date range (contains "to") or single date
     let startDate, endDate;
     
     if (dateRangeStr.toLowerCase().includes(' to ')) {
-      // Date range format: "startDate to endDate"
       const rangeParts = dateRangeStr.split(/ to /i).map(p => p.trim());
       if (rangeParts.length !== 2) {
         console.warn(`Invalid date range format: ${dateRangeStr}`);
@@ -127,7 +109,6 @@ export const parseCostCSV = (csvContent) => {
         continue;
       }
     } else {
-      // Single date format
       startDate = parseDate(dateRangeStr);
       if (!startDate || isNaN(startDate.getTime())) {
         console.warn(`Invalid date format: ${dateRangeStr}`);
@@ -136,7 +117,6 @@ export const parseCostCSV = (csvContent) => {
       endDate = new Date(startDate);
     }
     
-    // Generate all dates in the range and add to costData
     const datesInRange = generateDateRange(startDate, endDate);
     for (const date of datesInRange) {
       const dateKey = date.toISOString().split('T')[0];
@@ -148,15 +128,11 @@ export const parseCostCSV = (csvContent) => {
     }
   }
   
-  // Sort by date
   costData.sort((a, b) => a.timestamp - b.timestamp);
   
   return costData;
 };
 
-/**
- * Save cost data to Firebase, merging with existing data
- */
 export const saveCostData = async (newCostData) => {
   try {
     const uid = auth.currentUser?.uid;
@@ -166,7 +142,6 @@ export const saveCostData = async (newCostData) => {
     
     const costDataRef = doc(db, 'users', uid, 'settings', 'costData');
     
-    // Load existing data
     const existingDoc = await getDoc(costDataRef);
     let existingData = [];
     
@@ -177,22 +152,18 @@ export const saveCostData = async (newCostData) => {
       }
     }
     
-    // Create a map of existing data by date for easy lookup
     const existingDataMap = new Map();
     existingData.forEach(entry => {
       existingDataMap.set(entry.date, entry);
     });
     
-    // Merge new data with existing data (new data takes precedence for overlapping dates)
     newCostData.forEach(entry => {
       existingDataMap.set(entry.date, entry);
     });
     
-    // Convert map back to array and sort
     const mergedData = Array.from(existingDataMap.values());
     mergedData.sort((a, b) => a.timestamp - b.timestamp);
     
-    // Calculate overall date range
     const dateRange = mergedData.length > 0 ? {
       start: mergedData[0].date,
       end: mergedData[mergedData.length - 1].date
@@ -211,9 +182,6 @@ export const saveCostData = async (newCostData) => {
   }
 };
 
-/**
- * Load cost data from Firebase
- */
 export const loadCostData = async () => {
   try {
     const uid = auth.currentUser?.uid;
@@ -235,10 +203,6 @@ export const loadCostData = async () => {
   }
 };
 
-/**
- * Get cost per kWh for a specific date
- * Returns the cost for the exact date, or the closest earlier date, or a default
- */
 export const getCostForDate = async (targetDate, defaultCost = 0.14) => {
   try {
     const costDataDoc = await loadCostData();
@@ -251,13 +215,11 @@ export const getCostForDate = async (targetDate, defaultCost = 0.14) => {
       ? targetDate.toISOString().split('T')[0]
       : targetDate;
     
-    // Find exact match first
     const exactMatch = costData.find(d => d.date === targetDateStr);
     if (exactMatch) {
       return exactMatch.costPerKwh;
     }
     
-    // Find closest earlier date
     const targetTimestamp = new Date(targetDateStr).getTime();
     let closestCost = null;
     let closestDate = null;
@@ -279,9 +241,6 @@ export const getCostForDate = async (targetDate, defaultCost = 0.14) => {
   }
 };
 
-/**
- * Get cost per kWh for a date range (returns average or array of costs)
- */
 export const getCostForDateRange = async (startDate, endDate, defaultCost = 0.14) => {
   try {
     const costDataDoc = await loadCostData();
@@ -295,14 +254,12 @@ export const getCostForDateRange = async (startDate, endDate, defaultCost = 0.14
     const startTimestamp = start.getTime();
     const endTimestamp = end.getTime();
     
-    // Filter cost data within date range
     const costsInRange = costData.filter(entry => {
       const entryTimestamp = new Date(entry.date).getTime();
       return entryTimestamp >= startTimestamp && entryTimestamp <= endTimestamp;
     });
     
     if (costsInRange.length === 0) {
-      // No data in range, find closest earlier date
       let closestCost = null;
       let closestDate = null;
       
@@ -319,7 +276,6 @@ export const getCostForDateRange = async (startDate, endDate, defaultCost = 0.14
       return closestCost !== null ? closestCost : defaultCost;
     }
     
-    // Return average cost for the range
     const totalCost = costsInRange.reduce((sum, entry) => sum + entry.costPerKwh, 0);
     return totalCost / costsInRange.length;
   } catch (error) {

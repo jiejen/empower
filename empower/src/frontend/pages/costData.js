@@ -24,7 +24,6 @@ function CostData() {
     loadCostDataInfo();
   }, [user, navigate]);
 
-  // Auto-hide toast after 3 seconds
   useEffect(() => {
     if (showToast) {
       const timer = setTimeout(() => {
@@ -73,7 +72,6 @@ function CostData() {
           if (costData.length === 0) {
             setCostUploadError('No valid cost data found in CSV. Expected format: dateRange,costPerKwh (e.g., "2024-01-01 to 2024-01-31,0.12")');
             setCsvFile(null);
-            // Reset file input
             document.getElementById('costCsvFile').value = '';
             return;
           }
@@ -82,7 +80,6 @@ function CostData() {
           await loadCostDataInfo();
           showToastMessage('Cost data uploaded successfully!');
           
-          // Reset file input after successful upload
           setTimeout(() => {
             setCsvFile(null);
             document.getElementById('costCsvFile').value = '';
@@ -91,14 +88,14 @@ function CostData() {
           console.error('Error processing CSV:', error);
           setCostUploadError(error.message || 'Failed to process CSV file');
           setCsvFile(null);
-          // Reset file input
+
           document.getElementById('costCsvFile').value = '';
         }
       };
       reader.onerror = () => {
         setCostUploadError('Error reading file');
         setCsvFile(null);
-        // Reset file input
+
         document.getElementById('costCsvFile').value = '';
       };
       reader.readAsText(file);
@@ -109,13 +106,11 @@ function CostData() {
     }
   };
 
-  // Prepare chart data from cost data
   const prepareChartData = () => {
     if (!costDataInfo || !costDataInfo.data || costDataInfo.data.length === 0) {
       return [];
     }
 
-    // Group data by month to reduce data points for better visualization
     const monthlyData = {};
     costDataInfo.data.forEach(entry => {
       const date = new Date(entry.date);
@@ -127,7 +122,6 @@ function CostData() {
       monthlyData[monthKey].costs.push(entry.costPerKwh);
     });
 
-    // Calculate average cost per month
     return Object.keys(monthlyData)
       .sort()
       .map(monthKey => {

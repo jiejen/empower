@@ -15,7 +15,7 @@ function Reports() {
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to complete
+    if (authLoading) return;
     
     if (user) {
       fetchReports();
@@ -42,7 +42,6 @@ function Reports() {
         reportsData.push({ id: doc.id, ...doc.data() });
       });
       
-      // Sort by creation date, newest first
       reportsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
       setReports(reportsData);

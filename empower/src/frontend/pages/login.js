@@ -30,40 +30,10 @@ function Login() {
       return 'Please enter a valid email domain';
     }
     
-    // Check if domain has valid TLD
     const domainParts = domain.split('.');
-    const tld = domainParts[domainParts.length - 1];
-    const validTLDs = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'io', 'co', 'uk', 'us', 'ca', 'au', 'de', 'fr', 'jp', 'cn', 'in', 'br', 'ru', 'za', 'es', 'it', 'nl', 'se', 'no', 'dk', 'fi', 'be', 'ch', 'at', 'pl', 'cz', 'ie', 'nz', 'sg', 'hk', 'kr', 'mx', 'ar', 'cl', 'pt', 'gr', 'tr', 'il', 'ae', 'sa', 'th', 'vn', 'ph', 'id', 'my', 'pk', 'bd', 'ng', 'ke', 'tz', 'ug', 'gh', 'zm', 'zw', 'biz', 'info', 'name', 'pro', 'aero', 'coop', 'museum', 'travel', 'jobs', 'mobi', 'tel', 'asia', 'cat', 'post', 'xxx', 'app', 'dev', 'tech', 'online', 'site', 'website', 'space', 'store', 'shop'];
-    
-    if (!validTLDs.includes(tld)) {
-      return 'Please enter a valid email domain';
-    }
-    
-    // Common email providers and their correct spellings
-    const commonProviders = {
-      'gmail': ['gmial', 'gmai', 'gmil', 'gmaill', 'gmailll', 'gnail', 'gmsil', 'gmali', 'gmaul'],
-      'yahoo': ['yaho', 'yahooo', 'yhoo', 'yajoo', 'yaoo', 'yahho', 'yahoou'],
-      'outlook': ['outlok', 'outllook', 'outlool', 'ouklook', 'outlokk', 'outloook'],
-      'hotmail': ['hotmial', 'hotmal', 'hotmil', 'hotmaill', 'hotmaii', 'hotmaii', 'hotmall'],
-      'icloud': ['iclod', 'icluod', 'iclould', 'iclou', 'iclowud', 'iclooud'],
-      'protonmail': ['protonmial', 'protonmal', 'protonmil', 'protonmaill'],
-      'aol': ['aoll', 'aol1', 'ao1'],
-      'live': ['livee', 'llive', 'liv'],
-      'msn': ['mssn', 'msnn'],
-      'mail': ['mial', 'maill', 'mali', 'maul']
-    };
-    
-    // Extract the provider name (before the TLD)
+
     const providerPart = domainParts.slice(0, -1).join('.');
     
-    // Check for exact typos in common providers
-    for (const [correct, typos] of Object.entries(commonProviders)) {
-      if (typos.includes(providerPart)) {
-        return `Did you mean ${correct}.${tld}?`;
-      }
-    }
-    
-    // Check for repeated characters (like gmailll, yahooo) - but allow valid repetitions
     if (/(.)\1{2,}/.test(providerPart) && !providerPart.match(/^[a-z]+\.[a-z]+$/)) {
       return 'Please check your email domain for typos';
     }
@@ -189,7 +159,6 @@ function Login() {
       setResetMessage('If an account exists with this email, a password reset link has been sent. Check your inbox and spam folder.');
     } catch (error) {
       console.error('Password reset error:', error);
-      // Always show same message for security
       setResetMessage('If an account exists with this email, a password reset link has been sent. Check your inbox and spam folder.');
     }
   };
@@ -237,6 +206,7 @@ function Login() {
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
+                  {/* SVG for the eye icon thing that is on the login page */}
                   {showPassword ? (
                     <svg viewBox="0 0 24 24" width="20" height="20">
                       <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>

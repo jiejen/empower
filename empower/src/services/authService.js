@@ -27,8 +27,8 @@ export const authService = {
       const user = userStore.createUser(email, password);
       currentSession = {
         user,
-        token: btoa(`${email}:${Date.now()}`), // Simple token generation
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        token: btoa(`${email}:${Date.now()}`),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
       saveSession(currentSession);
       return currentSession;

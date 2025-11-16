@@ -37,7 +37,6 @@ function AddAppliance() {
     'Other'
   ];
 
-  // Auto-hide toast after 3 seconds
   useEffect(() => {
     if (showToast) {
       const timer = setTimeout(() => {
@@ -56,10 +55,8 @@ function AddAppliance() {
     const lines = text.split('\n').filter(line => line.trim());
     if (lines.length === 0) return [];
     
-    // Parse header
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     
-    // Find indices for common column names
     const timeIndex = headers.findIndex(h => h.includes('time') || h.includes('timestamp') || h.includes('date'));
     const kwhIndex = headers.findIndex(h => h.includes('kwh') || h.includes('energy') || h.includes('power'));
     
@@ -67,7 +64,6 @@ function AddAppliance() {
       throw new Error('CSV must contain time and kWh columns');
     }
     
-    // Parse data rows
     const data = [];
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
@@ -141,7 +137,7 @@ function AddAppliance() {
       setNotes('');
       setCsvFile(null);
       setCsvData(null);
-      // Reset file input
+
       document.getElementById('csvFile').value = '';
     } catch (error) {
       console.error(error);
@@ -214,7 +210,7 @@ function AddAppliance() {
                   outline: 'none',
                   outlineColor: '#28a745',
                   backgroundColor: 'white',
-                  color: '#1f2937', // ensure selected text is dark
+                  color: '#1f2937',
                   cursor: 'pointer',
                   boxSizing: 'border-box'
                 }}
@@ -251,7 +247,7 @@ function AddAppliance() {
                   borderRadius: '6px',
                   fontSize: '16px',
                   outline: 'none',
-                  outlineColor: '#28a745', // set to green, or use '#d1d5db' for neutral
+                  outlineColor: '#28a745',
                   boxSizing: 'border-box'
                 }}
               />
@@ -280,7 +276,7 @@ function AddAppliance() {
                   outline: 'none',
                   outlineColor: '#28a745',
                   backgroundColor: 'white',
-                  color: '#1f2937', // ensure selected text is dark
+                  color: '#1f2937',
                   cursor: 'pointer',
                   boxSizing: 'border-box'
                 }}

@@ -1,7 +1,5 @@
-/* Signup page uses same styles as Login page */
 @import './Login.css';
 
-/* Signup-specific styling */
 .auth-form .submit {
   margin-top: 8px;
   background: #28a745;
@@ -36,11 +34,11 @@
 }
 
 .login-left {
-  width: 50%; /* Use percentage for flexible width */
-  max-width: 800px; /* Set a maximum width */
-  min-height: 300px; /* Set a minimum height */
-  border-radius: 12px; /* Add rounded corners */
-  background-color: #f4f0a4; /* Ensure background color is set */
-  padding: 5%; /* Use percentage for padding to make it responsive */
-  overflow: auto; /* Allow scrolling if content exceeds max height */
+  width: 50%;
+  max-width: 800px;
+  min-height: 300px;
+  border-radius: 12px;
+  background-color: #f4f0a4;
+  padding: 5%;
+  overflow: auto;
 }

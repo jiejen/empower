@@ -12,8 +12,6 @@ import Profile from './frontend/pages/profile';
 import CostData from './frontend/pages/costData';
 import ReportView from './frontend/pages/ReportView';
 import Reports from './frontend/pages/Reports';
-import './App.css';
-import './frontend/pages/CommonPages.css';
 
 function App() {
   return (

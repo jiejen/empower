@@ -18,7 +18,7 @@ function Appliances() {
   const applianceRefs = useRef({});
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to complete
+    if (authLoading) return;
     
     if (user) {
       fetchAppliances();
@@ -27,13 +27,11 @@ function Appliances() {
     }
   }, [navigate, user, authLoading]);
 
-  // Handle highlight effect from dashboard navigation
   useEffect(() => {
     if (location.state?.highlightId && appliances.length > 0) {
       const id = location.state.highlightId;
       setHighlightId(id);
       
-      // Scroll to the appliance
       setTimeout(() => {
         if (applianceRefs.current[id]) {
           applianceRefs.current[id].scrollIntoView({ 
@@ -92,7 +90,6 @@ function Appliances() {
       const applianceRef = doc(db, 'users', uid, 'appliances', applianceId);
       await deleteDoc(applianceRef);
       
-      // Remove the appliance from the local state
       setAppliances(appliances.filter(a => a.id !== applianceId));
       setError(null);
     } catch (err) {
@@ -103,7 +100,6 @@ function Appliances() {
     }
   };
 
-  // Format date/time for display
   const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return '';
     try {
@@ -121,7 +117,6 @@ function Appliances() {
     }
   };
 
-  // Calculate time period description
   const getTimePeriodDescription = (firstTime, lastTime) => {
     if (!firstTime || !lastTime) return '';
     try {
@@ -144,7 +139,6 @@ function Appliances() {
     }
   };
 
-  // Calculate energy statistics for an appliance
   const getEnergyStats = (appliance) => {
     if (!appliance.energyData || appliance.energyData.length === 0) {
       return null;
@@ -372,7 +366,6 @@ function Appliances() {
                           </div>
                           
                           <div style={{
-                            // Changed from blue (#f0f9ff) to green (#f0fdf4)
                             backgroundColor: '#f0fdf4',
                             padding: '12px',
                             borderRadius: '6px',
@@ -384,7 +377,6 @@ function Appliances() {
                             <div style={{ 
                               fontSize: '18px', 
                               fontWeight: '600', 
-                              // Changed from blue (#28a745) to green (#059669)
                               color: '#059669', 
                               marginBottom: '4px' 
                             }}>
