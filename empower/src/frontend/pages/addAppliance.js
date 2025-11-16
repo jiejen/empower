@@ -167,9 +167,6 @@ function AddAppliance() {
             Add New Appliance
           </h2>
 
-
-
-          {/* Bottom Centered Toast Notification */}
           {showToast && (
             <div style={{
               position: 'fixed',
@@ -194,7 +191,6 @@ function AddAppliance() {
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Appliance Type */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="applianceType" style={{
                 display: 'block',
@@ -232,7 +228,6 @@ function AddAppliance() {
               </select>
             </div>
 
-            {/* Name */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="name" style={{
                 display: 'block',
@@ -262,7 +257,6 @@ function AddAppliance() {
               />
             </div>
 
-            {/* Location */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="location" style={{
                 display: 'block',
@@ -300,7 +294,6 @@ function AddAppliance() {
               </select>
             </div>
 
-            {/* Notes */}
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="notes" style={{
                 display: 'block',
@@ -331,7 +324,6 @@ function AddAppliance() {
               />
             </div>
 
-            {/* CSV File Upload */}
             <div style={{ marginBottom: '32px' }}>
               <label htmlFor="csvFile" style={{
                 display: 'block',
@@ -398,9 +390,6 @@ function AddAppliance() {
               </div>
             </div>
 
-
-
-            {/* Submit Button */}
             <div>
               <button
                 type="submit"
@@ -422,7 +411,6 @@ function AddAppliance() {
               </button>
             </div>
 
-            {/* Submit message */}
             {message && (
             <div style={{
               padding: '12px 16px',

@@ -272,7 +272,6 @@ function Appliances() {
                       }
                     }}
                   >
-                    {/* Delete Button */}
                     <button
                       onClick={() => handleDelete(appliance.id)}
                       disabled={isDeleting}

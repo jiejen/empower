@@ -13,7 +13,6 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
   const appliancesDropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
@@ -54,13 +53,11 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
 
   return (
     <div className="navbar">
-      {/* Left: Logo and App Name */}
       <div className="navbar-brand">
         <img src={logo} alt="Empower Logo" style={{ height: '40px', marginRight: '-4px', transform: 'rotate(220deg)' }} />
         <span className="app-name">Empower</span>
       </div>
 
-      {/* Center: Navigation Menu */}
       <nav className="navbar-menu">
         <button 
           className={`nav-item ${activePage === 'Dashboard' ? 'active' : ''}`}
@@ -69,7 +66,6 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
           Dashboard
         </button>
 
-        {/* Reports Dropdown */}
         <div className="nav-dropdown" ref={reportsDropdownRef}>
           <button 
             className={`nav-item ${activePage === 'Reports' || activePage === 'Create Report' ? 'active' : ''}`}
@@ -90,7 +86,6 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
           )}
         </div>
 
-        {/* Appliances Dropdown */}
         <div className="nav-dropdown" ref={appliancesDropdownRef}>
           <button 
             className={`nav-item ${activePage === 'Appliances' || activePage === 'Add Appliance' ? 'active' : ''}`}
@@ -112,7 +107,6 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
         </div>
       </nav>
 
-      {/* Right: User Profile */}
       <div className="user-profile" ref={profileDropdownRef}>
         <button 
           className="user-profile-btn"
