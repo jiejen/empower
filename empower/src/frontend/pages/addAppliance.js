@@ -216,7 +216,9 @@ function AddAppliance() {
                   borderRadius: '6px',
                   fontSize: '16px',
                   outline: 'none',
+                  outlineColor: '#28a745',
                   backgroundColor: 'white',
+                  color: '#1f2937', // ensure selected text is dark
                   cursor: 'pointer',
                   boxSizing: 'border-box'
                 }}
@@ -254,6 +256,7 @@ function AddAppliance() {
                   borderRadius: '6px',
                   fontSize: '16px',
                   outline: 'none',
+                  outlineColor: '#28a745', // set to green, or use '#d1d5db' for neutral
                   boxSizing: 'border-box'
                 }}
               />
@@ -281,7 +284,9 @@ function AddAppliance() {
                   borderRadius: '6px',
                   fontSize: '16px',
                   outline: 'none',
+                  outlineColor: '#28a745',
                   backgroundColor: 'white',
+                  color: '#1f2937', // ensure selected text is dark
                   cursor: 'pointer',
                   boxSizing: 'border-box'
                 }}

@@ -370,7 +370,7 @@ function ReportView()
       );
     }
 
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+    const colors = ['#28a745', '#059669', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']; // updated green theme
     const yAxisLabel = reportData.yAxis === 'power' ? 'Power (kW)' : 'Cost ($)';
 
     switch (reportData.chartType)
@@ -384,7 +384,15 @@ function ReportView()
               <YAxis label={{value: yAxisLabel, angle: -90, position: 'insideLeft'}} stroke="#6b7280"/>
               <Tooltip contentStyle={{backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}/>
               <Legend/>
-              <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{fill: '#3b82f6', r: 4}} activeDot={{r: 6}} name={yAxisLabel}/>
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#28a745" // green line
+                strokeWidth={2}
+                dot={{fill: '#059669', r: 4}} // green dots
+                activeDot={{r: 6, fill: '#059669'}}
+                name={yAxisLabel}
+              />
             </LineChart>
           </ResponsiveContainer>
         );
@@ -398,7 +406,12 @@ function ReportView()
               <YAxis label={{value: yAxisLabel, angle: -90, position: 'insideLeft'}} stroke="#6b7280"/>
               <Tooltip contentStyle={{backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}/>
               <Legend/>
-              <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} name={yAxisLabel}/>
+              <Bar
+                dataKey="value"
+                fill="#28a745" // green bar
+                radius={[6, 6, 0, 0]}
+                name={yAxisLabel}
+              />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -408,8 +421,19 @@ function ReportView()
         return (
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
-              <Pie data={chartData} cx="50%" cy="50%" labelLine={true} label={({name, value}) => `${name}: ${value}`} outerRadius={120} fill="#8884d8" dataKey="value">
-                {chartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={colors[index % colors.length]}/>))}
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={true}
+                label={({name, value}) => `${name}: ${value}`}
+                outerRadius={120}
+                fill="#28a745" // green fill
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]}/>
+                ))}
               </Pie>
               <Tooltip formatter={(value) => [`${value} ${reportData.yAxis === 'power' ? 'kW' : '$'}`, metricLabel]}/>
               <Legend/>
@@ -556,7 +580,14 @@ function ReportView()
                 <div style={{fontSize: '14px', color: '#6b7280'}}>
                   {new Date(reportData.startDate).toLocaleDateString()} - {new Date(reportData.endDate).toLocaleDateString()}
                 </div>
-                <div style={{padding: '2px 8px', backgroundColor: '#dbeafe', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#1e40af'}}>
+                <div style={{
+                  padding: '2px 8px',
+                  backgroundColor: '#fef9c3', // yellow background
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#b45309' // yellow/brown text
+                }}>
                   {reportData.chartType.charAt(0).toUpperCase() + reportData.chartType.slice(1)} Chart
                 </div>
                 {!hasUnsavedChanges && (

@@ -343,14 +343,15 @@ function Reports() {
                             marginBottom: '12px'
                           }}>
                             <div style={{
-                              backgroundColor: '#f0f9ff',
+                              // Changed from blue (#f0f9ff) to green (#f0fdf4)
+                              backgroundColor: '#f0fdf4',
                               padding: '10px',
                               borderRadius: '6px'
                             }}>
                               <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
                                 Total Energy
                               </div>
-                              <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e40af' }}>
+                              <div style={{ fontSize: '14px', fontWeight: '600', color: '#059669' }}>
                                 {report.stats.totalEnergy} kWh
                               </div>
                             </div>
