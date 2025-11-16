@@ -208,6 +208,13 @@ function Dashboard() {
         startDate = new Date(currentYear, currentMonth, 1, 0, 0, 0);
         endDate = new Date(currentYear, currentMonth, currentDate, 23, 59, 59);
         break;
+      case 'last-month':
+        // entire previous month
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        startDate = new Date(lastMonthYear, lastMonth, 1, 0, 0, 0);
+        endDate = new Date(lastMonthYear, lastMonth + 1, 0, 23, 59, 59);
+        break;
       case 'this-year':
         // start of current year to end of today
         startDate = new Date(currentYear, 0, 1, 0, 0, 0);
@@ -280,10 +287,10 @@ function Dashboard() {
           // Appliance type filters
           const typeMap = {
             'refrigerator': 'Refrigerator',
-            'air-conditioner': 'Air Conditioner',
-            'washing-machine': 'Washing Machine',
+            'washer': 'Washer',
+            'dryer': 'Dryer',
+            'oven': 'Oven',
             'dishwasher': 'Dishwasher',
-            'television': 'Television',
             'microwave': 'Microwave',
             'other': 'Other'
           };
@@ -601,20 +608,20 @@ function Dashboard() {
                               <span>Refrigerator</span>
                             </label>
                             <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('air-conditioner')} onChange={() => toggleFilter('air-conditioner')} />
-                              <span>Air Conditioner</span>
+                              <input type="checkbox" checked={filterBy.includes('washer')} onChange={() => toggleFilter('washer')} />
+                              <span>Washer</span>
                             </label>
                             <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('washing-machine')} onChange={() => toggleFilter('washing-machine')} />
-                              <span>Washing Machine</span>
+                              <input type="checkbox" checked={filterBy.includes('dryer')} onChange={() => toggleFilter('dryer')} />
+                              <span>Dryer</span>
+                            </label>
+                            <label className="filter-option">
+                              <input type="checkbox" checked={filterBy.includes('oven')} onChange={() => toggleFilter('oven')} />
+                              <span>Oven</span>
                             </label>
                             <label className="filter-option">
                               <input type="checkbox" checked={filterBy.includes('dishwasher')} onChange={() => toggleFilter('dishwasher')} />
                               <span>Dishwasher</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('television')} onChange={() => toggleFilter('television')} />
-                              <span>Television</span>
                             </label>
                             <label className="filter-option">
                               <input type="checkbox" checked={filterBy.includes('microwave')} onChange={() => toggleFilter('microwave')} />
@@ -774,10 +781,10 @@ function Dashboard() {
                               // Otherwise, show filter-specific messages
                               const filterMessages = {
                                 'refrigerator': 'No refrigerators',
-                                'air-conditioner': 'No air conditioners',
-                                'washing-machine': 'No washing machines',
+                                'washer': 'No washers',
+                                'dryer': 'No dryers',
+                                'oven': 'No ovens',
                                 'dishwasher': 'No dishwashers',
-                                'television': 'No televisions',
                                 'microwave': 'No microwaves',
                                 'other': 'No other appliances',
                                 'high-energy': 'No appliances with high energy usage (50+ kWh)',
