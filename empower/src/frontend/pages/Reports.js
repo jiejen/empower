@@ -134,7 +134,7 @@ function Reports() {
               fontWeight: '600', 
               color: '#1f2937' 
             }}>
-              Saved Reports
+              All Reports
             </h2>
             <button
               onClick={() => navigate('/create-report')}
@@ -152,7 +152,7 @@ function Reports() {
               onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
               onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
             >
-              + Create New Report
+              + Create Report
             </button>
           </div>
         

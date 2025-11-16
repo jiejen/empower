@@ -94,7 +94,7 @@ function CostData() {
           padding: '32px'
         }}>
           <h2 style={{ margin: '0 0 24px 0', fontSize: '24px', fontWeight: '600', color: '#1f2937' }}>
-            Energy Cost Data
+            Cost Data
           </h2>
           <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#6b7280' }}>
             Upload a CSV file with your cost per kWh over time. This will be used to calculate costs in reports, dashboard, and filtering.
