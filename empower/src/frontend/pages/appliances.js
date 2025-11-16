@@ -187,7 +187,7 @@ function Appliances() {
               fontWeight: '600', 
               color: '#1f2937' 
             }}>
-              Appliances
+              All Appliances
             </h2>
             <button
               onClick={() => navigate('/add-appliance')}

@@ -110,7 +110,7 @@ function AddAppliance() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!applianceType || !name || !location) {
+    if (!applianceType || !name || !location || !csvData) {
       setMessage('Please fill out all required fields.');
       return;
     }
@@ -164,7 +164,7 @@ function AddAppliance() {
             fontWeight: '600', 
             color: '#1f2937' 
           }}>
-            Add New Appliance
+            Add Appliance
           </h2>
 
           {showToast && (
@@ -332,7 +332,7 @@ function AddAppliance() {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Upload Energy Data CSV (Optional)
+                Upload Energy Data CSV *
               </label>
               <div style={{
                 border: '2px dashed #d1d5db',

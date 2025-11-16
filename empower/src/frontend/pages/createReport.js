@@ -508,7 +508,7 @@ function CreateReport() {
           </div>
 
           <button onClick={handleSubmit} style={{padding: '12px 32px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '6px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', transition: 'background-color 0.2s'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'} onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}>
-            Generate Report
+            Create Report
           </button>
         </div>
       </div>

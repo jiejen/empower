@@ -1,70 +1,62 @@
-# Getting Started with Create React App
+Empower Energy Management UI
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+This UI is a prototype for managing home appliances, tracking energy usage, and generating reports. It is designed for desktop browsers and provides a consistent experience for users to add appliances, upload energy data, and visualize usage and cost.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+Add Appliance
+    Create a new appliance entry
+    Specify appliance name, category, and location
+    Upload energy usage data via CSV (kWh vs timestamp)
+View Appliances
+    See list of all appliances and their details
+    View usage statistics generated from uploaded data
+    Delete appliances
+Create Report
+    Select one or more appliances
+    Select date ranges
+    Choose chart type (Line, Bar, Pie)
+    Generate visual analytics reports
+View Reports
+    Browse previously generated reports
+    View summary statistics
+    Delete old reports
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Setup & Requirements
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Browser: Use a modern desktop browser (Chrome, Firefox, Edge, Safari).
+Desktop recommended for best experience.
+Authentication: You must sign in with a test user account. TO ADD: TEST USER ACCOUNT
+The UI runs in the browser. No additional software is needed.
 
-### `npm test`
+## Running the UI
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Open your browser and navigate to the Empower app URL.
+Sign in.
+View the dashboard.
+Use the navigation bar to access Appliances, Reports, and Add Appliance pages.
+Add appliances and upload CSV energy data.
+Create a report by selecting appliances and a date range, then choose a chart type.
+View generated reports and summary statistics.
 
-### `npm run build`
+## Limitations
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Only tested on desktop browsers.
+CSV upload requires correct headers (time/timestamp and kWh/energy).
+Data is stored in Firebase; ensure you have access to the correct Firebase project.
+Prototype UI; some features may be limited or not fully polished.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Walkthrough Video
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Watch the demo video for a full walkthrough of the UI and its main interactions:
 
-### `npm run eject`
+YouTube Link: INSERT HERE
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The video demonstrates:
+Logging in
+Adding an appliance and uploading energy data.
+Viewing appliance statistics.
+Creating and viewing a report with different chart types.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
