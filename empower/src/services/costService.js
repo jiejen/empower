@@ -182,6 +182,75 @@ export const saveCostData = async (newCostData) => {
   }
 };
 
+export const deleteCostDataByDateRange = async (startDate, endDate) => {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      throw new Error('User not authenticated');
+    }
+    
+    const costDataRef = doc(db, 'users', uid, 'settings', 'costData');
+    const existingDoc = await getDoc(costDataRef);
+    
+    if (!existingDoc.exists()) {
+      return true;
+    }
+    
+    const existingDocData = existingDoc.data();
+    if (!existingDocData.data || !Array.isArray(existingDocData.data)) {
+      return true;
+    }
+    
+    const startTimestamp = new Date(startDate).getTime();
+    const endTimestamp = new Date(endDate).getTime();
+    
+    const filteredData = existingDocData.data.filter(entry => {
+      const entryTimestamp = new Date(entry.date).getTime();
+      return entryTimestamp < startTimestamp || entryTimestamp > endTimestamp;
+    });
+    
+    filteredData.sort((a, b) => a.timestamp - b.timestamp);
+    
+    const dateRange = filteredData.length > 0 ? {
+      start: filteredData[0].date,
+      end: filteredData[filteredData.length - 1].date
+    } : null;
+    
+    await setDoc(costDataRef, {
+      data: filteredData,
+      updatedAt: new Date().toISOString(),
+      dateRange: dateRange
+    }, { merge: true });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting cost data:', error);
+    throw error;
+  }
+};
+
+export const deleteAllCostData = async () => {
+  try {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      throw new Error('User not authenticated');
+    }
+    
+    const costDataRef = doc(db, 'users', uid, 'settings', 'costData');
+    
+    await setDoc(costDataRef, {
+      data: [],
+      updatedAt: new Date().toISOString(),
+      dateRange: null
+    }, { merge: true });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting all cost data:', error);
+    throw error;
+  }
+};
+
 export const loadCostData = async () => {
   try {
     const uid = auth.currentUser?.uid;
@@ -283,4 +352,3 @@ export const getCostForDateRange = async (startDate, endDate, defaultCost = 0.14
     return defaultCost;
   }
 };
-

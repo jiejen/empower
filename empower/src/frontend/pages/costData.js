@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
-import { parseCostCSV, saveCostData, loadCostData } from '../../services/costService';
+import { parseCostCSV, saveCostData, loadCostData, deleteCostDataByDateRange, deleteAllCostData } from '../../services/costService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import '../components/Layout.css';
 
@@ -14,6 +14,9 @@ function CostData() {
   const [costUploadError, setCostUploadError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteRange, setDeleteRange] = useState(null);
+
 
   useEffect(() => {
     if (!user) {
@@ -88,14 +91,12 @@ function CostData() {
           console.error('Error processing CSV:', error);
           setCostUploadError(error.message || 'Failed to process CSV file');
           setCsvFile(null);
-
           document.getElementById('costCsvFile').value = '';
         }
       };
       reader.onerror = () => {
         setCostUploadError('Error reading file');
         setCsvFile(null);
-
         document.getElementById('costCsvFile').value = '';
       };
       reader.readAsText(file);
@@ -104,6 +105,40 @@ function CostData() {
       setCostUploadError('Failed to upload file');
       setCsvFile(null);
     }
+  };
+
+  const handleDeleteRange = async (startDate, endDate) => {
+    setDeleteRange({ start: startDate, end: endDate });
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteAll = async () => {
+    setDeleteRange(null);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (deleteRange) {
+        await deleteCostDataByDateRange(deleteRange.start, deleteRange.end);
+        showToastMessage(`Deleted cost data from ${deleteRange.start} to ${deleteRange.end}`);
+      } else {
+        await deleteAllCostData();
+        showToastMessage('All cost data deleted successfully');
+      }
+      await loadCostDataInfo();
+    } catch (error) {
+      console.error('Error deleting cost data:', error);
+      showToastMessage('Failed to delete cost data');
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeleteRange(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeleteRange(null);
   };
 
   const prepareChartData = () => {
@@ -129,12 +164,52 @@ function CostData() {
         const avgCost = monthData.costs.reduce((sum, cost) => sum + cost, 0) / monthData.costs.length;
         return {
           month: monthKey,
-          costPerKwh: parseFloat(avgCost.toFixed(3))
+          costPerKwh: parseFloat(avgCost.toFixed(2))
         };
       });
   };
 
+  const getDateRanges = () => {
+    if (!costDataInfo || !costDataInfo.data || costDataInfo.data.length === 0) {
+      return [];
+    }
+
+    const ranges = [];
+    let currentRange = null;
+
+    const sortedData = [...costDataInfo.data].sort((a, b) => a.timestamp - b.timestamp);
+
+    sortedData.forEach((entry, index) => {
+      if (!currentRange) {
+        currentRange = {
+          start: entry.date,
+          end: entry.date,
+          cost: entry.costPerKwh,
+          count: 1
+        };
+      } else if (entry.costPerKwh === currentRange.cost) {
+        currentRange.end = entry.date;
+        currentRange.count++;
+      } else {
+        ranges.push(currentRange);
+        currentRange = {
+          start: entry.date,
+          end: entry.date,
+          cost: entry.costPerKwh,
+          count: 1
+        };
+      }
+
+      if (index === sortedData.length - 1) {
+        ranges.push(currentRange);
+      }
+    });
+
+    return ranges;
+  };
+
   const chartData = prepareChartData();
+  const dateRanges = getDateRanges();
 
   return (
     <Layout activePage="Cost Data" userName={user?.name || user?.email || 'User'} onLogout={logout}>
@@ -159,6 +234,76 @@ function CostData() {
             textAlign: 'center'
           }}>
             {toastMessage}
+          </div>
+        )}
+
+        {showDeleteConfirm && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '32px',
+              maxWidth: '500px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
+                Confirm Deletion
+              </h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#6b7280', lineHeight: '1.6' }}>
+                {deleteRange 
+                  ? `Are you sure you want to delete cost data from ${deleteRange.start} to ${deleteRange.end}? This action cannot be undone.`
+                  : 'Are you sure you want to delete ALL cost data? This action cannot be undone.'}
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={cancelDelete}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b91c1c'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#dc2626'}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -283,14 +428,34 @@ function CostData() {
               padding: '24px',
               marginTop: '24px'
             }}>
-              <h3 style={{ 
-                margin: '0 0 20px 0', 
-                fontSize: '18px', 
-                fontWeight: '600', 
-                color: '#1f2937' 
-              }}>
-                Current Cost Data
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  color: '#1f2937' 
+                }}>
+                  Current Cost Data
+                </h3>
+                <button
+                  onClick={handleDeleteAll}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b91c1c'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#dc2626'}
+                >
+                  Delete All Data
+                </button>
+              </div>
               
               {chartData.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
@@ -309,7 +474,7 @@ function CostData() {
                         tick={{ fontSize: 12 }}
                       />
                       <Tooltip 
-                        formatter={(value) => [`$${value.toFixed(3)}`, 'Cost per kWh']}
+                        formatter={(value) => [`${value.toFixed(2)}`, 'Cost per kWh']}
                         labelFormatter={(label) => `Month: ${label}`}
                       />
                       <Legend />
@@ -347,6 +512,19 @@ function CostData() {
                     </div>
                   </div>
                 )}
+                <div style={{ 
+                  padding: '12px', 
+                  backgroundColor: '#f9fafb', 
+                  borderRadius: '6px',
+                  border: '1px solid #e5e7eb'
+                }}>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                    Total Entries
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
+                    {costDataInfo.data.length} days
+                  </div>
+                </div>
                 {costDataInfo.updatedAt && (
                   <div style={{ 
                     padding: '12px', 
@@ -362,6 +540,66 @@ function CostData() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div style={{ marginTop: '24px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                  Cost Data Ranges
+                </h4>
+                
+                <div style={{ 
+                  maxHeight: '400px', 
+                  overflowY: 'auto',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px'
+                }}>
+                  {dateRanges.map((range, index) => (
+                    <div 
+                      key={index}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: index < dateRanges.length - 1 ? '1px solid #e5e7eb' : 'none',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        backgroundColor: index % 2 === 0 ? '#fafafa' : 'white'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937', marginBottom: '4px' }}>
+                          {range.start === range.end ? range.start : `${range.start} to ${range.end}`}
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                          ${range.cost.toFixed(4)} per kWh • {range.count} {range.count === 1 ? 'day' : 'days'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteRange(range.start, range.end)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#fee2e2',
+                          color: '#991b1b',
+                          border: '1px solid #fecaca',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#fecaca';
+                          e.target.style.borderColor = '#fca5a5';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = '#fee2e2';
+                          e.target.style.borderColor = '#fecaca';
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -399,4 +637,3 @@ function CostData() {
 }
 
 export default CostData;
-
