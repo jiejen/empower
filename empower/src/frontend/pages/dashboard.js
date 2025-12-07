@@ -910,9 +910,22 @@ function Dashboard() {
                   <h3 style={{ margin: 0 }}>Past Reports</h3>
                   <button 
                     className="create-report-btn"
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
                     onClick={() => navigate('/create-report')}
+                    onMouseEnter={e => e.target.style.backgroundColor = '#218838'}
+                    onMouseLeave={e => e.target.style.backgroundColor = '#28a745'}
                   >
-                    Create Report
+                    + Create Report
                   </button>
                 </div>
 
