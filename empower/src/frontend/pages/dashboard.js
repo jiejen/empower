@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth, db } from '../../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 import { Info } from 'lucide-react';
 import { getCostForDate, getCostForDateRange } from '../../services/costService';
 import '../components/Layout.css';
@@ -43,12 +43,61 @@ function Dashboard() {
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [isTimeOpen, setIsTimeOpen] = useState(false);
 
+  const [saveFilterSettings, setSaveFilterSettings] = useState(false);
+
   const toggleFilter = (filterValue) => {
-    setFilterBy(prev => 
+    setFilterBy(prev =>
       prev.includes(filterValue)
         ? prev.filter(f => f !== filterValue)
         : [...prev, filterValue]
     );
+  };
+
+  const loadSavedFilter = async () => {
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      const filterRef = doc(db, 'users', uid, 'settings', 'dashboardFilters');
+      const filterDoc = await getDoc(filterRef);
+
+      if (filterDoc.exists()) {
+        const data = filterDoc.data();
+        setRankBy(data.rankBy);
+        setFilterBy(data.filterBy);
+        setTimeFilter(data.timeFilter);
+        setSaveFilterSettings(true);
+      }
+    } catch (err) {
+      console.error('Error loading saved filter:', err);
+    }
+  };
+
+  const handleSaveFilterToggle = async (checked) => {
+    setSaveFilterSettings(checked);
+
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      const filterRef = doc(db, 'users', uid, 'settings', 'dashboardFilters');
+
+      if (checked) {
+        // Save current filter settings
+        const filterData = {
+          rankBy,
+          filterBy,
+          timeFilter,
+          savedAt: new Date().toISOString()
+        };
+        await setDoc(filterRef, filterData);
+      } else {
+        // Delete saved filter settings
+        await deleteDoc(filterRef);
+      }
+    } catch (err) {
+      console.error('Error toggling filter save:', err);
+    }
   };
 
   // so that tooltip stays within viewport
@@ -56,66 +105,90 @@ function Dashboard() {
     if (iconRef.current && tooltipRef.current) {
       const iconRect = iconRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      
+
       // start with centered position above icon
       let left = iconRect.left + iconRect.width / 2 - tooltipRect.width / 2;
       let top = iconRect.top - tooltipRect.height - 8;
-      
+
       // adjust if tooltip goes off left edge
       if (left < 16) {
         left = 16;
       }
-      
+
       // adjust if tooltip goes off right edge
       if (left + tooltipRect.width > window.innerWidth - 16) {
         left = window.innerWidth - tooltipRect.width - 16;
       }
-      
+
       // if tooltip goes off top, show below icon instead
       if (top < 16) {
         top = iconRect.bottom + 8;
       }
-      
+
       setTooltipPosition({ top, left });
     }
     if (iconRefEnergy.current && tooltipRefEnergy.current) {
       const iconRect = iconRefEnergy.current.getBoundingClientRect();
       const tooltipRect = tooltipRefEnergy.current.getBoundingClientRect();
-      
+
       let left = iconRect.left + iconRect.width / 2 - tooltipRect.width / 2;
       let top = iconRect.top - tooltipRect.height - 8;
-      
+
       if (left < 16) left = 16;
       if (left + tooltipRect.width > window.innerWidth - 16) {
         left = window.innerWidth - tooltipRect.width - 16;
       }
       if (top < 16) top = iconRect.bottom + 8;
-      
+
       setTooltipPositionEnergy({ top, left });
     }
     if (iconRefChange.current && tooltipRefChange.current) {
       const iconRect = iconRefChange.current.getBoundingClientRect();
       const tooltipRect = tooltipRefChange.current.getBoundingClientRect();
-      
+
       let left = iconRect.left + iconRect.width / 2 - tooltipRect.width / 2;
       let top = iconRect.top - tooltipRect.height - 8;
-      
+
       if (left < 16) left = 16;
       if (left + tooltipRect.width > window.innerWidth - 16) {
         left = window.innerWidth - tooltipRect.width - 16;
       }
       if (top < 16) top = iconRect.bottom + 8;
-      
+
       setTooltipPositionChange({ top, left });
     }
   };
+
+  useEffect(() => {
+    if (saveFilterSettings && user) {
+      const saveFilters = async () => {
+        try {
+          const uid = auth.currentUser?.uid;
+          if (!uid) return;
+
+          const filterData = {
+            rankBy,
+            filterBy,
+            timeFilter,
+            savedAt: new Date().toISOString()
+          };
+
+          const filterRef = doc(db, 'users', uid, 'settings', 'dashboardFilters');
+          await setDoc(filterRef, filterData);
+        } catch (err) {
+          console.error('Error saving filter:', err);
+        }
+      };
+      saveFilters();
+    }
+  }, [rankBy, filterBy, timeFilter, saveFilterSettings, user]);
 
   useEffect(() => {
     if (showTooltip || showTooltipEnergy || showTooltipChange) {
       updateTooltipPosition();
       window.addEventListener('resize', updateTooltipPosition);
       window.addEventListener('scroll', updateTooltipPosition);
-      
+
       return () => {
         window.removeEventListener('resize', updateTooltipPosition);
         window.removeEventListener('scroll', updateTooltipPosition);
@@ -131,9 +204,9 @@ function Dashboard() {
     const currentYear = now.getFullYear();
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-    
+
     const monthlyData = {};
-    
+
     // go through each appliance and organize data by month
     applianceData.forEach(appliance => {
       if (appliance.energyData && Array.isArray(appliance.energyData)) {
@@ -143,7 +216,7 @@ function Dashboard() {
 
           const pointDate = new Date(dataPoint.time);
           const monthKey = `${pointDate.getFullYear()}-${String(pointDate.getMonth() + 1).padStart(2, '0')}`;
-          
+
           if (!monthlyData[monthKey]) {
             monthlyData[monthKey] = { kwh: 0, dataPoints: 0 };
           }
@@ -155,7 +228,7 @@ function Dashboard() {
 
     const currentMonthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
     const lastMonthKey = `${lastMonthYear}-${String(lastMonth + 1).padStart(2, '0')}`;
-    
+
     const currentMonthKwh = monthlyData[currentMonthKey]?.kwh || 0;
     const lastMonthKwh = monthlyData[lastMonthKey]?.kwh || 0;
 
@@ -172,13 +245,13 @@ function Dashboard() {
     // calculate estimated bill with fallback logic
     let estimatedBill = 0;
     let billDataSource = null;
-    
+
     if (currentMonthKwh > 0) {
       // we have current month data, project it to full month
       const dayOfMonth = now.getDate();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const projectedMonthlyKwh = (currentMonthKwh / dayOfMonth) * daysInMonth;
-      
+
       // get cost for current month
       const monthStart = new Date(currentYear, currentMonth, 1);
       const monthEnd = new Date(currentYear, currentMonth + 1, 0);
@@ -189,17 +262,17 @@ function Dashboard() {
       // no current month data, look for historical data
       // try to find the most recent complete month
       const sortedMonths = Object.keys(monthlyData).sort().reverse();
-      
+
       for (const monthKey of sortedMonths) {
         const [year, month] = monthKey.split('-').map(Number);
         // skip current month (we already know it's empty)
         if (year === currentYear && month === currentMonth + 1) continue;
-        
+
         // get cost for that month
         const monthStart = new Date(year, month - 1, 1);
         const monthEnd = new Date(year, month, 0);
         const rate = await getCostForDateRange(monthStart, monthEnd);
-        
+
         // use this month's data as estimate
         estimatedBill = monthlyData[monthKey].kwh * rate;
         const date = new Date(year, month - 1);
@@ -224,7 +297,7 @@ function Dashboard() {
     const currentMonth = now.getMonth();
     const currentDate = now.getDate();
     const currentDay = now.getDay();
-    
+
     let startDate, endDate = new Date(now);
 
     // determine time range based on current date
@@ -270,7 +343,7 @@ function Dashboard() {
 
     // get average cost for the time range
     const avgRate = await getCostForDateRange(startDate, endDate);
-    
+
     // process appliances with async cost calculations
     const rankedPromises = applianceData.map(async (appliance) => {
       let totalKwh = 0;
@@ -280,13 +353,13 @@ function Dashboard() {
       if (appliance.energyData && Array.isArray(appliance.energyData)) {
         appliance.energyData.forEach((dataPoint) => {
           const pointDate = new Date(dataPoint.time);
-          
+
           // only include data points within the selected time range
           if (pointDate >= startDate && pointDate <= endDate) {
             const kwh = parseFloat(dataPoint.kwh) || 0;
             totalKwh += kwh;
             dataPointCount++;
-            
+
             // get cost for this specific date (async)
             costPromises.push(
               getCostForDate(pointDate).then(rate => ({ kwh, rate }))
@@ -310,12 +383,12 @@ function Dashboard() {
         dataPointCount
       };
     });
-    
+
     const ranked = await Promise.all(rankedPromises);
 
     // apply filters, when no filters selected, show all with data
     let filtered = ranked.filter(a => a.totalKwh > 0);
-    
+
     if (filter.length > 0) {
       filtered = ranked.filter(appliance => {
         // an appliance passes only if it matches ALL selected filters
@@ -329,7 +402,7 @@ function Dashboard() {
             'microwave': 'Microwave',
             'other': 'Other'
           };
-          
+
           if (typeMap[f]) {
             return appliance.applianceType === typeMap[f];
           }
@@ -349,7 +422,7 @@ function Dashboard() {
           } else if (f === 'low-cost') {
             return appliance.totalCost < 5 && appliance.totalCost > 0;
           }
-          
+
           return false;
         });
       });
@@ -366,7 +439,7 @@ function Dashboard() {
 
     // calculate total kWh for percentage calculation
     const totalKwhSum = filtered.reduce((sum, a) => sum + a.totalKwh, 0);
-    
+
     // add percentage to each appliance
     const withPercentage = filtered.map(appliance => ({
       ...appliance,
@@ -391,23 +464,23 @@ function Dashboard() {
         setLoading(false);
         return;
       }
-      
+
       const appliancesRef = collection(db, 'users', uid, 'appliances');
       const snapshot = await getDocs(appliancesRef);
       const data = [];
       snapshot.forEach((doc) => {
         data.push({ id: doc.id, ...doc.data() });
       });
-      
+
       setAppliances(data);
       setError(null);
-      
+
       console.log('Loaded appliances:', data);
       if (data.length > 0) {
         console.log('First appliance structure:', data[0]);
         console.log('First appliance energyData:', data[0].energyData);
       }
-      
+
       // calculate stats if we have appliances with energy data
       if (data.length > 0) {
         calculateStats(data);
@@ -432,18 +505,18 @@ function Dashboard() {
         setLoadingReports(false);
         return;
       }
-      
+
       const reportsRef = collection(db, 'users', uid, 'reports');
       const snapshot = await getDocs(reportsRef);
       const reportsData = [];
-      
+
       snapshot.forEach((doc) => {
         reportsData.push({ id: doc.id, ...doc.data() });
       });
-      
+
       // sort by creation date, newest first
       reportsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
+
       setReports(reportsData);
     } catch (err) {
       console.error('Error fetching reports:', err);
@@ -455,10 +528,11 @@ function Dashboard() {
   // load appliances on mount and when user changes
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (user) {
       fetchAppliances();
       fetchReports();
+      loadSavedFilter();
     } else {
       navigate('/');
     }
@@ -490,328 +564,357 @@ function Dashboard() {
           border: '1px solid #e5e7eb',
           padding: '32px'
         }}>
-          <h2 style={{ 
-            margin: '0 0 32px 0', 
-            fontSize: '24px', 
-            fontWeight: '600', 
-            color: '#1f2937' 
+          <h2 style={{
+            margin: '0 0 32px 0',
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#1f2937'
           }}>
             Dashboard
           </h2>
 
-        {error && (
-          <div style={{
-            padding: '12px 16px',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            borderRadius: '6px',
-            border: '1px solid #fecaca',
-            fontSize: '14px',
-            fontWeight: '500',
-            marginBottom: '24px'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="loading-container">
-            Loading...
-          </div>
-        ) : appliances.length === 0 ? (
-          <div className="welcome-container">
-            <p style={{ fontSize: '16px', marginBottom: '16px' }}>
-              No appliances found.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="stats-grid">
-              {/* total energy used card */}
-              <div className="stat-card">
-                <div className="stat-header">
-                  <h3 className="stat-title">Total Energy Used</h3>
-                  <div 
-                    ref={iconRefEnergy}
-                    className="tooltip-container"
-                    onMouseEnter={() => setShowTooltipEnergy(true)}
-                    onMouseLeave={() => setShowTooltipEnergy(false)}
-                  >
-                    <Info size={16} color="#6b7280" className="info-icon" />
-                    {showTooltipEnergy && (
-                      <div 
-                        ref={tooltipRefEnergy}
-                        className="tooltip"
-                        style={{
-                          top: `${tooltipPositionEnergy.top}px`,
-                          left: `${tooltipPositionEnergy.left}px`
-                        }}
-                      >
-                        Total sum of all energy usage (kWh) across all your appliances based on the data you've provided.
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="stat-divider"></div>
-                <p className="stat-value">
-                  {stats.totalEnergy.toFixed(2)}
-                  <span className="stat-unit">kWh</span>
-                </p>
-              </div>
-
-              {/* monthly change card */}
-              <div className="stat-card">
-                <div className="stat-header">
-                  <h3 className="stat-title">Energy Usage Change vs. Last Month</h3>
-                  <div 
-                    ref={iconRefChange}
-                    className="tooltip-container"
-                    onMouseEnter={() => setShowTooltipChange(true)}
-                    onMouseLeave={() => setShowTooltipChange(false)}
-                  >
-                    <Info size={16} color="#6b7280" className="info-icon" />
-                    {showTooltipChange && (
-                      <div 
-                        ref={tooltipRefChange}
-                        className="tooltip"
-                        style={{
-                          top: `${tooltipPositionChange.top}px`,
-                          left: `${tooltipPositionChange.left}px`
-                        }}
-                      >
-                        Compares current month's energy usage to last month's. Negative % (green) means less energy used this month. Positive % (red) means more energy used. 0% (gray) means same usage.
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="stat-divider"></div>
-                {stats.monthlyChange !== null ? (
-                  <p className={`stat-value ${stats.monthlyChange > 0 ? 'red' : stats.monthlyChange < 0 ? 'green' : 'gray'}`}>
-                    {stats.monthlyChange > 0 ? '+' : ''}{stats.monthlyChange.toFixed(2)}%
-                  </p>
-                ) : (
-                  <p className="stat-na">
-                    N/A - Data from one month only
-                  </p>
-                )}
-              </div>
-
-              {/* estimated monthly bill card */}
-              <div className="stat-card">
-                <div className="stat-header">
-                  <h3 className="stat-title">Estimated Monthly Bill</h3>
-                  <div 
-                    ref={iconRef}
-                    className="tooltip-container"
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
-                  >
-                    <Info size={16} color="#6b7280" className="info-icon" />
-                    {showTooltip && (
-                      <div 
-                        ref={tooltipRef}
-                        className="tooltip"
-                        style={{
-                          top: `${tooltipPosition.top}px`,
-                          left: `${tooltipPosition.left}px`
-                        }}
-                      >
-                        {stats.billDataSource && stats.billDataSource.includes('current month') 
-                          ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'
-                          : stats.billDataSource
-                          ? `Estimated using data from ${stats.billDataSource} since no current month data is available. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.`
-                          : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="stat-divider"></div>
-                <p className="stat-value">
-                  ${stats.estimatedBill.toFixed(2)}
-                </p>
-              </div>
+          {error && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: '#fee2e2',
+              color: '#991b1b',
+              borderRadius: '6px',
+              border: '1px solid #fecaca',
+              fontSize: '14px',
+              fontWeight: '500',
+              marginBottom: '24px'
+            }}>
+              {error}
             </div>
+          )}
 
-            {/* appliance ranking and reports sections */}
-            <div className="dashboard-sections">
-              <div className="ranking-section">
-                <h2>Appliance Rankings</h2>
-
-                <div className="ranking-filters">
-                  <div className="filter-group">
-                    <label>Rank By:</label>
-                    <div className="filter-dropdown">
-                      <div 
-                        className="filter-dropdown-toggle"
-                        onClick={() => setIsRankOpen(!isRankOpen)}
-                      >
-                        <span>{rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}</span>
-                        <span className="dropdown-arrow">{isRankOpen ? '▲' : '▼'}</span>
-                      </div>
-                      {isRankOpen && (
-                        <div className="filter-options">
-                          <div className="filter-section">
-                            <label className="filter-option" onClick={() => { setRankBy('kwh'); setIsRankOpen(false); }}>
-                              <input type="radio" checked={rankBy === 'kwh'} readOnly />
-                              <span>Energy (kWh)</span>
-                            </label>
-                            <label className="filter-option" onClick={() => { setRankBy('price'); setIsRankOpen(false); }}>
-                              <input type="radio" checked={rankBy === 'price'} readOnly />
-                              <span>Cost ($)</span>
-                            </label>
-                          </div>
+          {loading ? (
+            <div className="loading-container">
+              Loading...
+            </div>
+          ) : appliances.length === 0 ? (
+            <div className="welcome-container">
+              <p style={{ fontSize: '16px', marginBottom: '16px' }}>
+                No appliances found.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="stats-grid">
+                {/* total energy used card */}
+                <div className="stat-card">
+                  <div className="stat-header">
+                    <h3 className="stat-title">Total Energy Used</h3>
+                    <div
+                      ref={iconRefEnergy}
+                      className="tooltip-container"
+                      onMouseEnter={() => setShowTooltipEnergy(true)}
+                      onMouseLeave={() => setShowTooltipEnergy(false)}
+                    >
+                      <Info size={16} color="#6b7280" className="info-icon" />
+                      {showTooltipEnergy && (
+                        <div
+                          ref={tooltipRefEnergy}
+                          className="tooltip"
+                          style={{
+                            top: `${tooltipPositionEnergy.top}px`,
+                            left: `${tooltipPositionEnergy.left}px`
+                          }}
+                        >
+                          Total sum of all energy usage (kWh) across all your appliances based on the data you've provided.
                         </div>
                       )}
                     </div>
                   </div>
-
-                  <div className="filter-group">
-                    <label>Filter By:</label>
-                    <div className="filter-dropdown">
-                      <div 
-                        className="filter-dropdown-toggle"
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
-                      >
-                        <span>
-                          {filterBy.length === 0 ? 'All Appliances' : `${filterBy.length} filter${filterBy.length > 1 ? 's' : ''} selected`}
-                        </span>
-                        <span className="dropdown-arrow">{isFilterOpen ? '▲' : '▼'}</span>
-                      </div>
-                      {isFilterOpen && (
-                        <div className="filter-options">
-                          <div className="filter-section">
-                            <div className="filter-section-title">Appliance Type</div>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('refrigerator')} onChange={() => toggleFilter('refrigerator')} />
-                              <span>Refrigerator</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('washer')} onChange={() => toggleFilter('washer')} />
-                              <span>Washer</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('dryer')} onChange={() => toggleFilter('dryer')} />
-                              <span>Dryer</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('oven')} onChange={() => toggleFilter('oven')} />
-                              <span>Oven</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('dishwasher')} onChange={() => toggleFilter('dishwasher')} />
-                              <span>Dishwasher</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('microwave')} onChange={() => toggleFilter('microwave')} />
-                              <span>Microwave</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('other')} onChange={() => toggleFilter('other')} />
-                              <span>Other</span>
-                            </label>
-                          </div>
-                          <div className="filter-section">
-                            <div className="filter-section-title">Energy Usage</div>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('high-energy')} onChange={() => toggleFilter('high-energy')} />
-                              <span>High Energy (50+ kWh)</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('medium-energy')} onChange={() => toggleFilter('medium-energy')} />
-                              <span>Medium Energy (20-50 kWh)</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('low-energy')} onChange={() => toggleFilter('low-energy')} />
-                              <span>Low Energy (&lt; 20 kWh)</span>
-                            </label>
-                          </div>
-                          <div className="filter-section">
-                            <div className="filter-section-title">Cost</div>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('high-cost')} onChange={() => toggleFilter('high-cost')} />
-                              <span>High Cost ($10+)</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('medium-cost')} onChange={() => toggleFilter('medium-cost')} />
-                              <span>Medium Cost ($5-$10)</span>
-                            </label>
-                            <label className="filter-option">
-                              <input type="checkbox" checked={filterBy.includes('low-cost')} onChange={() => toggleFilter('low-cost')} />
-                              <span>Low Cost (&lt; $5)</span>
-                            </label>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="filter-group">
-                    <label>Time:</label>
-                    <div className="filter-dropdown">
-                      <div 
-                        className="filter-dropdown-toggle"
-                        onClick={() => setIsTimeOpen(!isTimeOpen)}
-                      >
-                        <span>
-                          {timeFilter === 'today' ? 'Today' :
-                           timeFilter === 'this-week' ? 'This Week' :
-                           timeFilter === 'this-month' ? 'This Month' :
-                           timeFilter === 'last-month' ? 'Last Month' : 'All Time'}
-                        </span>
-                        <span className="dropdown-arrow">{isTimeOpen ? '▲' : '▼'}</span>
-                      </div>
-                      {isTimeOpen && (
-                        <div className="filter-options">
-                          <div className="filter-section">
-                            <label className="filter-option" onClick={() => { setTimeFilter('today'); setIsTimeOpen(false); }}>
-                              <input type="radio" checked={timeFilter === 'today'} readOnly />
-                              <span>Today</span>
-                            </label>
-                            <label className="filter-option" onClick={() => { setTimeFilter('this-week'); setIsTimeOpen(false); }}>
-                              <input type="radio" checked={timeFilter === 'this-week'} readOnly />
-                              <span>This Week</span>
-                            </label>
-                            <label className="filter-option" onClick={() => { setTimeFilter('this-month'); setIsTimeOpen(false); }}>
-                              <input type="radio" checked={timeFilter === 'this-month'} readOnly />
-                              <span>This Month</span>
-                            </label>
-                            <label className="filter-option" onClick={() => { setTimeFilter('last-month'); setIsTimeOpen(false); }}>
-                              <input type="radio" checked={timeFilter === 'last-month'} readOnly />
-                              <span>Last Month</span>
-                            </label>
-                            <label className="filter-option" onClick={() => { setTimeFilter('all-time'); setIsTimeOpen(false); }}>
-                              <input type="radio" checked={timeFilter === 'all-time'} readOnly />
-                              <span>All Time</span>
-                            </label>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <div className="stat-divider"></div>
+                  <p className="stat-value">
+                    {stats.totalEnergy.toFixed(2)}
+                    <span className="stat-unit">kWh</span>
+                  </p>
                 </div>
 
-                <div className="ranked-list">
-                  {rankedAppliances.length === 0 ? (
-                    <div className="no-data">
-                      <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>N/A</div>
-                      <div style={{ fontSize: '14px' }}>
-                        {appliances.length === 0 
-                          ? 'No appliances available. Add appliances to see rankings.'
-                          : (() => {
+                {/* monthly change card */}
+                <div className="stat-card">
+                  <div className="stat-header">
+                    <h3 className="stat-title">Energy Usage Change vs. Last Month</h3>
+                    <div
+                      ref={iconRefChange}
+                      className="tooltip-container"
+                      onMouseEnter={() => setShowTooltipChange(true)}
+                      onMouseLeave={() => setShowTooltipChange(false)}
+                    >
+                      <Info size={16} color="#6b7280" className="info-icon" />
+                      {showTooltipChange && (
+                        <div
+                          ref={tooltipRefChange}
+                          className="tooltip"
+                          style={{
+                            top: `${tooltipPositionChange.top}px`,
+                            left: `${tooltipPositionChange.left}px`
+                          }}
+                        >
+                          Compares current month's energy usage to last month's. Negative % (green) means less energy used this month. Positive % (red) means more energy used. 0% (gray) means same usage.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="stat-divider"></div>
+                  {stats.monthlyChange !== null ? (
+                    <p className={`stat-value ${stats.monthlyChange > 0 ? 'red' : stats.monthlyChange < 0 ? 'green' : 'gray'}`}>
+                      {stats.monthlyChange > 0 ? '+' : ''}{stats.monthlyChange.toFixed(2)}%
+                    </p>
+                  ) : (
+                    <p className="stat-na">
+                      N/A - Data from one month only
+                    </p>
+                  )}
+                </div>
+
+                {/* estimated monthly bill card */}
+                <div className="stat-card">
+                  <div className="stat-header">
+                    <h3 className="stat-title">Estimated Monthly Bill</h3>
+                    <div
+                      ref={iconRef}
+                      className="tooltip-container"
+                      onMouseEnter={() => setShowTooltip(true)}
+                      onMouseLeave={() => setShowTooltip(false)}
+                    >
+                      <Info size={16} color="#6b7280" className="info-icon" />
+                      {showTooltip && (
+                        <div
+                          ref={tooltipRef}
+                          className="tooltip"
+                          style={{
+                            top: `${tooltipPosition.top}px`,
+                            left: `${tooltipPosition.left}px`
+                          }}
+                        >
+                          {stats.billDataSource && stats.billDataSource.includes('current month')
+                            ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'
+                            : stats.billDataSource
+                              ? `Estimated using data from ${stats.billDataSource} since no current month data is available. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.`
+                              : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="stat-divider"></div>
+                  <p className="stat-value">
+                    ${stats.estimatedBill.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              {/* appliance ranking and reports sections */}
+              <div className="dashboard-sections">
+                <div className="ranking-section">
+                  <h2>Appliance Rankings</h2>
+
+                  <div className="ranking-filters">
+                    <div className="filter-group">
+                      <label>Rank By:</label>
+                      <div className="filter-dropdown">
+                        <div
+                          className="filter-dropdown-toggle"
+                          onClick={() => setIsRankOpen(!isRankOpen)}
+                        >
+                          <span>{rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}</span>
+                          <span className="dropdown-arrow">{isRankOpen ? '▲' : '▼'}</span>
+                        </div>
+                        {isRankOpen && (
+                          <div className="filter-options">
+                            <div className="filter-section">
+                              <label className="filter-option" onClick={() => { setRankBy('kwh'); setIsRankOpen(false); }}>
+                                <input type="radio" checked={rankBy === 'kwh'} readOnly />
+                                <span>Energy (kWh)</span>
+                              </label>
+                              <label className="filter-option" onClick={() => { setRankBy('price'); setIsRankOpen(false); }}>
+                                <input type="radio" checked={rankBy === 'price'} readOnly />
+                                <span>Cost ($)</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="filter-group">
+                      <label>Filter By:</label>
+                      <div className="filter-dropdown">
+                        <div
+                          className="filter-dropdown-toggle"
+                          onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        >
+                          <span>
+                            {filterBy.length === 0 ? 'All Appliances' : `${filterBy.length} filter${filterBy.length > 1 ? 's' : ''} selected`}
+                          </span>
+                          <span className="dropdown-arrow">{isFilterOpen ? '▲' : '▼'}</span>
+                        </div>
+                        {isFilterOpen && (
+                          <div className="filter-options">
+                            <div className="filter-section">
+                              <div className="filter-section-title">Appliance Type</div>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('refrigerator')} onChange={() => toggleFilter('refrigerator')} />
+                                <span>Refrigerator</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('washer')} onChange={() => toggleFilter('washer')} />
+                                <span>Washer</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('dryer')} onChange={() => toggleFilter('dryer')} />
+                                <span>Dryer</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('oven')} onChange={() => toggleFilter('oven')} />
+                                <span>Oven</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('dishwasher')} onChange={() => toggleFilter('dishwasher')} />
+                                <span>Dishwasher</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('microwave')} onChange={() => toggleFilter('microwave')} />
+                                <span>Microwave</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('other')} onChange={() => toggleFilter('other')} />
+                                <span>Other</span>
+                              </label>
+                            </div>
+                            <div className="filter-section">
+                              <div className="filter-section-title">Energy Usage</div>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('high-energy')} onChange={() => toggleFilter('high-energy')} />
+                                <span>High Energy (50+ kWh)</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('medium-energy')} onChange={() => toggleFilter('medium-energy')} />
+                                <span>Medium Energy (20-50 kWh)</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('low-energy')} onChange={() => toggleFilter('low-energy')} />
+                                <span>Low Energy (&lt; 20 kWh)</span>
+                              </label>
+                            </div>
+                            <div className="filter-section">
+                              <div className="filter-section-title">Cost</div>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('high-cost')} onChange={() => toggleFilter('high-cost')} />
+                                <span>High Cost ($10+)</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('medium-cost')} onChange={() => toggleFilter('medium-cost')} />
+                                <span>Medium Cost ($5-$10)</span>
+                              </label>
+                              <label className="filter-option">
+                                <input type="checkbox" checked={filterBy.includes('low-cost')} onChange={() => toggleFilter('low-cost')} />
+                                <span>Low Cost (&lt; $5)</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="filter-group">
+                      <label>Time:</label>
+                      <div className="filter-dropdown">
+                        <div
+                          className="filter-dropdown-toggle"
+                          onClick={() => setIsTimeOpen(!isTimeOpen)}
+                        >
+                          <span>
+                            {timeFilter === 'today' ? 'Today' :
+                              timeFilter === 'this-week' ? 'This Week' :
+                                timeFilter === 'this-month' ? 'This Month' :
+                                  timeFilter === 'last-month' ? 'Last Month' : 'All Time'}
+                          </span>
+                          <span className="dropdown-arrow">{isTimeOpen ? '▲' : '▼'}</span>
+                        </div>
+                        {isTimeOpen && (
+                          <div className="filter-options">
+                            <div className="filter-section">
+                              <label className="filter-option" onClick={() => { setTimeFilter('today'); setIsTimeOpen(false); }}>
+                                <input type="radio" checked={timeFilter === 'today'} readOnly />
+                                <span>Today</span>
+                              </label>
+                              <label className="filter-option" onClick={() => { setTimeFilter('this-week'); setIsTimeOpen(false); }}>
+                                <input type="radio" checked={timeFilter === 'this-week'} readOnly />
+                                <span>This Week</span>
+                              </label>
+                              <label className="filter-option" onClick={() => { setTimeFilter('this-month'); setIsTimeOpen(false); }}>
+                                <input type="radio" checked={timeFilter === 'this-month'} readOnly />
+                                <span>This Month</span>
+                              </label>
+                              <label className="filter-option" onClick={() => { setTimeFilter('last-month'); setIsTimeOpen(false); }}>
+                                <input type="radio" checked={timeFilter === 'last-month'} readOnly />
+                                <span>Last Month</span>
+                              </label>
+                              <label className="filter-option" onClick={() => { setTimeFilter('all-time'); setIsTimeOpen(false); }}>
+                                <input type="radio" checked={timeFilter === 'all-time'} readOnly />
+                                <span>All Time</span>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="filter-group" style={{
+                      display: 'flex',
+                      gap: '8px',
+                      alignItems: 'center',
+                      marginLeft: 'auto'
+                    }}>
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={saveFilterSettings}
+                          onChange={(e) => handleSaveFilterToggle(e.target.checked)}
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span>Save these settings</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="ranked-list">
+                    {rankedAppliances.length === 0 ? (
+                      <div className="no-data">
+                        <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>N/A</div>
+                        <div style={{ fontSize: '14px' }}>
+                          {appliances.length === 0
+                            ? 'No appliances available. Add appliances to see rankings.'
+                            : (() => {
                               const timeMessage = timeFilter === 'today'
                                 ? 'today'
                                 : timeFilter === 'this-week'
-                                ? 'this week'
-                                : timeFilter === 'this-month'
-                                ? 'this month'
-                                : timeFilter === 'this-year'
-                                ? 'this year'
-                                : 'the selected time period';
-                              
+                                  ? 'this week'
+                                  : timeFilter === 'this-month'
+                                    ? 'this month'
+                                    : timeFilter === 'this-year'
+                                      ? 'this year'
+                                      : 'the selected time period';
+
                               const hasAnyData = appliances.some(a => a.energyData && a.energyData.length > 0);
                               const noDataInTimeRange = appliances.every(a => {
                                 if (!a.energyData || a.energyData.length === 0) return true;
-                                
+
                                 // check if this appliance has any data points in the time range
                                 return !a.energyData.some(dataPoint => {
                                   const pointDate = new Date(dataPoint.time);
@@ -820,7 +923,7 @@ function Dashboard() {
                                   const currentMonth = now.getMonth();
                                   const currentDate = now.getDate();
                                   const currentDay = now.getDay();
-                                  
+
                                   let startDate, endDate;
                                   switch (timeFilter) {
                                     case 'today':
@@ -845,15 +948,15 @@ function Dashboard() {
                                       startDate = new Date(0);
                                       endDate = new Date(currentYear, currentMonth, currentDate, 23, 59, 59);
                                   }
-                                  
+
                                   return pointDate >= startDate && pointDate <= endDate;
                                 });
                               });
-                              
+
                               if (hasAnyData && noDataInTimeRange) {
                                 return `No energy data found ${timeMessage}. Your appliances have data from other time periods.`;
                               }
-                              
+
                               const filterMessages = {
                                 'refrigerator': 'No refrigerators',
                                 'washer': 'No washers',
@@ -869,7 +972,7 @@ function Dashboard() {
                                 'medium-cost': 'No appliances with medium cost ($5-$10)',
                                 'low-cost': 'No appliances with low cost (< $5)'
                               };
-                              
+
                               const message = filterMessages[filterBy];
                               if (message) {
                                 return `${message} found ${timeMessage}.`;
@@ -877,107 +980,107 @@ function Dashboard() {
                                 return `No appliances found ${timeMessage}.`;
                               }
                             })()
-                        }
+                          }
+                        </div>
                       </div>
+                    ) : (
+                      rankedAppliances.map((appliance, index) => (
+                        <div
+                          key={appliance.id}
+                          className="ranked-item"
+                          onClick={() => handleApplianceClick(appliance.id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className="rank-number">#{index + 1}</div>
+                          <div className="appliance-info">
+                            <div className="appliance-name">{appliance.name}</div>
+                            <div className="appliance-kwh">{appliance.totalKwh.toFixed(2)} kWh</div>
+                          </div>
+                          <div className="appliance-cost">
+                            ${appliance.totalCost.toFixed(2)}
+                          </div>
+                          <div className="appliance-percentage">
+                            {appliance.percentage.toFixed(1)}%
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="previous-reports-section">
+                  <div className="reports-header">
+                    <h3 style={{ margin: 0 }}>Past Reports</h3>
+                    <button
+                      className="create-report-btn"
+                      onClick={() => navigate('/create-report')}
+                    >
+                      Create Report
+                    </button>
+                  </div>
+
+                  {loadingReports ? (
+                    <p>Loading reports...</p>
+                  ) : reports.length === 0 ? (
+                    <div className="no-reports">
+                      <p>No reports created yet.</p>
                     </div>
                   ) : (
-                    rankedAppliances.map((appliance, index) => (
-                      <div 
-                        key={appliance.id} 
-                        className="ranked-item"
-                        onClick={() => handleApplianceClick(appliance.id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className="rank-number">#{index + 1}</div>
-                        <div className="appliance-info">
-                          <div className="appliance-name">{appliance.name}</div>
-                          <div className="appliance-kwh">{appliance.totalKwh.toFixed(2)} kWh</div>
-                        </div>
-                        <div className="appliance-cost">
-                          ${appliance.totalCost.toFixed(2)}
-                        </div>
-                        <div className="appliance-percentage">
-                          {appliance.percentage.toFixed(1)}%
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="previous-reports-section">
-                <div className="reports-header">
-                  <h3 style={{ margin: 0 }}>Past Reports</h3>
-                  <button 
-                    className="create-report-btn"
-                    onClick={() => navigate('/create-report')}
-                  >
-                    Create Report
-                  </button>
-                </div>
-
-                {loadingReports ? (
-                  <p>Loading reports...</p>
-                ) : reports.length === 0 ? (
-                  <div className="no-reports">
-                    <p>No reports created yet.</p>
-                  </div>
-                ) : (
-                  <div className="reports-grid">
-                    {reports.slice(0, 5).map((report) => (
-                      <div 
-                        key={report.id} 
-                        className="report-preview-card"
-                        onClick={() => navigate('/report-view', { state: { reportData: report } })}
-                      >
-                        {report.chartImage && (
-                          <img 
-                            src={report.chartImage} 
-                            alt={report.reportName}
-                            className="report-chart-image"
-                          />
-                        )}
-                        <div className="report-info">
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <p className="report-name">{report.reportName}</p>
-                            {report.startDate && report.endDate && (
-                              <p className="report-date" style={{ fontSize: '11px', color: '#9ca3af' }}>
-                                Created on: {new Date(report.createdAt).toLocaleDateString('en-US', {
+                    <div className="reports-grid">
+                      {reports.slice(0, 5).map((report) => (
+                        <div
+                          key={report.id}
+                          className="report-preview-card"
+                          onClick={() => navigate('/report-view', { state: { reportData: report } })}
+                        >
+                          {report.chartImage && (
+                            <img
+                              src={report.chartImage}
+                              alt={report.reportName}
+                              className="report-chart-image"
+                            />
+                          )}
+                          <div className="report-info">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <p className="report-name">{report.reportName}</p>
+                              {report.startDate && report.endDate && (
+                                <p className="report-date" style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                  Created on: {new Date(report.createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </p>
+                              )}
+                            </div>
+                            <p className="report-date" style={{ textAlign: 'right' }}>
+                              {report.startDate && report.endDate ? (
+                                `${new Date(report.startDate).toLocaleDateString('en-US', {
                                   month: 'short',
                                   day: 'numeric',
                                   year: 'numeric'
-                                })}
-                              </p>
-                            )}
+                                })} - ${new Date(report.endDate).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}`
+                              ) : (
+                                new Date(report.createdAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })
+                              )}
+                            </p>
                           </div>
-                          <p className="report-date" style={{ textAlign: 'right' }}>
-                            {report.startDate && report.endDate ? (
-                              `${new Date(report.startDate).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })} - ${new Date(report.endDate).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}`
-                            ) : (
-                              new Date(report.createdAt).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })
-                            )}
-                          </p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
         </div>
       </div>
     </Layout>
