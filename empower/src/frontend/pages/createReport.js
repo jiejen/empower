@@ -236,11 +236,47 @@ function CreateReport() {
 
   return (
     <Layout activePage="Create Report" userName={user?.name || user?.email || 'User'} onLogout={logout}>
-      <div style={{padding: '32px', maxWidth: '1000px'}}>
-        <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '32px'}}>
+      <div style={{ padding: '32px', maxWidth: '1000px' }}>
+        <div style={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '32px' }}>
           <h2 style={{margin: '0 0 32px 0', fontSize: '24px', fontWeight: '600', color: '#1f2937'}}>
             Create Report
           </h2>
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+              Loading appliances...
+            </div>
+          )}
+  
+          {!loading && error && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#dc2626' }}>
+              Error loading appliances: {error}
+            </div>
+          )}
+  
+          {!loading && !error && appliances.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+              No appliances yet. Add appliances before creating a report!
+              <br /><br />
+              <button
+                onClick={() => navigate('/add-appliance')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                + Add Appliance
+              </button>
+            </div>
+          )}
+  
+          {!loading && !error && appliances.length > 0 && (
+            <>
 
           <div style={{marginBottom: '24px'}}>
             <label style={{display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px'}}>
@@ -262,13 +298,13 @@ function CreateReport() {
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
               <div>
                 <label style={{display: 'block', fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '6px'}}>
-                  Start Date
+                  Start Date *
                 </label>
                 <input type="date" value={startDate} max={getTodayDate()} onChange={(e) => handleStartDateChange(e.target.value)} style={{width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '15px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white'}}/>
               </div>
               <div>
                 <label style={{display: 'block', fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '6px'}}>
-                  End Date
+                  End Date *
                 </label>
                 <input type="date" value={endDate} min={startDate} max={getTodayDate()} onChange={(e) => handleEndDateChange(e.target.value)} disabled={!startDate} style={{width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '15px', outline: 'none', boxSizing: 'border-box', backgroundColor: !startDate ? '#f3f4f6' : 'white', cursor: !startDate ? 'not-allowed' : 'pointer'}}/>
               </div>
@@ -510,10 +546,13 @@ function CreateReport() {
           <button onClick={handleSubmit} style={{padding: '12px 32px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '6px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', transition: 'background-color 0.2s'}} onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'} onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}>
             Create Report
           </button>
+            </>
+          )}
+  
         </div>
       </div>
     </Layout>
-  );
+  );  
 }
 
 export default CreateReport;
