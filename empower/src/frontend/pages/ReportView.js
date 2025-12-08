@@ -23,7 +23,6 @@ function ReportView()
   const [showAdvancedStats, setShowAdvancedStats] = useState(false);
   const [applianceBreakdown, setApplianceBreakdown] = useState([]);
   const [peakUsageTime, setPeakUsageTime] = useState(null);
-  const [comparisonStats] = useState(null);
   const [energySavingTips, setEnergySavingTips] = useState([]);
 
   useEffect(() => {
@@ -333,8 +332,7 @@ function ReportView()
         advancedStats: {
           applianceBreakdown,
           peakUsageTime,
-          energySavingTips,
-          comparisonStats
+          energySavingTips
         },
         createdAt: new Date().toISOString()
       };
