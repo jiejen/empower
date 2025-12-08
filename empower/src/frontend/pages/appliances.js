@@ -21,7 +21,7 @@ function Appliances() {
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (user) {
       fetchAppliances();
     } else {
@@ -33,16 +33,16 @@ function Appliances() {
     if (location.state?.highlightId && appliances.length > 0) {
       const id = location.state.highlightId;
       setHighlightId(id);
-      
+
       setTimeout(() => {
         if (applianceRefs.current[id]) {
-          applianceRefs.current[id].scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
+          applianceRefs.current[id].scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
           });
         }
       }, 100);
-      
+
       // remove highlight after 2 seconds
       setTimeout(() => {
         setHighlightId(null);
@@ -165,7 +165,7 @@ function Appliances() {
       const diffMs = last - first;
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      
+
       if (diffDays > 0) {
         return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
       } else if (diffHours > 0) {
@@ -183,7 +183,7 @@ function Appliances() {
     if (!appliance.energyData || appliance.energyData.length === 0) {
       return null;
     }
-    
+
     const data = appliance.energyData;
     const totalKwh = data.reduce((sum, point) => sum + (point.kwh || 0), 0);
     const avgKwh = totalKwh / data.length;
@@ -192,7 +192,7 @@ function Appliances() {
     const firstTime = data[0]?.time;
     const lastTime = data[data.length - 1]?.time;
     const timePeriod = getTimePeriodDescription(firstTime, lastTime);
-    
+
     return {
       totalKwh: totalKwh.toFixed(2),
       avgKwh: avgKwh.toFixed(2),
@@ -230,11 +230,11 @@ function Appliances() {
           padding: '32px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-            <h2 style={{ 
-              margin: 0, 
-              fontSize: '25px', 
-              fontWeight: '600', 
-              color: '#1f2937' 
+            <h2 style={{
+              margin: 0,
+              fontSize: '25px',
+              fontWeight: '600',
+              color: '#1f2937'
             }}>
               All Appliances
             </h2>
@@ -285,13 +285,13 @@ function Appliances() {
               </button>
             </div>
           </div>
-        
+
           {loading && (
             <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
               Loading appliances...
             </div>
           )}
-        
+
           {error && (
             <div style={{
               padding: '12px 16px',
@@ -306,13 +306,13 @@ function Appliances() {
               {error}
             </div>
           )}
-        
+
           {!loading && !error && appliances.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
               No appliances yet. Add one to get started!
             </div>
           )}
-        
+
           {!loading && !error && appliances.length > 0 && (
             <>
               {favoriteAppliances.length > 0 && (
@@ -342,272 +342,275 @@ function Appliances() {
                       ({favoriteAppliances.length})
                     </span>
                   </div>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                     gap: '24px'
                   }}>
                     {favoriteAppliances.map((appliance) => {
-                const stats = getEnergyStats(appliance);
-                const isDeleting = deletingId === appliance.id;
-                const isHighlighted = highlightId === appliance.id;
-                
-                return (
-                  <div 
-                    key={appliance.id}
-                    ref={(el) => applianceRefs.current[appliance.id] = el}
-                    style={{ 
-                      border: isHighlighted ? '1px solid #6b7280' : '1px solid #e5e7eb', 
-                      borderRadius: '8px', 
-                      padding: '24px',
-                      backgroundColor: isHighlighted ? '#f9fafb' : '#fff',
-                      boxShadow: isHighlighted ? '0 4px 12px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
-                      transition: 'all 0.3s ease',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isHighlighted) {
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isHighlighted) {
-                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                      }
-                    }}
-                  >
-                    <div style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '16px',
-                      display: 'flex',
-                      gap: '8px',
-                      zIndex: 10
-                    }}>
-                      <button
-                        onClick={() => handleToggleFavorite(appliance.id, appliance.isFavorite)}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '4px',
-                          fontSize: '16px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#f9fafb';
-                          e.target.style.transform = 'scale(1.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                          e.target.style.transform = 'scale(1)';
-                        }}
-                        title={appliance.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill={appliance.isFavorite ? '#ef4444' : 'none'} stroke={appliance.isFavorite ? '#ef4444' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                      </button>
+                      const stats = getEnergyStats(appliance);
+                      const isDeleting = deletingId === appliance.id;
+                      const isHighlighted = highlightId === appliance.id;
 
-                      <button
-                        onClick={() => handleDeleteClick(appliance)}
-                        disabled={isDeleting}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: isDeleting ? '#9ca3af' : '#ef4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: isDeleting ? 'not-allowed' : 'pointer',
-                          transition: 'background-color 0.2s',
-                          opacity: isDeleting ? 0.6 : 1
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isDeleting) {
-                            e.target.style.backgroundColor = '#dc2626';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isDeleting) {
-                            e.target.style.backgroundColor = '#ef4444';
-                          }
-                        }}
-                      >
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
+                      return (
+                        <div
+                          key={appliance.id}
+                          ref={(el) => applianceRefs.current[appliance.id] = el}
+                          style={{
+                            border: isHighlighted ? '1px solid #6b7280' : '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            padding: '24px',
+                            backgroundColor: isHighlighted ? '#f9fafb' : '#fff',
+                            boxShadow: isHighlighted ? '0 4px 12px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease',
+                            position: 'relative'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isHighlighted) {
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isHighlighted) {
+                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                            }
+                          }}
+                        >
+                          <div style={{
+                            position: 'absolute',
+                            top: '16px',
+                            right: '16px',
+                            display: 'flex',
+                            gap: '8px',
+                            zIndex: 10
+                          }}>
+                            <button
+                              onClick={() => handleToggleFavorite(appliance.id, appliance.isFavorite)}
+                              style={{
+                                padding: '6px 10px',
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '4px',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#f9fafb';
+                                e.target.style.transform = 'scale(1.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'white';
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                              title={appliance.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill={appliance.isFavorite ? '#ef4444' : 'none'} stroke={appliance.isFavorite ? '#ef4444' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                              </svg>
+                            </button>
 
-                    <div style={{ marginBottom: '16px', paddingRight: '120px' }}>
-                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
-                        {appliance.name}
-                      </h3>
-                    </div>
-                
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ 
-                        fontSize: '13px', 
-                        color: '#6b7280',
-                        marginRight: '8px'
-                      }}>Type:</span>
-                      <span style={{ 
-                        fontSize: '14px', 
-                        color: '#1f2937',
-                        fontWeight: '500'
-                      }}>
-                        {appliance.applianceType}
-                      </span>
-                    </div>
-                
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ 
-                        fontSize: '13px', 
-                        color: '#6b7280',
-                        marginRight: '8px'
-                      }}>Location:</span>
-                      <span style={{ 
-                        fontSize: '14px', 
-                        color: '#1f2937',
-                        fontWeight: '500'
-                      }}>
-                        {appliance.location}
-                      </span>
-                    </div>
-                
-                    {appliance.notes && (
-                      <div style={{ marginBottom: '12px' }}>
-                        <span style={{ 
-                          fontSize: '13px', 
-                          color: '#6b7280',
-                          marginRight: '8px'
-                        }}>Notes:</span>
-                        <span style={{ fontSize: '14px', color: '#374151' }}>
-                          {appliance.notes}
-                        </span>
-                      </div>
-                    )}
-                
-                    {stats && (
-                      <>
-                        <div style={{ 
-                          borderTop: '1px solid #e5e7eb',
-                          marginTop: '16px',
-                          paddingTop: '16px'
-                        }}>
-                          <div style={{ 
-                            fontSize: '12px', 
-                            fontWeight: '600', 
-                            color: '#6b7280',
-                            marginBottom: '16px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}>
-                            Energy Consumption Data
+                            <button
+                              onClick={() => handleDeleteClick(appliance)}
+                              disabled={isDeleting}
+                              style={{
+                                padding: '6px 10px',
+                                backgroundColor: isDeleting ? '#9ca3af' : '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                cursor: isDeleting ? 'not-allowed' : 'pointer',
+                                transition: 'background-color 0.2s',
+                                opacity: isDeleting ? 0.6 : 1
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isDeleting) {
+                                  e.target.style.backgroundColor = '#dc2626';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isDeleting) {
+                                  e.target.style.backgroundColor = '#ef4444';
+                                }
+                              }}
+                            >
+                              {isDeleting ? 'Deleting...' : 'Delete'}
+                            </button>
                           </div>
-                          
-                          <div style={{
-                            backgroundColor: '#f0fdf4',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            marginBottom: '16px'
-                          }}>
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                              Total Energy Consumption
-                            </div>
-                            <div style={{ 
-                              fontSize: '18px', 
-                              fontWeight: '600', 
-                              color: '#059669', 
-                              marginBottom: '4px' 
+
+                          <div style={{ marginBottom: '16px', paddingRight: '120px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                              {appliance.name}
+                            </h3>
+                          </div>
+
+                          <div style={{ marginBottom: '12px' }}>
+                            <span style={{
+                              fontSize: '13px',
+                              color: '#6b7280',
+                              marginRight: '8px'
+                            }}>Type:</span>
+                            <span style={{
+                              fontSize: '14px',
+                              color: '#1f2937',
+                              fontWeight: '500'
                             }}>
-                              {stats.totalKwh} kWh
-                            </div>
-                            <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                              Over {stats.timePeriod} ({formatDateTime(stats.firstTime)} to {formatDateTime(stats.lastTime)})
-                            </div>
+                              {appliance.applianceType}
+                            </span>
                           </div>
-                          
-                          <div style={{
-                            backgroundColor: '#f0fdf4',
-                            padding: '10px',
-                            borderRadius: '6px',
-                            marginBottom: '12px'
-                          }}>
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                              Average per Reading
-                            </div>
-                            <div style={{ fontSize: '16px', fontWeight: '600', color: '#059669' }}>
-                              {stats.avgKwh} kWh
-                            </div>
+
+                          <div style={{ marginBottom: '12px' }}>
+                            <span style={{
+                              fontSize: '13px',
+                              color: '#6b7280',
+                              marginRight: '8px'
+                            }}>Location:</span>
+                            <span style={{
+                              fontSize: '14px',
+                              color: '#1f2937',
+                              fontWeight: '500'
+                            }}>
+                              {appliance.location}
+                            </span>
                           </div>
-                          
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '12px'
-                          }}>
+
+                          {appliance.notes && (
+                            <div style={{ marginBottom: '12px' }}>
+                              <span style={{
+                                fontSize: '13px',
+                                color: '#6b7280',
+                                marginRight: '8px'
+                              }}>Notes:</span>
+                              <span style={{ fontSize: '14px', color: '#374151' }}>
+                                {appliance.notes}
+                              </span>
+                            </div>
+                          )}
+
+                          {stats && (
+                            <>
+                              <div style={{
+                                borderTop: '1px solid #e5e7eb',
+                                marginTop: '16px',
+                                paddingTop: '16px'
+                              }}>
+                                <div style={{
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  color: '#6b7280',
+                                  marginBottom: '16px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}>
+                                  Energy Consumption Data
+                                </div>
+
+                                <div style={{
+                                  backgroundColor: '#f0fdf4',
+                                  padding: '12px',
+                                  borderRadius: '6px',
+                                  marginBottom: '16px'
+                                }}>
+                                  <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                    Total Energy Consumption
+                                  </div>
+                                  <div style={{
+                                    fontSize: '18px',
+                                    fontWeight: '600',
+                                    color: '#059669',
+                                    marginBottom: '6px'
+                                  }}>
+                                    {stats.totalKwh} kWh
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#6b7280', lineHeight: '1.4' }}>
+                                    {formatDateTime(stats.firstTime)} to {formatDateTime(stats.lastTime)}
+                                  </div>
+                                  <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
+                                    ({stats.timePeriod})
+                                  </div>
+                                </div>
+
+                                <div style={{
+                                  backgroundColor: '#f0fdf4',
+                                  padding: '10px',
+                                  borderRadius: '6px',
+                                  marginBottom: '12px'
+                                }}>
+                                  <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                    Average per Reading
+                                  </div>
+                                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#059669' }}>
+                                    {stats.avgKwh} kWh
+                                  </div>
+                                </div>
+
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr 1fr',
+                                  gap: '12px'
+                                }}>
+                                  <div style={{
+                                    backgroundColor: '#f9fafb',
+                                    padding: '10px',
+                                    borderRadius: '6px'
+                                  }}>
+                                    <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                      Minimum Reading
+                                    </div>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                                      {stats.minKwh} kWh
+                                    </div>
+                                  </div>
+                                  <div style={{
+                                    backgroundColor: '#f9fafb',
+                                    padding: '10px',
+                                    borderRadius: '6px'
+                                  }}>
+                                    <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                      Maximum Reading
+                                    </div>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                                      {stats.maxKwh} kWh
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {!stats && (
                             <div style={{
-                              backgroundColor: '#f9fafb',
-                              padding: '10px',
-                              borderRadius: '6px'
+                              marginTop: '16px',
+                              paddingTop: '16px',
+                              borderTop: '1px solid #e5e7eb'
                             }}>
-                              <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                                Minimum Reading
-                              </div>
-                              <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                {stats.minKwh} kWh
+                              <div style={{
+                                fontSize: '12px',
+                                color: '#9ca3af',
+                                textAlign: 'center'
+                              }}>
+                                No energy data uploaded
                               </div>
                             </div>
-                            <div style={{
-                              backgroundColor: '#f9fafb',
-                              padding: '10px',
-                              borderRadius: '6px'
-                            }}>
-                              <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                                Maximum Reading
-                              </div>
-                              <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                {stats.maxKwh} kWh
-                              </div>
-                            </div>
+                          )}
+
+                          <div style={{
+                            fontSize: '12px',
+                            color: '#9ca3af',
+                            marginTop: '16px',
+                            paddingTop: '12px',
+                            borderTop: '1px solid #f3f4f6'
+                          }}>
+                            Added: {new Date(appliance.createdAt).toLocaleDateString()}
                           </div>
                         </div>
-                      </>
-                    )}
-                
-                    {!stats && (
-                      <div style={{ 
-                        marginTop: '16px',
-                        paddingTop: '16px',
-                        borderTop: '1px solid #e5e7eb'
-                      }}>
-                        <div style={{ 
-                          fontSize: '12px', 
-                          color: '#9ca3af',
-                          textAlign: 'center'
-                        }}>
-                          No energy data uploaded
-                        </div>
-                      </div>
-                    )}
-                
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: '#9ca3af', 
-                      marginTop: '16px',
-                      paddingTop: '12px',
-                      borderTop: '1px solid #f3f4f6'
-                    }}>
-                      Added: {new Date(appliance.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                );
-              })}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -624,259 +627,262 @@ function Appliances() {
                       All Appliances
                     </h3>
                   )}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                     gap: '24px'
                   }}>
                     {regularAppliances.map((appliance) => {
-                const stats = getEnergyStats(appliance);
-                const isDeleting = deletingId === appliance.id;
-                const isHighlighted = highlightId === appliance.id;
-                
-                return (
-                  <div 
-                    key={appliance.id}
-                    ref={(el) => applianceRefs.current[appliance.id] = el}
-                    style={{ 
-                      border: isHighlighted ? '1px solid #6b7280' : '1px solid #e5e7eb', 
-                      borderRadius: '8px', 
-                      padding: '24px',
-                      backgroundColor: isHighlighted ? '#f9fafb' : '#fff',
-                      boxShadow: isHighlighted ? '0 4px 12px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
-                      transition: 'all 0.3s ease',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isHighlighted) {
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isHighlighted) {
-                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                      }
-                    }}
-                  >
-                    <div style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '16px',
-                      display: 'flex',
-                      gap: '8px',
-                      zIndex: 10
-                    }}>
-                      <button
-                        onClick={() => handleToggleFavorite(appliance.id, appliance.isFavorite)}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '4px',
-                          fontSize: '16px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#f9fafb';
-                          e.target.style.transform = 'scale(1.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                          e.target.style.transform = 'scale(1)';
-                        }}
-                        title={appliance.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill={appliance.isFavorite ? '#ef4444' : 'none'} stroke={appliance.isFavorite ? '#ef4444' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                      </button>
+                      const stats = getEnergyStats(appliance);
+                      const isDeleting = deletingId === appliance.id;
+                      const isHighlighted = highlightId === appliance.id;
 
-                      <button
-                        onClick={() => handleDeleteClick(appliance)}
-                        disabled={isDeleting}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: isDeleting ? '#9ca3af' : '#ef4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: isDeleting ? 'not-allowed' : 'pointer',
-                          transition: 'background-color 0.2s',
-                          opacity: isDeleting ? 0.6 : 1
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isDeleting) {
-                            e.target.style.backgroundColor = '#dc2626';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isDeleting) {
-                            e.target.style.backgroundColor = '#ef4444';
-                          }
-                        }}
-                      >
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-
-                    <div style={{ marginBottom: '16px', paddingRight: '120px' }}>
-                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
-                        {appliance.name}
-                      </h3>
-                    </div>
-                
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ 
-                        fontSize: '13px', 
-                        color: '#6b7280',
-                        marginRight: '8px'
-                      }}>Type:</span>
-                      <span style={{ 
-                        fontSize: '14px', 
-                        color: '#1f2937',
-                        fontWeight: '500'
-                      }}>
-                        {appliance.applianceType}
-                      </span>
-                    </div>
-                
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ 
-                        fontSize: '13px', 
-                        color: '#6b7280',
-                        marginRight: '8px'
-                      }}>Location:</span>
-                      <span style={{ 
-                        fontSize: '14px', 
-                        color: '#1f2937',
-                        fontWeight: '500'
-                      }}>
-                        {appliance.location}
-                      </span>
-                    </div>
-                
-                    {appliance.notes && (
-                      <div style={{ marginBottom: '12px' }}>
-                        <span style={{ 
-                          fontSize: '13px', 
-                          color: '#6b7280',
-                          marginRight: '8px'
-                        }}>Notes:</span>
-                        <span style={{ 
-                          fontSize: '14px', 
-                          color: '#1f2937'
-                        }}>
-                          {appliance.notes}
-                        </span>
-                      </div>
-                    )}
-
-                    {stats && (
-                      <div style={{
-                        marginTop: '16px',
-                        borderTop: '1px solid #e5e7eb',
-                        paddingTop: '16px'
-                      }}>
-                        <div style={{ 
-                          fontSize: '12px', 
-                          fontWeight: '600', 
-                          color: '#6b7280',
-                          marginBottom: '16px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>
-                          Energy Consumption Data
-                        </div>
-                        
-                        <div style={{
-                          backgroundColor: '#f0fdf4',
-                          padding: '12px',
-                          borderRadius: '6px',
-                          marginBottom: '16px'
-                        }}>
-                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                            Total Energy Consumption
-                          </div>
-                          <div style={{ 
-                            fontSize: '18px', 
-                            fontWeight: '600', 
-                            color: '#059669', 
-                            marginBottom: '4px' 
-                          }}>
-                            {stats.totalKwh} kWh
-                          </div>
-                          <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                            Over {stats.timePeriod} ({stats.dataPoints} data points)
-                          </div>
-                        </div>
-                        
-                        <div style={{
-                          backgroundColor: '#f0fdf4',
-                          padding: '10px',
-                          borderRadius: '6px',
-                          marginBottom: '12px'
-                        }}>
-                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                            Average per Reading
-                          </div>
-                          <div style={{ fontSize: '16px', fontWeight: '600', color: '#059669' }}>
-                            {stats.avgKwh} kWh
-                          </div>
-                        </div>
-                        
-                        <div style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: '1fr 1fr', 
-                          gap: '12px'
-                        }}>
+                      return (
+                        <div
+                          key={appliance.id}
+                          ref={(el) => applianceRefs.current[appliance.id] = el}
+                          style={{
+                            border: isHighlighted ? '1px solid #6b7280' : '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            padding: '24px',
+                            backgroundColor: isHighlighted ? '#f9fafb' : '#fff',
+                            boxShadow: isHighlighted ? '0 4px 12px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease',
+                            position: 'relative'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isHighlighted) {
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isHighlighted) {
+                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                            }
+                          }}
+                        >
                           <div style={{
-                            backgroundColor: '#f9fafb',
-                            padding: '10px',
-                            borderRadius: '6px'
+                            position: 'absolute',
+                            top: '16px',
+                            right: '16px',
+                            display: 'flex',
+                            gap: '8px',
+                            zIndex: 10
                           }}>
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                              Minimum Reading
-                            </div>
-                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                              {stats.minKwh} kWh
-                            </div>
-                          </div>
-                          <div style={{
-                            backgroundColor: '#f9fafb',
-                            padding: '10px',
-                            borderRadius: '6px'
-                          }}>
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                              Maximum Reading
-                            </div>
-                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                              {stats.maxKwh} kWh
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                            <button
+                              onClick={() => handleToggleFavorite(appliance.id, appliance.isFavorite)}
+                              style={{
+                                padding: '6px 10px',
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '4px',
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#f9fafb';
+                                e.target.style.transform = 'scale(1.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'white';
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                              title={appliance.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill={appliance.isFavorite ? '#ef4444' : 'none'} stroke={appliance.isFavorite ? '#ef4444' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                              </svg>
+                            </button>
 
-                    {appliance.createdAt && (
-                      <div style={{ 
-                        marginTop: '16px', 
-                        paddingTop: '16px',
-                        borderTop: '1px solid #e5e7eb',
-                        fontSize: '12px', 
-                        color: '#9ca3af'
-                      }}>
-                        Added: {formatDateTime(appliance.createdAt)}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                            <button
+                              onClick={() => handleDeleteClick(appliance)}
+                              disabled={isDeleting}
+                              style={{
+                                padding: '6px 10px',
+                                backgroundColor: isDeleting ? '#9ca3af' : '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                cursor: isDeleting ? 'not-allowed' : 'pointer',
+                                transition: 'background-color 0.2s',
+                                opacity: isDeleting ? 0.6 : 1
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isDeleting) {
+                                  e.target.style.backgroundColor = '#dc2626';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isDeleting) {
+                                  e.target.style.backgroundColor = '#ef4444';
+                                }
+                              }}
+                            >
+                              {isDeleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
+
+                          <div style={{ marginBottom: '16px', paddingRight: '120px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                              {appliance.name}
+                            </h3>
+                          </div>
+
+                          <div style={{ marginBottom: '12px' }}>
+                            <span style={{
+                              fontSize: '13px',
+                              color: '#6b7280',
+                              marginRight: '8px'
+                            }}>Type:</span>
+                            <span style={{
+                              fontSize: '14px',
+                              color: '#1f2937',
+                              fontWeight: '500'
+                            }}>
+                              {appliance.applianceType}
+                            </span>
+                          </div>
+
+                          <div style={{ marginBottom: '12px' }}>
+                            <span style={{
+                              fontSize: '13px',
+                              color: '#6b7280',
+                              marginRight: '8px'
+                            }}>Location:</span>
+                            <span style={{
+                              fontSize: '14px',
+                              color: '#1f2937',
+                              fontWeight: '500'
+                            }}>
+                              {appliance.location}
+                            </span>
+                          </div>
+
+                          {appliance.notes && (
+                            <div style={{ marginBottom: '12px' }}>
+                              <span style={{
+                                fontSize: '13px',
+                                color: '#6b7280',
+                                marginRight: '8px'
+                              }}>Notes:</span>
+                              <span style={{
+                                fontSize: '14px',
+                                color: '#1f2937'
+                              }}>
+                                {appliance.notes}
+                              </span>
+                            </div>
+                          )}
+
+                          {stats && (
+                            <div style={{
+                              marginTop: '16px',
+                              borderTop: '1px solid #e5e7eb',
+                              paddingTop: '16px'
+                            }}>
+                              <div style={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#6b7280',
+                                marginBottom: '16px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px'
+                              }}>
+                                Energy Consumption Data
+                              </div>
+
+                              <div style={{
+                                backgroundColor: '#f0fdf4',
+                                padding: '12px',
+                                borderRadius: '6px',
+                                marginBottom: '16px'
+                              }}>
+                                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                  Total Energy Consumption
+                                </div>
+                                <div style={{
+                                  fontSize: '18px',
+                                  fontWeight: '600',
+                                  color: '#059669',
+                                  marginBottom: '6px'
+                                }}>
+                                  {stats.totalKwh} kWh
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#6b7280', lineHeight: '1.4' }}>
+                                  {formatDateTime(stats.firstTime)} to {formatDateTime(stats.lastTime)}
+                                </div>
+                                <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
+                                  ({stats.timePeriod})
+                                </div>
+                              </div>
+
+                              <div style={{
+                                backgroundColor: '#f0fdf4',
+                                padding: '10px',
+                                borderRadius: '6px',
+                                marginBottom: '12px'
+                              }}>
+                                <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                  Average per Reading
+                                </div>
+                                <div style={{ fontSize: '16px', fontWeight: '600', color: '#059669' }}>
+                                  {stats.avgKwh} kWh
+                                </div>
+                              </div>
+
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '12px'
+                              }}>
+                                <div style={{
+                                  backgroundColor: '#f9fafb',
+                                  padding: '10px',
+                                  borderRadius: '6px'
+                                }}>
+                                  <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                    Minimum Reading
+                                  </div>
+                                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                                    {stats.minKwh} kWh
+                                  </div>
+                                </div>
+                                <div style={{
+                                  backgroundColor: '#f9fafb',
+                                  padding: '10px',
+                                  borderRadius: '6px'
+                                }}>
+                                  <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                                    Maximum Reading
+                                  </div>
+                                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                                    {stats.maxKwh} kWh
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {appliance.createdAt && (
+                            <div style={{
+                              marginTop: '16px',
+                              paddingTop: '16px',
+                              borderTop: '1px solid #e5e7eb',
+                              fontSize: '12px',
+                              color: '#9ca3af'
+                            }}>
+                              Added: {formatDateTime(appliance.createdAt)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

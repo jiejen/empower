@@ -68,7 +68,7 @@ function Dashboard() {
       snapshot.forEach((doc) => {
         allFilters.push({ id: doc.id, ...doc.data() });
       });
-      
+
       // Sort by savedAt descending (most recent first)
       allFilters.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
       setSavedFilters(allFilters);
@@ -87,20 +87,20 @@ function Dashboard() {
       // Check if a filter with the same configuration already exists (regardless of name)
       const existingConfigFilter = savedFilters.find(f => {
         if (f.deleted) return false;
-        
+
         // Compare rankBy and timeFilter
         if (f.rankBy !== rankBy || f.timeFilter !== timeFilter) return false;
-        
+
         // Compare filterBy arrays
         const savedFilterBy = f.filterBy || [];
         const currentFilterBy = filterBy || [];
-        
+
         if (savedFilterBy.length !== currentFilterBy.length) return false;
-        
+
         // Check if all elements match (order-independent comparison)
         const sortedSaved = [...savedFilterBy].sort();
         const sortedCurrent = [...currentFilterBy].sort();
-        
+
         return sortedSaved.every((val, idx) => val === sortedCurrent[idx]);
       });
 
@@ -113,7 +113,7 @@ function Dashboard() {
       const existingNameFilter = savedFilters.find(
         f => f.name === filterName.trim() && !f.deleted
       );
-      
+
       if (existingNameFilter) {
         alert(`The name "${filterName.trim()}" is already used by another filter. Please choose a different name.`);
         return;
@@ -129,7 +129,7 @@ function Dashboard() {
 
       const filtersRef = collection(db, 'users', uid, 'filterPresets');
       await addDoc(filtersRef, filterData);
-      
+
       setFilterName('');
       setShowSaveDialog(false);
       await loadSavedFilters();
@@ -679,6 +679,7 @@ function Dashboard() {
                 fontSize: '18px',
                 fontWeight: '600',
                 color: '#1f2937',
+                marginTop: '0px',
                 marginBottom: '24px'
               }}>
                 Get Started
@@ -1332,9 +1333,9 @@ function Dashboard() {
                                     <div>
                                       <span style={{ fontWeight: '500' }}>Time:</span> {
                                         filter.timeFilter === 'today' ? 'Today' :
-                                        filter.timeFilter === 'this-week' ? 'This Week' :
-                                        filter.timeFilter === 'this-month' ? 'This Month' :
-                                        filter.timeFilter === 'last-month' ? 'Last Month' : 'All Time'
+                                          filter.timeFilter === 'this-week' ? 'This Week' :
+                                            filter.timeFilter === 'this-month' ? 'This Month' :
+                                              filter.timeFilter === 'last-month' ? 'Last Month' : 'All Time'
                                       }
                                     </div>
                                   </div>
@@ -1354,84 +1355,84 @@ function Dashboard() {
                           ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               {savedFilters.filter(f => f.deleted).map((filter) => (
-                              <div
-                                key={filter.id}
-                                style={{
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: '8px',
-                                  padding: '16px',
-                                  backgroundColor: '#fff',
-                                  transition: 'box-shadow 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                                  <div>
-                                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                                      {filter.name}
-                                    </h4>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-                                      Saved {new Date(filter.savedAt).toLocaleDateString()}
+                                <div
+                                  key={filter.id}
+                                  style={{
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    padding: '16px',
+                                    backgroundColor: '#fff',
+                                    transition: 'box-shadow 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                    <div>
+                                      <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                                        {filter.name}
+                                      </h4>
+                                      <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                        Saved {new Date(filter.savedAt).toLocaleDateString()}
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <button
+                                        onClick={() => handleRestoreFilter(filter.id)}
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#28a745',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          fontSize: '13px',
+                                          fontWeight: '500',
+                                          cursor: 'pointer',
+                                          transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                                      >
+                                        Restore
+                                      </button>
+                                      <button
+                                        onClick={() => handlePermanentDeleteFilter(filter.id)}
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#ef4444',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          fontSize: '13px',
+                                          fontWeight: '500',
+                                          cursor: 'pointer',
+                                          transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
+                                      >
+                                        Delete Forever
+                                      </button>
                                     </div>
                                   </div>
-                                  <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                      onClick={() => handleRestoreFilter(filter.id)}
-                                      style={{
-                                        padding: '6px 12px',
-                                        backgroundColor: '#28a745',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        fontSize: '13px',
-                                        fontWeight: '500',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s'
-                                      }}
-                                      onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-                                      onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
-                                    >
-                                      Restore
-                                    </button>
-                                    <button
-                                      onClick={() => handlePermanentDeleteFilter(filter.id)}
-                                      style={{
-                                        padding: '6px 12px',
-                                        backgroundColor: '#ef4444',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        fontSize: '13px',
-                                        fontWeight: '500',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s'
-                                      }}
-                                      onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
-                                      onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
-                                    >
-                                      Delete Forever
-                                    </button>
+                                  <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
+                                    <div>
+                                      <span style={{ fontWeight: '500' }}>Rank By:</span> {filter.rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}
+                                    </div>
+                                    <div>
+                                      <span style={{ fontWeight: '500' }}>Filters:</span> {filter.filterBy.length === 0 ? 'None' : filter.filterBy.length}
+                                    </div>
+                                    <div>
+                                      <span style={{ fontWeight: '500' }}>Time:</span> {
+                                        filter.timeFilter === 'today' ? 'Today' :
+                                          filter.timeFilter === 'this-week' ? 'This Week' :
+                                            filter.timeFilter === 'this-month' ? 'This Month' :
+                                              filter.timeFilter === 'last-month' ? 'Last Month' : 'All Time'
+                                      }
+                                    </div>
                                   </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
-                                  <div>
-                                    <span style={{ fontWeight: '500' }}>Rank By:</span> {filter.rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}
-                                  </div>
-                                  <div>
-                                    <span style={{ fontWeight: '500' }}>Filters:</span> {filter.filterBy.length === 0 ? 'None' : filter.filterBy.length}
-                                  </div>
-                                  <div>
-                                    <span style={{ fontWeight: '500' }}>Time:</span> {
-                                      filter.timeFilter === 'today' ? 'Today' :
-                                      filter.timeFilter === 'this-week' ? 'This Week' :
-                                      filter.timeFilter === 'this-month' ? 'This Month' :
-                                      filter.timeFilter === 'last-month' ? 'Last Month' : 'All Time'
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
+                              ))}
                             </div>
                           )
                         )}
