@@ -110,6 +110,9 @@ function AddAppliance() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Fix the persistence issue by resetting the error display upon every click of “Add Appliance”
+    setMessage('');
+
     if (!applianceType || !name || !location) {
       setMessage('Please fill out all required fields.');
       return;
