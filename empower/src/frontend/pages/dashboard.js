@@ -535,7 +535,11 @@ function Dashboard() {
       const snapshot = await getDocs(appliancesRef);
       const data = [];
       snapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() });
+        const applianceData = { id: doc.id, ...doc.data() };
+        // Only include appliances that are not deleted
+        if (!applianceData.deleted) {
+          data.push(applianceData);
+        }
       });
 
       setAppliances(data);
@@ -577,7 +581,11 @@ function Dashboard() {
       const reportsData = [];
 
       snapshot.forEach((doc) => {
-        reportsData.push({ id: doc.id, ...doc.data() });
+        const reportData = { id: doc.id, ...doc.data() };
+        // Only include reports that are not deleted
+        if (!reportData.deleted) {
+          reportsData.push(reportData);
+        }
       });
 
       // sort by creation date, newest first
@@ -659,10 +667,96 @@ function Dashboard() {
               Loading...
             </div>
           ) : appliances.length === 0 ? (
-            <div className="welcome-container">
-              <p style={{ fontSize: '16px', marginBottom: '16px' }}>
-                No appliances found.
-              </p>
+            <div style={{
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '32px',
+              maxWidth: '700px',
+              margin: '0 auto'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#1f2937',
+                marginBottom: '24px'
+              }}>
+                Get Started
+              </h3>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px'
+              }}>
+                <div>
+                  <h4 style={{
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    margin: '0 0 8px 0'
+                  }}>
+                    1. Add an appliance and upload energy data
+                  </h4>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    lineHeight: '1.5',
+                    margin: '0 0 8px 0'
+                  }}>
+                    Go to Appliances and click "Add Appliance" to register your devices. Then click on an appliance and upload a CSV file with time and kWh columns to track usage.
+                  </p>
+                  <button
+                    onClick={() => navigate('/appliances')}
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Go to Appliances
+                  </button>
+                </div>
+
+                <div>
+                  <h4 style={{
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    margin: '0 0 8px 0'
+                  }}>
+                    2. Add cost data (optional)
+                  </h4>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    lineHeight: '1.5',
+                    margin: '0 0 8px 0'
+                  }}>
+                    Upload your electricity rates for accurate cost estimates. Default is $0.14/kWh.
+                  </p>
+                  <button
+                    onClick={() => navigate('/cost-data')}
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Go to Cost Data
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <>
@@ -757,10 +851,10 @@ function Dashboard() {
                           }}
                         >
                           {stats.billDataSource && stats.billDataSource.includes('current month')
-                            ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'
+                            ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used.'
                             : stats.billDataSource
-                              ? `Estimated using data from ${stats.billDataSource} since no current month data is available. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.`
-                              : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'}
+                              ? `Estimated using data uploaded since no current month data is available. Cost rate is from your uploaded data (CSV) in the Cost Data tab under Profile. If no cost data is available, a base rate of $0.14/kWh is used.`
+                              : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used.'}
                         </div>
                       )}
                     </div>
@@ -1448,19 +1542,39 @@ function Dashboard() {
                 <div className="previous-reports-section">
                   <div className="reports-header">
                     <h3 style={{ margin: 0 }}>Past Reports</h3>
-                    <button
-                      className="create-report-btn"
-                      onClick={() => navigate('/create-report')}
-                    >
-                      Create Report
-                    </button>
+                    {reports.length > 0 && (
+                      <button
+                        className="create-report-btn"
+                        onClick={() => navigate('/create-report')}
+                      >
+                        Create Report
+                      </button>
+                    )}
                   </div>
 
                   {loadingReports ? (
                     <p>Loading reports...</p>
                   ) : reports.length === 0 ? (
                     <div className="no-reports">
-                      <p>No reports created yet.</p>
+                      <p style={{ marginBottom: '12px' }}>No reports yet.</p>
+                      <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
+                        Create custom visualizations to compare appliance energy usage over time.
+                      </p>
+                      <button
+                        onClick={() => navigate('/create-report')}
+                        style={{
+                          padding: '6px 14px',
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Create Your First Report
+                      </button>
                     </div>
                   ) : (
                     <div className="reports-grid">
