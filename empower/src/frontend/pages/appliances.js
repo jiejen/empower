@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth, db } from '../../firebase';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import '../components/Layout.css';
 
 function Appliances() {
@@ -16,6 +17,7 @@ function Appliances() {
   const [deletingId, setDeletingId] = useState(null);
   const [highlightId, setHighlightId] = useState(null);
   const applianceRefs = useRef({});
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -62,7 +64,11 @@ function Appliances() {
       const snapshot = await getDocs(appliancesRef);
       const appliances = [];
       snapshot.forEach((doc) => {
-        appliances.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        // Only show non-deleted appliances
+        if (!data.deleted) {
+          appliances.push({ id: doc.id, ...data });
+        }
       });
       setAppliances(appliances);
       setError(null);
@@ -71,6 +77,42 @@ function Appliances() {
       setError('An error occurred while loading appliances');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (appliance) => {
+    setConfirmDelete(appliance);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+
+    const applianceToDelete = confirmDelete;
+    setConfirmDelete(null);
+
+    try {
+      setDeletingId(applianceToDelete.id);
+      const uid = auth.currentUser?.uid;
+      if (!uid) {
+        setError('Not authenticated');
+        return;
+      }
+
+      // Soft delete - mark as deleted with timestamp
+      const applianceRef = doc(db, 'users', uid, 'appliances', applianceToDelete.id);
+      await updateDoc(applianceRef, {
+        deleted: true,
+        deletedAt: new Date().toISOString()
+      });
+
+      // Remove from UI immediately
+      setAppliances(appliances.filter(a => a.id !== applianceToDelete.id));
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting appliance:', err);
+      setError('An error occurred while deleting appliance');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -167,6 +209,17 @@ function Appliances() {
 
   return (
     <Layout activePage="Appliances" userName={user?.name || user?.email || 'User'} onLogout={logout}>
+      <ConfirmationDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Appliance?"
+        message="Are you sure you want to delete this appliance? It will be moved to Deleted Appliances where you can recover it for 30 days."
+        itemName={confirmDelete?.name}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
       <div style={{ padding: '32px', maxWidth: '1400px' }}>
         <div style={{
           backgroundColor: 'white',
@@ -183,24 +236,52 @@ function Appliances() {
             }}>
               All Appliances
             </h2>
-            <button
-              onClick={() => navigate('/add-appliance')}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
-            >
-              Add Appliance
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => navigate('/trash-appliances')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  color: '#6b7280',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#f9fafb';
+                  e.target.style.borderColor = '#9ca3af';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.borderColor = '#d1d5db';
+                }}
+              >
+                Deleted Appliances
+              </button>
+              <button
+                onClick={() => navigate('/add-appliance')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+              >
+                Add Appliance
+              </button>
+            </div>
           </div>
         
           {loading && (
@@ -267,7 +348,7 @@ function Appliances() {
                     }}
                   >
                     <button
-                      onClick={() => handleDelete(appliance.id)}
+                      onClick={() => handleDeleteClick(appliance)}
                       disabled={isDeleting}
                       style={{
                         position: 'absolute',

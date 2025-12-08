@@ -11,6 +11,8 @@ import Profile from './frontend/pages/profile';
 import CostData from './frontend/pages/costData';
 import ReportView from './frontend/pages/ReportView';
 import Reports from './frontend/pages/Reports';
+import TrashReports from './frontend/pages/TrashReports';
+import TrashAppliances from './frontend/pages/TrashAppliances';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
           <Route path="/cost-data" element={<CostData />} />
           <Route path="/report-view" element={<ReportView />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/trash-reports" element={<TrashReports />} />
+          <Route path="/trash-appliances" element={<TrashAppliances />} />
         </Routes>
       </BrowserRouter>
     </UserProvider>
