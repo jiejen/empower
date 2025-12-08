@@ -780,49 +780,86 @@ function Appliances() {
                     {stats && (
                       <div style={{
                         marginTop: '16px',
-                        paddingTop: '16px',
-                        borderTop: '1px solid #e5e7eb'
+                        borderTop: '1px solid #e5e7eb',
+                        paddingTop: '16px'
                       }}>
-                        <div style={{
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: '#374151',
-                          marginBottom: '8px'
-                        }}>
-                          Energy Usage Statistics
-                        </div>
                         <div style={{ 
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '8px',
-                          fontSize: '12px'
+                          fontSize: '12px', 
+                          fontWeight: '600', 
+                          color: '#6b7280',
+                          marginBottom: '16px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
                         }}>
-                          <div>
-                            <span style={{ color: '#6b7280' }}>Total: </span>
-                            <span style={{ fontWeight: '500', color: '#1f2937' }}>{stats.totalKwh} kWh</span>
+                          Energy Consumption Data
+                        </div>
+                        
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          padding: '12px',
+                          borderRadius: '6px',
+                          marginBottom: '16px'
+                        }}>
+                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                            Total Energy Consumption
                           </div>
-                          <div>
-                            <span style={{ color: '#6b7280' }}>Avg: </span>
-                            <span style={{ fontWeight: '500', color: '#1f2937' }}>{stats.avgKwh} kWh</span>
+                          <div style={{ 
+                            fontSize: '18px', 
+                            fontWeight: '600', 
+                            color: '#059669', 
+                            marginBottom: '4px' 
+                          }}>
+                            {stats.totalKwh} kWh
                           </div>
-                          <div>
-                            <span style={{ color: '#6b7280' }}>Min: </span>
-                            <span style={{ fontWeight: '500', color: '#1f2937' }}>{stats.minKwh} kWh</span>
-                          </div>
-                          <div>
-                            <span style={{ color: '#6b7280' }}>Max: </span>
-                            <span style={{ fontWeight: '500', color: '#1f2937' }}>{stats.maxKwh} kWh</span>
+                          <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                            Over {stats.timePeriod} ({stats.dataPoints} data points)
                           </div>
                         </div>
-                        {stats.timePeriod && (
-                          <div style={{
-                            marginTop: '8px',
-                            fontSize: '12px',
-                            color: '#6b7280'
-                          }}>
-                            Period: {stats.timePeriod} ({stats.dataPoints} data points)
+                        
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          padding: '10px',
+                          borderRadius: '6px',
+                          marginBottom: '12px'
+                        }}>
+                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                            Average per Reading
                           </div>
-                        )}
+                          <div style={{ fontSize: '16px', fontWeight: '600', color: '#059669' }}>
+                            {stats.avgKwh} kWh
+                          </div>
+                        </div>
+                        
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: '1fr 1fr', 
+                          gap: '12px'
+                        }}>
+                          <div style={{
+                            backgroundColor: '#f9fafb',
+                            padding: '10px',
+                            borderRadius: '6px'
+                          }}>
+                            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                              Minimum Reading
+                            </div>
+                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                              {stats.minKwh} kWh
+                            </div>
+                          </div>
+                          <div style={{
+                            backgroundColor: '#f9fafb',
+                            padding: '10px',
+                            borderRadius: '6px'
+                          }}>
+                            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                              Maximum Reading
+                            </div>
+                            <div style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                              {stats.maxKwh} kWh
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
 

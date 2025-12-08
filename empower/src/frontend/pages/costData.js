@@ -18,6 +18,7 @@ function CostData() {
   const [deleteRange, setDeleteRange] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   useEffect(() => {
@@ -151,6 +152,7 @@ function CostData() {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteRange) {
         await deleteCostDataByDateRange(deleteRange.start, deleteRange.end);
@@ -164,6 +166,7 @@ function CostData() {
       console.error('Error deleting cost data:', error);
       showToastMessage('Failed to delete cost data');
     } finally {
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
       setDeleteRange(null);
     }
@@ -293,14 +296,19 @@ function CostData() {
               <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
                 Confirm Deletion
               </h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#6b7280', lineHeight: '1.6' }}>
-                {deleteRange 
-                  ? `Are you sure you want to delete cost data from ${deleteRange.start} to ${deleteRange.end}? This action cannot be undone.`
-                  : 'Are you sure you want to delete ALL cost data? This action cannot be undone.'}
+              <p style={{ margin: '0 0 24px 0', color: '#6b7280', lineHeight: '1.5' }}>
+                {isDeleting ? (
+                  <span style={{ fontWeight: '500', color: '#1f2937' }}>Deleting...</span>
+                ) : (
+                  deleteRange 
+                    ? `Are you sure you want to delete cost data from ${deleteRange.start} to ${deleteRange.end}? This action cannot be undone.`
+                    : 'Are you sure you want to delete ALL cost data? This action cannot be undone.'
+                )}
               </p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button
                   onClick={cancelDelete}
+                  disabled={isDeleting}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#f3f4f6',
@@ -309,16 +317,18 @@ function CostData() {
                     borderRadius: '6px',
                     fontSize: '14px',
                     fontWeight: '500',
-                    cursor: 'pointer',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    opacity: isDeleting ? 0.6 : 1,
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                  onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#e5e7eb')}
+                  onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#f3f4f6')}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
+                  disabled={isDeleting}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#dc2626',
@@ -327,13 +337,14 @@ function CostData() {
                     borderRadius: '6px',
                     fontSize: '14px',
                     fontWeight: '500',
-                    cursor: 'pointer',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    opacity: isDeleting ? 0.6 : 1,
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b91c1c'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#dc2626'}
+                  onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#b91c1c')}
+                  onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc2626')}
                 >
-                  Delete
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>
@@ -376,7 +387,7 @@ function CostData() {
                 borderRadius: '6px',
                 padding: '20px',
                 textAlign: 'center',
-                backgroundColor: csvFile ? '#f0f9ff' : '#f9fafb',
+                backgroundColor: '#f9fafb',
                 transition: 'all 0.2s'
               }}>
                 <input
@@ -503,6 +514,7 @@ function CostData() {
                 </h3>
                 <button
                   onClick={handleDeleteAll}
+                  disabled={isDeleting}
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#dc2626',
@@ -511,11 +523,12 @@ function CostData() {
                     borderRadius: '6px',
                     fontSize: '14px',
                     fontWeight: '500',
-                    cursor: 'pointer',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    opacity: isDeleting ? 0.6 : 1,
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b91c1c'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#dc2626'}
+                  onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#b91c1c')}
+                  onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc2626')}
                 >
                   Delete All Data
                 </button>
@@ -639,25 +652,21 @@ function CostData() {
                       </div>
                       <button
                         onClick={() => handleDeleteRange(range.start, range.end)}
+                        disabled={isDeleting}
                         style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#fee2e2',
-                          color: '#991b1b',
-                          border: '1px solid #fecaca',
+                          padding: '8px 16px',
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
                           borderRadius: '6px',
-                          fontSize: '13px',
+                          fontSize: '14px',
                           fontWeight: '500',
-                          cursor: 'pointer',
+                          cursor: isDeleting ? 'not-allowed' : 'pointer',
+                          opacity: isDeleting ? 0.6 : 1,
                           transition: 'background-color 0.2s'
                         }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#fecaca';
-                          e.target.style.borderColor = '#fca5a5';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = '#fee2e2';
-                          e.target.style.borderColor = '#fecaca';
-                        }}
+                        onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#b91c1c')}
+                        onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc2626')}
                       >
                         Delete
                       </button>

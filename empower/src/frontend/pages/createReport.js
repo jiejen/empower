@@ -321,7 +321,7 @@ function CreateReport() {
               </div>
             )}
             {startDate && endDate && (
-              <div style={{padding: '8px 12px', marginBottom: '12px', backgroundColor: '#e0f2fe', color: '#0c4a6e', borderRadius: '6px', fontSize: '12px'}}>
+              <div style={{padding: '8px 12px', marginBottom: '12px', backgroundColor: '#e6f7d4', color: '#218838', borderRadius: '6px', fontSize: '12px'}}>
                 Only appliances with data for the selected date range can be selected.
               </div>
             )}
@@ -348,8 +348,8 @@ function CreateReport() {
                   const isDisabled = startDate && endDate && !hasData;
                   
                   return (
-                    <label key={appliance.id} style={{display: 'flex', alignItems: 'center', padding: '12px', cursor: isDisabled ? 'not-allowed' : 'pointer', borderRadius: '6px', marginBottom: '8px', transition: 'all 0.2s', backgroundColor: isDisabled ? '#f3f4f6' : isSelected ? '#dbeafe' : 'white', border: `1px solid ${isDisabled ? '#e5e7eb' : isSelected ? '#3b82f6' : '#e5e7eb'}`, opacity: isDisabled ? 0.6 : 1}} title={isDisabled ? 'This appliance does not have data for the selected date range' : ''}>
-                      <input type="checkbox" checked={isSelected} onChange={() => handleApplianceToggle(appliance.id)} disabled={isDisabled} style={{width: '18px', height: '18px', marginRight: '12px', cursor: isDisabled ? 'not-allowed' : 'pointer', accentColor: '#3b82f6'}}/>
+                    <label key={appliance.id} style={{display: 'flex', alignItems: 'center', padding: '12px', cursor: isDisabled ? 'not-allowed' : 'pointer', borderRadius: '6px', marginBottom: '8px', transition: 'all 0.2s', backgroundColor: isDisabled ? '#f3f4f6' : isSelected ? '#e6f7d4' : 'white', border: `1px solid ${isDisabled ? '#e5e7eb' : isSelected ? '#28a745' : '#e5e7eb'}`, opacity: isDisabled ? 0.6 : 1}} title={isDisabled ? 'This appliance does not have data for the selected date range' : ''}>
+                      <input type="checkbox" checked={isSelected} onChange={() => handleApplianceToggle(appliance.id)} disabled={isDisabled} style={{width: '18px', height: '18px', marginRight: '12px', cursor: isDisabled ? 'not-allowed' : 'pointer', accentColor: '#28a745'}}/>
                       <div style={{flex: 1}}>
                         <div style={{fontSize: '15px', fontWeight: '500', color: isDisabled ? '#9ca3af' : '#1f2937', marginBottom: '2px'}}>
                           {appliance.name}

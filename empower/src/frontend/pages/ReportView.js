@@ -708,7 +708,7 @@ function ReportView()
             e.target.style.backgroundColor = 'white';
           }}
         >
-          ← Back to Reports
+          Back to Reports
         </button>
 
         <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '32px', marginBottom: '24px'}}>
@@ -830,16 +830,12 @@ function ReportView()
         <div style={{marginBottom: '24px', marginTop: '24px'}}>
           <button 
             onClick={() => setShowAdvancedStats(!showAdvancedStats)}
-            style={{padding: '10px 20px', backgroundColor: showAdvancedStats ? '#28a745' : '#f3f4f6', color: showAdvancedStats ? 'white' : '#374151', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: showAdvancedStats ? '16px' : '0'}}
+            style={{padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: showAdvancedStats ? '16px' : '0'}}
             onMouseEnter={(e) => {
-              if (!showAdvancedStats) {
-                e.target.style.backgroundColor = '#e5e7eb';
-              }
+              e.target.style.backgroundColor = '#218838';
             }}
             onMouseLeave={(e) => {
-              if (!showAdvancedStats) {
-                e.target.style.backgroundColor = '#f3f4f6';
-              }
+              e.target.style.backgroundColor = '#28a745';
             }}
           >
             {showAdvancedStats ? '▼ Hide Advanced Statistics' : '▶ Show Advanced Statistics'}

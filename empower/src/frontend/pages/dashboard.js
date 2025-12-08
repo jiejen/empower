@@ -1558,7 +1558,7 @@ function Dashboard() {
                     <div className="no-reports">
                       <p style={{ marginBottom: '12px' }}>No reports yet.</p>
                       <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
-                        Create custom visualizations to compare appliance energy usage over time.
+                        Create custom reports to compare appliance energy usage over time.
                       </p>
                       <button
                         onClick={() => navigate('/create-report')}

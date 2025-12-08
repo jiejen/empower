@@ -367,7 +367,7 @@ function AddAppliance() {
                 borderRadius: '6px',
                 padding: '20px',
                 textAlign: 'center',
-                backgroundColor: csvFile ? '#f0f9ff' : '#f9fafb',
+                backgroundColor: '#f9fafb',
                 transition: 'all 0.2s'
               }}>
                 <input

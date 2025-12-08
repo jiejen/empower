@@ -336,19 +336,20 @@
 }
 
 .profile-cancel-btn {
-  padding: 8px 16px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
+  padding: 10px 20px;
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .profile-cancel-btn:hover {
-  background-color: #c82333;
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .profile-save-btn {
