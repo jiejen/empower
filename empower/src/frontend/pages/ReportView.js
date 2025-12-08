@@ -20,6 +20,11 @@ function ReportView()
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true);
   const [showNavigationModal, setShowNavigationModal] = useState(false);
   const navigationRef = useRef(null);
+  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
+  const [applianceBreakdown, setApplianceBreakdown] = useState([]);
+  const [peakUsageTime, setPeakUsageTime] = useState(null);
+  const [comparisonStats] = useState(null);
+  const [energySavingTips, setEnergySavingTips] = useState([]);
 
   useEffect(() => {
     if (reportData)
@@ -325,6 +330,12 @@ function ReportView()
         notes: reportData.notes,
         chartData: chartData,
         stats: await calculateStats(),
+        advancedStats: {
+          applianceBreakdown,
+          peakUsageTime,
+          energySavingTips,
+          comparisonStats
+        },
         createdAt: new Date().toISOString()
       };
 
@@ -489,6 +500,152 @@ function ReportView()
     };
   }, [chartData, reportData]);
 
+  const calculateAdvancedStats = useCallback(async () => {
+    if (!reportData || !reportData.appliances || reportData.appliances.length === 0) {
+      return;
+    }
+
+    const start = parseISOWithLocalTime(reportData.startDate);
+    const end = parseISOWithLocalTime(reportData.endDate);
+    const daysInRange = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+
+    const breakdownPromises = reportData.appliances.map(async (appliance) => {
+      let totalEnergy = 0;
+      let totalCost = 0;
+      const hourlyData = Array(24).fill(0);
+      let dataPoints = 0;
+
+      if (appliance.energyData && Array.isArray(appliance.energyData)) {
+        appliance.energyData.forEach(dataPoint => {
+          const pointDate = new Date(dataPoint.time);
+          if (pointDate >= start && pointDate <= end) {
+            const energy = parseFloat(dataPoint.kwh) || 0;
+            totalEnergy += energy;
+            
+            const hour = pointDate.getHours();
+            hourlyData[hour] += energy;
+            dataPoints++;
+          }
+        });
+
+        if (reportData.yAxis === 'cost') {
+          const costPromises = appliance.energyData
+            .filter(dataPoint => {
+              const pointDate = new Date(dataPoint.time);
+              return pointDate >= start && pointDate <= end;
+            })
+            .map(async (dataPoint) => {
+              const rate = await getCostForDate(new Date(dataPoint.time));
+              return parseFloat(dataPoint.kwh) * rate;
+            });
+          
+          const costs = await Promise.all(costPromises);
+          totalCost = costs.reduce((sum, cost) => sum + cost, 0);
+        } else {
+          const avgCostPerKwh = await getCostForDateRange(start, end);
+          totalCost = totalEnergy * avgCostPerKwh;
+        }
+      }
+
+      return {
+        name: appliance.name,
+        type: appliance.applianceType,
+        totalEnergy: parseFloat(totalEnergy.toFixed(2)),
+        avgDailyEnergy: parseFloat((totalEnergy / daysInRange).toFixed(2)),
+        totalCost: parseFloat(totalCost.toFixed(2)),
+        percentageOfTotal: 0,
+        hourlyData,
+        dataPoints
+      };
+    });
+
+    const breakdownResults = await Promise.all(breakdownPromises);
+    
+    const totalEnergyAll = breakdownResults.reduce((sum, app) => sum + app.totalEnergy, 0);
+    
+    let maxHourEnergy = 0;
+    let peakHour = 0;
+    const hourlyTotals = Array(24).fill(0);
+    
+    const finalBreakdown = breakdownResults.map(app => {
+      const percentage = totalEnergyAll > 0 ? (app.totalEnergy / totalEnergyAll) * 100 : 0;
+      
+      app.hourlyData.forEach((energy, hour) => {
+        hourlyTotals[hour] += energy;
+        if (hourlyTotals[hour] > maxHourEnergy) {
+          maxHourEnergy = hourlyTotals[hour];
+          peakHour = hour;
+        }
+      });
+      
+      return {
+        ...app,
+        percentageOfTotal: parseFloat(percentage.toFixed(1))
+      };
+    });
+
+    finalBreakdown.sort((a, b) => b.totalEnergy - a.totalEnergy);
+
+    setApplianceBreakdown(finalBreakdown);
+    setPeakUsageTime(peakHour);
+
+    const avgEnergyPerDay = totalEnergyAll / daysInRange;    
+
+    const tips = generateEnergySavingTips(finalBreakdown, peakHour, avgEnergyPerDay);
+    setEnergySavingTips(tips);
+
+  }, [reportData]);
+
+  const generateEnergySavingTips = (breakdown, peakHour, avgDailyEnergy) => {
+    const tips = [];
+    
+    if (breakdown.length === 0) return tips;
+    
+    const topConsumer = breakdown[0];
+    
+    tips.push({
+      title: `Reduce ${topConsumer.name} Usage`,
+      description: `${topConsumer.name} is your highest energy consumer at ${topConsumer.percentageOfTotal}% of total usage. Consider using it during off-peak hours or reducing usage time.`,
+      priority: 'high'
+    });
+    
+    if (peakHour >= 14 && peakHour <= 20) {
+      tips.push({
+        title: 'Shift Usage Away From Peak Hours',
+        description: `Your peak energy usage occurs at ${peakHour}:00, during peak rate hours. Consider shifting usage to early morning or late night.`,
+        priority: 'medium'
+      });
+    }
+    
+    if (avgDailyEnergy > 30) {
+      tips.push({
+        title: 'High Overall Energy Consumption',
+        description: `Your average daily energy usage (${avgDailyEnergy.toFixed(1)} kWh) is above typical household levels. Consider an energy audit.`,
+        priority: 'medium'
+      });
+    }
+    
+    tips.push({
+      title: 'Use Smart Power Strips',
+      description: 'Connect entertainment systems and office equipment to smart power strips to eliminate phantom load.',
+      priority: 'low'
+    });
+    
+    tips.push({
+      title: 'Maintain Appliances Regularly',
+      description: 'Clean filters and perform regular maintenance on appliances to keep them running efficiently.',
+      priority: 'low'
+    });
+    
+    return tips.slice(0, 3);
+  };
+
+  useEffect(() => {
+    if (reportData && chartData && chartData.length > 0) {
+      calculateAdvancedStats();
+    }
+  }, [reportData, chartData, calculateAdvancedStats]);
+
   const [stats, setStats] = useState({totalEnergy: 0, avgEnergy: 0, totalCost: 0});
 
   useEffect(() => {
@@ -543,21 +700,7 @@ function ReportView()
 
       <div style={{padding: '32px', maxWidth: '1200px'}}>
         <button onClick={handleBackButton}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            background: 'white',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: '16px',
-            transition: 'all 0.2s'
-          }}
+          style={{display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'white', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '16px', transition: 'all 0.2s'}}
           onMouseEnter={(e) => {
             e.target.style.borderColor = '#9ca3af';
             e.target.style.backgroundColor = '#f9fafb';
@@ -684,6 +827,106 @@ function ReportView()
               </div>
             )}
           </div>
+        </div>
+
+        <div style={{marginBottom: '24px', marginTop: '24px'}}>
+          <button 
+            onClick={() => setShowAdvancedStats(!showAdvancedStats)}
+            style={{padding: '10px 20px', backgroundColor: showAdvancedStats ? '#28a745' : '#f3f4f6', color: showAdvancedStats ? 'white' : '#374151', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: showAdvancedStats ? '16px' : '0'}}
+            onMouseEnter={(e) => {
+              if (!showAdvancedStats) {
+                e.target.style.backgroundColor = '#e5e7eb';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!showAdvancedStats) {
+                e.target.style.backgroundColor = '#f3f4f6';
+              }
+            }}
+          >
+            {showAdvancedStats ? '▼ Hide Advanced Statistics' : '▶ Show Advanced Statistics'}
+          </button>
+
+          {showAdvancedStats && (
+            <div style={{backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px', marginTop: '16px'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
+                <h3 style={{margin: 0, fontSize: '18px', fontWeight: '600', color: '#1f2937'}}>
+                  Advanced Statistics
+                </h3>
+              </div>
+
+              <div style={{marginBottom: '32px'}}>
+                <h4 style={{margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937'}}>
+                  Energy Consumption Breakdown
+                </h4>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px'}}>
+                  {applianceBreakdown.map((appliance, index) => (
+                    <div key={index} style={{padding: '12px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+                        <div style={{fontSize: '15px', fontWeight: '500', color: '#1f2937'}}>
+                          {appliance.name}
+                        </div>
+                        <div style={{fontSize: '14px', fontWeight: '600', color: index === 0 ? '#ef4444' : '#28a745'}}>
+                          {appliance.percentageOfTotal}% of total
+                        </div>
+                      </div>
+                      
+                      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px'}}>
+                        <div>
+                          <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '4px'}}>Total Energy</div>
+                          <div style={{fontSize: '14px', fontWeight: '500', color: '#1f2937'}}>
+                            {appliance.totalEnergy} kWh
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '4px'}}>Avg Daily</div>
+                          <div style={{fontSize: '14px', fontWeight: '500', color: '#1f2937'}}>
+                            {appliance.avgDailyEnergy} kWh
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '4px'}}>Total Cost</div>
+                          <div style={{fontSize: '14px', fontWeight: '500', color: '#1f2937'}}>
+                            ${appliance.totalCost}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '4px'}}>Data Points</div>
+                          <div style={{fontSize: '14px', fontWeight: '500', color: '#1f2937'}}>
+                            {appliance.dataPoints}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937'}}>
+                  Energy Saving Recommendations
+                </h4>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px'}}>
+                  {energySavingTips.map((tip, index) => (
+                    <div key={index} style={{padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
+                        <div style={{fontSize: '14px', fontWeight: '600', color: '#1f2937'}}>
+                          {tip.title}
+                        </div>
+                        <div style={{fontSize: '11px', fontWeight: '500', padding: '2px 8px', backgroundColor: tip.priority === 'high' ? '#ef4444' : tip.priority === 'medium' ? '#fef9c3' : '#28a745', color: 'white', borderRadius: '12px'}}>
+                          {tip.priority.toUpperCase()} PRIORITY
+                        </div>
+                      </div>
+                      
+                      <div style={{fontSize: '13px', color: '#4b5563', marginBottom: '8px', lineHeight: '1.5'}}>
+                        {tip.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
