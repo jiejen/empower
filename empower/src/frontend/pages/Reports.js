@@ -245,7 +245,9 @@ function Reports() {
             }}
             title={report.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
-            {report.isFavorite ? '❤️' : '🤍'}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={report.isFavorite ? '#ef4444' : 'none'} stroke={report.isFavorite ? '#ef4444' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </button>
 
           <button
@@ -541,7 +543,9 @@ function Reports() {
                     gap: '8px',
                     marginBottom: '20px'
                   }}>
-                    <span style={{ fontSize: '20px' }}>⭐</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
                     <h3 style={{
                       margin: 0,
                       fontSize: '18px',
