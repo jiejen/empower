@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth, db } from '../../firebase';
-import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import '../components/Layout.css';
 
