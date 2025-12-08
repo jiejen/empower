@@ -16,6 +16,8 @@ function AddAppliance() {
   const [message, setMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const applianceOptions = [
     'Refrigerator',
@@ -89,16 +91,45 @@ function AddAppliance() {
     }
     
     setCsvFile(file);
+    setIsUploading(true);
+    setUploadProgress(0);
+    setMessage('');
+    
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 100);
     
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
+        setUploadProgress(70);
         const parsed = parseCSV(event.target.result);
         setCsvData(parsed);
+        setUploadProgress(100);
+        
+        setTimeout(() => {
+          setIsUploading(false);
+          setUploadProgress(0);
+        }, 500);
       } catch (error) {
         setMessage(`Error parsing CSV: ${error.message}`);
         setCsvData(null);
+        setIsUploading(false);
+        setUploadProgress(0);
+        clearInterval(progressInterval);
       }
+    };
+    reader.onerror = () => {
+      setMessage('Error reading file.');
+      setIsUploading(false);
+      setUploadProgress(0);
+      clearInterval(progressInterval);
     };
     reader.readAsText(file);
   };
@@ -346,25 +377,56 @@ function AddAppliance() {
                   style={{
                     display: 'none'
                   }}
+                  disabled={isUploading}
                 />
                 <label
                   htmlFor="csvFile"
                   style={{
                     display: 'inline-block',
                     padding: '8px 16px',
-                    backgroundColor: '#28a745',
+                    backgroundColor: isUploading ? '#9ca3af' : '#28a745',
                     color: 'white',
                     borderRadius: '6px',
-                    cursor: 'pointer',
+                    cursor: isUploading ? 'not-allowed' : 'pointer',
                     fontSize: '14px',
                     fontWeight: '500',
-                    transition: 'background-color 0.2s'
+                    transition: 'background-color 0.2s',
+                    opacity: isUploading ? 0.6 : 1
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                  onMouseEnter={(e) => !isUploading && (e.target.style.backgroundColor = '#218838')}
+                  onMouseLeave={(e) => !isUploading && (e.target.style.backgroundColor = '#28a745')}
                 >
                   {csvFile ? csvFile.name : 'Upload Energy Data for Appliance'}
                 </label>
+                
+                {isUploading && (
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#374151',
+                      fontWeight: '500',
+                      marginBottom: '8px'
+                    }}>
+                      Uploading... {uploadProgress}% done
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '8px',
+                      backgroundColor: '#e5e7eb',
+                      borderRadius: '4px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${uploadProgress}%`,
+                        height: '100%',
+                        backgroundColor: '#28a745',
+                        transition: 'width 0.3s ease',
+                        borderRadius: '4px'
+                      }} />
+                    </div>
+                  </div>
+                )}
+                
                 <p style={{
                   marginTop: '12px',
                   fontSize: '13px',
@@ -373,7 +435,7 @@ function AddAppliance() {
                   CSV should contain columns for time/timestamp and kWh/energy. 
                   First row should be headers.
                 </p>
-                {csvData && (
+                {csvData && !isUploading && (
                   <p style={{
                     marginTop: '8px',
                     fontSize: '13px',
