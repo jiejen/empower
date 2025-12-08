@@ -873,6 +873,31 @@ function Dashboard() {
                     <h2 style={{ margin: 0 }}>Appliance Rankings</h2>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <button
+                        onClick={() => setShowSavedFilters(!showSavedFilters)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: 'white',
+                          color: '#6b7280',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f9fafb';
+                          e.target.style.borderColor = '#9ca3af';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.borderColor = '#d1d5db';
+                        }}
+                      >
+                        Saved Filters ({savedFilters.filter(f => !f.deleted).length})
+                      </button>
+                      <button
                         onClick={() => setShowSaveDialog(true)}
                         style={{
                           padding: '8px 16px',
@@ -890,25 +915,6 @@ function Dashboard() {
                         onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
                       >
                         Save Filter
-                      </button>
-                      <button
-                        onClick={() => setShowSavedFilters(!showSavedFilters)}
-                        style={{
-                          padding: '8px 16px',
-                          backgroundColor: '#28a745',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          whiteSpace: 'nowrap'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
-                      >
-                        Saved Filters ({savedFilters.filter(f => !f.deleted).length})
                       </button>
                     </div>
                   </div>
@@ -1185,13 +1191,22 @@ function Dashboard() {
                             onClick={() => { setShowSavedFilters(false); setFilterTab('active'); }}
                             style={{
                               padding: '6px 12px',
-                              backgroundColor: '#f3f4f6',
-                              color: '#374151',
-                              border: 'none',
+                              backgroundColor: 'white',
+                              color: '#6b7280',
+                              border: '1px solid #d1d5db',
                               borderRadius: '6px',
                               fontSize: '14px',
                               fontWeight: '500',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = '#f9fafb';
+                              e.target.style.borderColor = '#9ca3af';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = 'white';
+                              e.target.style.borderColor = '#d1d5db';
                             }}
                           >
                             Close
