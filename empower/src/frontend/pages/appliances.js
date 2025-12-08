@@ -199,7 +199,7 @@ function Appliances() {
               onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
               onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
             >
-              + Add Appliance
+              Add Appliance
             </button>
           </div>
         

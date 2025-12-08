@@ -419,7 +419,7 @@ function Reports() {
               onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
               onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
             >
-              + Create Report
+              Create Report
             </button>
           </div>
 
