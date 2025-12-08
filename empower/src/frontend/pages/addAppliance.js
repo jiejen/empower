@@ -162,6 +162,7 @@ function AddAppliance() {
       await addDoc(appliancesRef, applianceData);
 
       showToastMessage('Appliance added successfully!');
+      setMessage('');
       setApplianceType('');
       setName('');
       setLocation('');
