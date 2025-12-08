@@ -120,32 +120,6 @@ function Reports() {
     }
   };
 
-  const handleDelete = async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      setDeletingId(reportId);
-      const uid = auth.currentUser?.uid;
-      if (!uid) {
-        setError('Not authenticated');
-        return;
-      }
-
-      const reportRef = doc(db, 'users', uid, 'reports', reportId);
-      await deleteDoc(reportRef);
-
-      setReports(reports.filter(r => r.id !== reportId));
-      setError(null);
-    } catch (err) {
-      console.error('Error deleting report:', err);
-      setError('An error occurred while deleting report');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const handleViewReport = (report) => {
     navigate('/report-view', { state: { reportData: report } });
   };

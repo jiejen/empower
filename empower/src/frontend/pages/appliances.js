@@ -140,32 +140,6 @@ function Appliances() {
     }
   };
 
-  const handleDelete = async (applianceId) => {
-    if (!window.confirm('Are you sure you want to delete this appliance? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      setDeletingId(applianceId);
-      const uid = auth.currentUser?.uid;
-      if (!uid) {
-        setError('Not authenticated');
-        return;
-      }
-
-      const applianceRef = doc(db, 'users', uid, 'appliances', applianceId);
-      await deleteDoc(applianceRef);
-      
-      setAppliances(appliances.filter(a => a.id !== applianceId));
-      setError(null);
-    } catch (err) {
-      console.error('Error deleting appliance:', err);
-      setError('An error occurred while deleting appliance');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return '';
     try {
