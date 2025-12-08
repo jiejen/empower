@@ -16,6 +16,8 @@ function CostData() {
   const [showToast, setShowToast] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteRange, setDeleteRange] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
 
   useEffect(() => {
@@ -64,11 +66,25 @@ function CostData() {
 
     setCsvFile(file);
     setCostUploadError('');
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       const reader = new FileReader();
+      
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
       reader.onload = async (e) => {
         try {
+          setUploadProgress(50);
           const csvContent = e.target.result;
           const costData = parseCostCSV(csvContent);
           
@@ -76,34 +92,51 @@ function CostData() {
             setCostUploadError('No valid cost data found in CSV. Expected format: dateRange,costPerKwh (e.g., "2024-01-01 to 2024-01-31,0.12")');
             setCsvFile(null);
             document.getElementById('costCsvFile').value = '';
+            setIsUploading(false);
+            setUploadProgress(0);
+            clearInterval(progressInterval);
             return;
           }
 
+          setUploadProgress(70);
           await saveCostData(costData);
+          setUploadProgress(90);
           await loadCostDataInfo();
+          setUploadProgress(100);
+          
           showToastMessage('Cost data uploaded successfully!');
           
           setTimeout(() => {
             setCsvFile(null);
             document.getElementById('costCsvFile').value = '';
-          }, 100);
+            setIsUploading(false);
+            setUploadProgress(0);
+          }, 500);
         } catch (error) {
           console.error('Error processing CSV:', error);
           setCostUploadError(error.message || 'Failed to process CSV file');
           setCsvFile(null);
           document.getElementById('costCsvFile').value = '';
+          setIsUploading(false);
+          setUploadProgress(0);
+          clearInterval(progressInterval);
         }
       };
       reader.onerror = () => {
         setCostUploadError('Error reading file');
         setCsvFile(null);
         document.getElementById('costCsvFile').value = '';
+        setIsUploading(false);
+        setUploadProgress(0);
+        clearInterval(progressInterval);
       };
       reader.readAsText(file);
     } catch (error) {
       console.error('Error uploading cost file:', error);
       setCostUploadError('Failed to upload file');
       setCsvFile(null);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -354,25 +387,56 @@ function CostData() {
                   style={{
                     display: 'none'
                   }}
+                  disabled={isUploading}
                 />
                 <label
                   htmlFor="costCsvFile"
                   style={{
                     display: 'inline-block',
                     padding: '8px 16px',
-                    backgroundColor: '#28a745',
+                    backgroundColor: isUploading ? '#9ca3af' : '#28a745',
                     color: 'white',
                     borderRadius: '6px',
-                    cursor: 'pointer',
+                    cursor: isUploading ? 'not-allowed' : 'pointer',
                     fontSize: '14px',
                     fontWeight: '500',
-                    transition: 'background-color 0.2s'
+                    transition: 'background-color 0.2s',
+                    opacity: isUploading ? 0.6 : 1
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                  onMouseEnter={(e) => !isUploading && (e.target.style.backgroundColor = '#218838')}
+                  onMouseLeave={(e) => !isUploading && (e.target.style.backgroundColor = '#28a745')}
                 >
                   {csvFile ? csvFile.name : 'Upload Cost Data'}
                 </label>
+                
+                {isUploading && (
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#374151',
+                      fontWeight: '500',
+                      marginBottom: '8px'
+                    }}>
+                      Uploading... {uploadProgress}% done
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '8px',
+                      backgroundColor: '#e5e7eb',
+                      borderRadius: '4px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${uploadProgress}%`,
+                        height: '100%',
+                        backgroundColor: '#28a745',
+                        transition: 'width 0.3s ease',
+                        borderRadius: '4px'
+                      }} />
+                    </div>
+                  </div>
+                )}
+                
                 <p style={{
                   marginTop: '12px',
                   fontSize: '13px',

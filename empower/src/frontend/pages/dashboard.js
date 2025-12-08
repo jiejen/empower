@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth, db } from '../../firebase';
-import { doc, setDoc, getDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, deleteDoc, collection, getDocs, addDoc, updateDoc } from 'firebase/firestore';
 import { Info } from 'lucide-react';
 import { getCostForDate, getCostForDateRange } from '../../services/costService';
 import '../components/Layout.css';
@@ -43,7 +43,11 @@ function Dashboard() {
   const [isRankOpen, setIsRankOpen] = useState(false);
   const [isTimeOpen, setIsTimeOpen] = useState(false);
 
-  const [saveFilterSettings, setSaveFilterSettings] = useState(false);
+  const [savedFilters, setSavedFilters] = useState([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [filterName, setFilterName] = useState('');
+  const [showSavedFilters, setShowSavedFilters] = useState(false);
+  const [filterTab, setFilterTab] = useState('active');
 
   const toggleFilter = (filterValue) => {
     setFilterBy(prev =>
@@ -53,50 +57,136 @@ function Dashboard() {
     );
   };
 
-  const loadSavedFilter = async () => {
+  const loadSavedFilters = async () => {
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
 
-      const filterRef = doc(db, 'users', uid, 'settings', 'dashboardFilters');
-      const filterDoc = await getDoc(filterRef);
-
-      if (filterDoc.exists()) {
-        const data = filterDoc.data();
-        setRankBy(data.rankBy);
-        setFilterBy(data.filterBy);
-        setTimeFilter(data.timeFilter);
-        setSaveFilterSettings(true);
-      }
+      const filtersRef = collection(db, 'users', uid, 'filterPresets');
+      const snapshot = await getDocs(filtersRef);
+      const allFilters = [];
+      snapshot.forEach((doc) => {
+        allFilters.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Sort by savedAt descending (most recent first)
+      allFilters.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+      setSavedFilters(allFilters);
     } catch (err) {
-      console.error('Error loading saved filter:', err);
+      console.error('Error loading saved filters:', err);
     }
   };
 
-  const handleSaveFilterToggle = async (checked) => {
-    setSaveFilterSettings(checked);
+  const handleSaveNamedFilter = async () => {
+    if (!filterName.trim()) return;
 
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) return;
 
-      const filterRef = doc(db, 'users', uid, 'settings', 'dashboardFilters');
+      // Check if a filter with the same configuration already exists (regardless of name)
+      const existingConfigFilter = savedFilters.find(f => {
+        if (f.deleted) return false;
+        
+        // Compare rankBy and timeFilter
+        if (f.rankBy !== rankBy || f.timeFilter !== timeFilter) return false;
+        
+        // Compare filterBy arrays
+        const savedFilterBy = f.filterBy || [];
+        const currentFilterBy = filterBy || [];
+        
+        if (savedFilterBy.length !== currentFilterBy.length) return false;
+        
+        // Check if all elements match (order-independent comparison)
+        const sortedSaved = [...savedFilterBy].sort();
+        const sortedCurrent = [...currentFilterBy].sort();
+        
+        return sortedSaved.every((val, idx) => val === sortedCurrent[idx]);
+      });
 
-      if (checked) {
-        // Save current filter settings
-        const filterData = {
-          rankBy,
-          filterBy,
-          timeFilter,
-          savedAt: new Date().toISOString()
-        };
-        await setDoc(filterRef, filterData);
-      } else {
-        // Delete saved filter settings
-        await deleteDoc(filterRef);
+      if (existingConfigFilter) {
+        alert(`These filter settings already match the existing filter "${existingConfigFilter.name}". Please change your filter settings or use the existing filter.`);
+        return;
       }
+
+      // Check if a filter with the same name already exists (case sensitive)
+      const existingNameFilter = savedFilters.find(
+        f => f.name === filterName.trim() && !f.deleted
+      );
+      
+      if (existingNameFilter) {
+        alert(`The name "${filterName.trim()}" is already used by another filter. Please choose a different name.`);
+        return;
+      }
+
+      const filterData = {
+        name: filterName.trim(),
+        rankBy,
+        filterBy,
+        timeFilter,
+        savedAt: new Date().toISOString()
+      };
+
+      const filtersRef = collection(db, 'users', uid, 'filterPresets');
+      await addDoc(filtersRef, filterData);
+      
+      setFilterName('');
+      setShowSaveDialog(false);
+      await loadSavedFilters();
     } catch (err) {
-      console.error('Error toggling filter save:', err);
+      console.error('Error saving named filter:', err);
+    }
+  };
+
+  const handleApplyFilter = (filter) => {
+    setRankBy(filter.rankBy);
+    setFilterBy(filter.filterBy);
+    setTimeFilter(filter.timeFilter);
+    setShowSavedFilters(false);
+  };
+
+  const handleDeleteFilterClick = async (filterId) => {
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      const filterRef = doc(db, 'users', uid, 'filterPresets', filterId);
+      await updateDoc(filterRef, {
+        deleted: true,
+        deletedAt: new Date().toISOString()
+      });
+      await loadSavedFilters();
+    } catch (err) {
+      console.error('Error deleting filter:', err);
+    }
+  };
+
+  const handleRestoreFilter = async (filterId) => {
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      const filterRef = doc(db, 'users', uid, 'filterPresets', filterId);
+      await updateDoc(filterRef, {
+        deleted: false,
+        deletedAt: null
+      });
+      await loadSavedFilters();
+    } catch (err) {
+      console.error('Error restoring filter:', err);
+    }
+  };
+
+  const handlePermanentDeleteFilter = async (filterId) => {
+    try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      const filterRef = doc(db, 'users', uid, 'filterPresets', filterId);
+      await deleteDoc(filterRef);
+      await loadSavedFilters();
+    } catch (err) {
+      console.error('Error permanently deleting filter:', err);
     }
   };
 
@@ -158,30 +248,6 @@ function Dashboard() {
       setTooltipPositionChange({ top, left });
     }
   };
-
-  useEffect(() => {
-    if (saveFilterSettings && user) {
-      const saveFilters = async () => {
-        try {
-          const uid = auth.currentUser?.uid;
-          if (!uid) return;
-
-          const filterData = {
-            rankBy,
-            filterBy,
-            timeFilter,
-            savedAt: new Date().toISOString()
-          };
-
-          const filterRef = doc(db, 'users', uid, 'settings', 'dashboardFilters');
-          await setDoc(filterRef, filterData);
-        } catch (err) {
-          console.error('Error saving filter:', err);
-        }
-      };
-      saveFilters();
-    }
-  }, [rankBy, filterBy, timeFilter, saveFilterSettings, user]);
 
   useEffect(() => {
     if (showTooltip || showTooltipEnergy || showTooltipChange) {
@@ -469,7 +535,11 @@ function Dashboard() {
       const snapshot = await getDocs(appliancesRef);
       const data = [];
       snapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() });
+        const applianceData = { id: doc.id, ...doc.data() };
+        // Only include appliances that are not deleted
+        if (!applianceData.deleted) {
+          data.push(applianceData);
+        }
       });
 
       setAppliances(data);
@@ -511,7 +581,11 @@ function Dashboard() {
       const reportsData = [];
 
       snapshot.forEach((doc) => {
-        reportsData.push({ id: doc.id, ...doc.data() });
+        const reportData = { id: doc.id, ...doc.data() };
+        // Only include reports that are not deleted
+        if (!reportData.deleted) {
+          reportsData.push(reportData);
+        }
       });
 
       // sort by creation date, newest first
@@ -532,7 +606,7 @@ function Dashboard() {
     if (user) {
       fetchAppliances();
       fetchReports();
-      loadSavedFilter();
+      loadSavedFilters();
     } else {
       navigate('/');
     }
@@ -593,10 +667,96 @@ function Dashboard() {
               Loading...
             </div>
           ) : appliances.length === 0 ? (
-            <div className="welcome-container">
-              <p style={{ fontSize: '16px', marginBottom: '16px' }}>
-                No appliances found.
-              </p>
+            <div style={{
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '32px',
+              maxWidth: '700px',
+              margin: '0 auto'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#1f2937',
+                marginBottom: '24px'
+              }}>
+                Get Started
+              </h3>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px'
+              }}>
+                <div>
+                  <h4 style={{
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    margin: '0 0 8px 0'
+                  }}>
+                    1. Add an appliance and upload energy data
+                  </h4>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    lineHeight: '1.5',
+                    margin: '0 0 8px 0'
+                  }}>
+                    Go to Appliances and click "Add Appliance" to register your devices. Then click on an appliance and upload a CSV file with time and kWh columns to track usage.
+                  </p>
+                  <button
+                    onClick={() => navigate('/appliances')}
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Go to Appliances
+                  </button>
+                </div>
+
+                <div>
+                  <h4 style={{
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    margin: '0 0 8px 0'
+                  }}>
+                    2. Add cost data (optional)
+                  </h4>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    lineHeight: '1.5',
+                    margin: '0 0 8px 0'
+                  }}>
+                    Upload your electricity rates for accurate cost estimates. Default is $0.14/kWh.
+                  </p>
+                  <button
+                    onClick={() => navigate('/cost-data')}
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Go to Cost Data
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <>
@@ -691,10 +851,10 @@ function Dashboard() {
                           }}
                         >
                           {stats.billDataSource && stats.billDataSource.includes('current month')
-                            ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'
+                            ? 'Projected based on your current monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used.'
                             : stats.billDataSource
-                              ? `Estimated using data from ${stats.billDataSource} since no current month data is available. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.`
-                              : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used based on your location.'}
+                              ? `Estimated using data uploaded since no current month data is available. Cost rate is from your uploaded data (CSV) in the Cost Data tab under Profile. If no cost data is available, a base rate of $0.14/kWh is used.`
+                              : 'Projected based on your monthly usage. Cost rate is from your uploaded data (CSV). If no cost data is available, a base rate of $0.14/kWh is used.'}
                         </div>
                       )}
                     </div>
@@ -709,7 +869,49 @@ function Dashboard() {
               {/* appliance ranking and reports sections */}
               <div className="dashboard-sections">
                 <div className="ranking-section">
-                  <h2>Appliance Rankings</h2>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ margin: 0 }}>Appliance Rankings</h2>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        onClick={() => setShowSaveDialog(true)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                      >
+                        Save Filter
+                      </button>
+                      <button
+                        onClick={() => setShowSavedFilters(!showSavedFilters)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                      >
+                        Saved Filters ({savedFilters.filter(f => !f.deleted).length})
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="ranking-filters">
                     <div className="filter-group">
@@ -863,35 +1065,364 @@ function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="filter-group" style={{
+                  </div>
+
+                  {showSaveDialog && (
+                    <div style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
                       display: 'flex',
-                      gap: '8px',
                       alignItems: 'center',
-                      marginLeft: 'auto'
+                      justifyContent: 'center',
+                      zIndex: 10000
                     }}>
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '14px',
-                        color: '#374151',
-                        cursor: 'pointer',
-                        userSelect: 'none'
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '32px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)'
                       }}>
+                        <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
+                          Save Filter Preset
+                        </h3>
+                        <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#6b7280', lineHeight: '1.6' }}>
+                          Give this filter configuration a name so you can quickly apply it later.
+                        </p>
                         <input
-                          type="checkbox"
-                          checked={saveFilterSettings}
-                          onChange={(e) => handleSaveFilterToggle(e.target.checked)}
+                          type="text"
+                          value={filterName}
+                          onChange={(e) => setFilterName(e.target.value)}
+                          placeholder="Enter filter name (e.g., 'High Energy Appliances')"
+                          onKeyPress={(e) => e.key === 'Enter' && handleSaveNamedFilter()}
+                          autoFocus
                           style={{
-                            width: '16px',
-                            height: '16px',
-                            cursor: 'pointer'
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            marginBottom: '24px',
+                            boxSizing: 'border-box'
                           }}
                         />
-                        <span>Save these settings</span>
-                      </label>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => { setShowSaveDialog(false); setFilterName(''); }}
+                            style={{
+                              padding: '10px 20px',
+                              backgroundColor: '#f3f4f6',
+                              color: '#374151',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSaveNamedFilter}
+                            disabled={!filterName.trim()}
+                            style={{
+                              padding: '10px 20px',
+                              backgroundColor: filterName.trim() ? '#28a745' : '#9ca3af',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: filterName.trim() ? 'pointer' : 'not-allowed',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => filterName.trim() && (e.target.style.backgroundColor = '#218838')}
+                            onMouseLeave={(e) => filterName.trim() && (e.target.style.backgroundColor = '#28a745')}
+                          >
+                            Save Filter
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {showSavedFilters && (
+                    <div style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10000
+                    }}>
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '32px',
+                        maxWidth: '700px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflow: 'auto',
+                        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
+                            Saved Filter Presets
+                          </h3>
+                          <button
+                            onClick={() => { setShowSavedFilters(false); setFilterTab('active'); }}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#f3f4f6',
+                              color: '#374151',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb' }}>
+                          <button
+                            onClick={() => setFilterTab('active')}
+                            style={{
+                              padding: '12px 24px',
+                              backgroundColor: 'transparent',
+                              color: filterTab === 'active' ? '#28a745' : '#6b7280',
+                              border: 'none',
+                              borderBottom: filterTab === 'active' ? '2px solid #28a745' : '2px solid transparent',
+                              marginBottom: '-2px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            Active Filters ({savedFilters.filter(f => !f.deleted).length})
+                          </button>
+                          <button
+                            onClick={() => setFilterTab('deleted')}
+                            style={{
+                              padding: '12px 24px',
+                              backgroundColor: 'transparent',
+                              color: filterTab === 'deleted' ? '#28a745' : '#6b7280',
+                              border: 'none',
+                              borderBottom: filterTab === 'deleted' ? '2px solid #28a745' : '2px solid transparent',
+                              marginBottom: '-2px',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            Deleted Filters ({savedFilters.filter(f => f.deleted).length})
+                          </button>
+                        </div>
+
+                        {filterTab === 'active' ? (
+                          savedFilters.filter(f => !f.deleted).length === 0 ? (
+                            <div style={{
+                              textAlign: 'center',
+                              padding: '40px',
+                              color: '#6b7280'
+                            }}>
+                              No saved filters yet. Use "Save Filter" to create one.
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {savedFilters.filter(f => !f.deleted).map((filter) => (
+                                <div
+                                  key={filter.id}
+                                  style={{
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    padding: '16px',
+                                    backgroundColor: '#fff',
+                                    transition: 'box-shadow 0.2s'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                    <div>
+                                      <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                                        {filter.name}
+                                      </h4>
+                                      <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                        Saved {new Date(filter.savedAt).toLocaleDateString()}
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <button
+                                        onClick={() => handleApplyFilter(filter)}
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#28a745',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          fontSize: '13px',
+                                          fontWeight: '500',
+                                          cursor: 'pointer',
+                                          transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                                      >
+                                        Apply
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteFilterClick(filter.id)}
+                                        style={{
+                                          padding: '6px 12px',
+                                          backgroundColor: '#ef4444',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '6px',
+                                          fontSize: '13px',
+                                          fontWeight: '500',
+                                          cursor: 'pointer',
+                                          transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
+                                    <div>
+                                      <span style={{ fontWeight: '500' }}>Rank By:</span> {filter.rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}
+                                    </div>
+                                    <div>
+                                      <span style={{ fontWeight: '500' }}>Filters:</span> {filter.filterBy.length === 0 ? 'None' : filter.filterBy.length}
+                                    </div>
+                                    <div>
+                                      <span style={{ fontWeight: '500' }}>Time:</span> {
+                                        filter.timeFilter === 'today' ? 'Today' :
+                                        filter.timeFilter === 'this-week' ? 'This Week' :
+                                        filter.timeFilter === 'this-month' ? 'This Month' :
+                                        filter.timeFilter === 'last-month' ? 'Last Month' : 'All Time'
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        ) : (
+                          savedFilters.filter(f => f.deleted).length === 0 ? (
+                            <div style={{
+                              textAlign: 'center',
+                              padding: '40px',
+                              color: '#6b7280'
+                            }}>
+                              No deleted filters. Deleted filters are stored here for 30 days.
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {savedFilters.filter(f => f.deleted).map((filter) => (
+                              <div
+                                key={filter.id}
+                                style={{
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '8px',
+                                  padding: '16px',
+                                  backgroundColor: '#fff',
+                                  transition: 'box-shadow 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                  <div>
+                                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                                      {filter.name}
+                                    </h4>
+                                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                      Saved {new Date(filter.savedAt).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                      onClick={() => handleRestoreFilter(filter.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.2s'
+                                      }}
+                                      onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                                      onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+                                    >
+                                      Restore
+                                    </button>
+                                    <button
+                                      onClick={() => handlePermanentDeleteFilter(filter.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.2s'
+                                      }}
+                                      onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
+                                      onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
+                                    >
+                                      Delete Forever
+                                    </button>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
+                                  <div>
+                                    <span style={{ fontWeight: '500' }}>Rank By:</span> {filter.rankBy === 'kwh' ? 'Energy (kWh)' : 'Cost ($)'}
+                                  </div>
+                                  <div>
+                                    <span style={{ fontWeight: '500' }}>Filters:</span> {filter.filterBy.length === 0 ? 'None' : filter.filterBy.length}
+                                  </div>
+                                  <div>
+                                    <span style={{ fontWeight: '500' }}>Time:</span> {
+                                      filter.timeFilter === 'today' ? 'Today' :
+                                      filter.timeFilter === 'this-week' ? 'This Week' :
+                                      filter.timeFilter === 'this-month' ? 'This Month' :
+                                      filter.timeFilter === 'last-month' ? 'Last Month' : 'All Time'
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="ranked-list">
                     {rankedAppliances.length === 0 ? (
@@ -1011,19 +1542,39 @@ function Dashboard() {
                 <div className="previous-reports-section">
                   <div className="reports-header">
                     <h3 style={{ margin: 0 }}>Past Reports</h3>
-                    <button
-                      className="create-report-btn"
-                      onClick={() => navigate('/create-report')}
-                    >
-                      Create Report
-                    </button>
+                    {reports.length > 0 && (
+                      <button
+                        className="create-report-btn"
+                        onClick={() => navigate('/create-report')}
+                      >
+                        Create Report
+                      </button>
+                    )}
                   </div>
 
                   {loadingReports ? (
                     <p>Loading reports...</p>
                   ) : reports.length === 0 ? (
                     <div className="no-reports">
-                      <p>No reports created yet.</p>
+                      <p style={{ marginBottom: '12px' }}>No reports yet.</p>
+                      <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
+                        Create custom visualizations to compare appliance energy usage over time.
+                      </p>
+                      <button
+                        onClick={() => navigate('/create-report')}
+                        style={{
+                          padding: '6px 14px',
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Create Your First Report
+                      </button>
                     </div>
                   ) : (
                     <div className="reports-grid">

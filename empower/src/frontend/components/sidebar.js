@@ -82,6 +82,9 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
               <button className="nav-dropdown-item" onClick={() => { navigate('/create-report'); setIsReportsDropdownOpen(false); }}>
                 Create Report
               </button>
+              <button className="nav-dropdown-item" onClick={() => { navigate('/trash-reports'); setIsReportsDropdownOpen(false); }}>
+                Deleted Reports
+              </button>
             </div>
           )}
         </div>
@@ -101,6 +104,9 @@ export const Navbar = ({ userName = 'User name', onLogout, activePage = 'Dashboa
               </button>
               <button className="nav-dropdown-item" onClick={() => { navigate('/add-appliance'); setIsAppliancesDropdownOpen(false); }}>
                 Add Appliance
+              </button>
+              <button className="nav-dropdown-item" onClick={() => { navigate('/trash-appliances'); setIsAppliancesDropdownOpen(false); }}>
+                Deleted Appliances
               </button>
             </div>
           )}

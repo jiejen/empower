@@ -4,6 +4,7 @@ import { Layout } from '../components/layout';
 import { useUser } from '../../context/UserContext';
 import { auth, db } from '../../firebase';
 import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import '../components/Layout.css';
 
 function Reports() {
@@ -13,6 +14,7 @@ function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -39,7 +41,11 @@ function Reports() {
       const reportsData = [];
 
       snapshot.forEach((doc) => {
-        reportsData.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        // Only show non-deleted reports
+        if (!data.deleted) {
+          reportsData.push({ id: doc.id, ...data });
+        }
       });
 
       reportsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -78,23 +84,33 @@ function Reports() {
     }
   };
 
-  const handleDelete = async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteClick = (report) => {
+    setConfirmDelete(report);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+
+    const reportToDelete = confirmDelete;
+    setConfirmDelete(null);
 
     try {
-      setDeletingId(reportId);
+      setDeletingId(reportToDelete.id);
       const uid = auth.currentUser?.uid;
       if (!uid) {
         setError('Not authenticated');
         return;
       }
 
-      const reportRef = doc(db, 'users', uid, 'reports', reportId);
-      await deleteDoc(reportRef);
+      // Soft delete - mark as deleted with timestamp
+      const reportRef = doc(db, 'users', uid, 'reports', reportToDelete.id);
+      await updateDoc(reportRef, {
+        deleted: true,
+        deletedAt: new Date().toISOString()
+      });
 
-      setReports(reports.filter(r => r.id !== reportId));
+      // Remove from UI immediately
+      setReports(reports.filter(r => r.id !== reportToDelete.id));
       setError(null);
     } catch (err) {
       console.error('Error deleting report:', err);
@@ -203,13 +219,15 @@ function Reports() {
             }}
             title={report.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
-            {report.isFavorite ? '❤️' : '🤍'}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={report.isFavorite ? '#ef4444' : 'none'} stroke={report.isFavorite ? '#ef4444' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </button>
 
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete(report.id);
+              handleDeleteClick(report);
             }}
             disabled={isDeleting}
             style={{
@@ -387,6 +405,17 @@ function Reports() {
 
   return (
     <Layout activePage="Reports" userName={user?.name || user?.email || 'User'} onLogout={logout}>
+      <ConfirmationDialog
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Report?"
+        message="Are you sure you want to delete this report? It will be moved to Deleted Reports where you can recover it for 30 days."
+        itemName={confirmDelete?.reportName}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+
       <div style={{ padding: '32px', maxWidth: '1400px' }}>
         <div style={{
           backgroundColor: 'white',
@@ -403,24 +432,52 @@ function Reports() {
             }}>
               All Reports
             </h2>
-            <button
-              onClick={() => navigate('/create-report')}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
-            >
-              + Create Report
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => navigate('/trash-reports')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  color: '#6b7280',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#f9fafb';
+                  e.target.style.borderColor = '#9ca3af';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.borderColor = '#d1d5db';
+                }}
+              >
+                Deleted Reports
+              </button>
+              <button
+                onClick={() => navigate('/create-report')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+              >
+                Create Report
+              </button>
+            </div>
           </div>
 
           {loading && (
@@ -460,7 +517,9 @@ function Reports() {
                     gap: '8px',
                     marginBottom: '20px'
                   }}>
-                    <span style={{ fontSize: '20px' }}>⭐</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
                     <h3 style={{
                       margin: 0,
                       fontSize: '18px',
