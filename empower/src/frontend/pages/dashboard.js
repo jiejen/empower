@@ -753,7 +753,7 @@ function Dashboard() {
                     color: '#1f2937',
                     margin: '0 0 8px 0'
                   }}>
-                    2. Add cost data (optional)
+                    Note: Add cost data (optional)
                   </h4>
                   <p style={{
                     fontSize: '14px',
