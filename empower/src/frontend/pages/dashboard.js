@@ -452,45 +452,67 @@ function Dashboard() {
 
     const ranked = await Promise.all(rankedPromises);
 
-    // apply filters, when no filters selected, show all with data
+    // apply filters (AND across categories, OR within category)
     let filtered = ranked.filter(a => a.totalKwh > 0);
 
     if (filter.length > 0) {
-      filtered = ranked.filter(appliance => {
-        // an appliance passes only if it matches ALL selected filters
-        return filter.every(f => {
+
+      const filterGroups = {
+        type: [],
+        energy: [],
+        cost: []
+      };
+
+      filter.forEach(f => {
+        if (['refrigerator', 'washer', 'dryer', 'oven', 'dishwasher', 'microwave', 'other'].includes(f)) {
+          filterGroups.type.push(f);
+        } else if (['high-energy', 'medium-energy', 'low-energy'].includes(f)) {
+          filterGroups.energy.push(f);
+        } else if (['high-cost', 'medium-cost', 'low-cost'].includes(f)) {
+          filterGroups.cost.push(f);
+        }
+      });
+
+      filtered = filtered.filter(appliance => {
+        if (filterGroups.type.length > 0) {
           const typeMap = {
-            'refrigerator': 'Refrigerator',
-            'washer': 'Washer',
-            'dryer': 'Dryer',
-            'oven': 'Oven',
-            'dishwasher': 'Dishwasher',
-            'microwave': 'Microwave',
-            'other': 'Other'
+            refrigerator: 'Refrigerator',
+            washer: 'Washer',
+            dryer: 'Dryer',
+            oven: 'Oven',
+            dishwasher: 'Dishwasher',
+            microwave: 'Microwave',
+            other: 'Other'
           };
 
-          if (typeMap[f]) {
-            return appliance.applianceType === typeMap[f];
+          if (!filterGroups.type.some(t => appliance.applianceType === typeMap[t])) {
+            return false;
           }
-          // energy usage filters
-          else if (f === 'high-energy') {
-            return appliance.totalKwh > 50;
-          } else if (f === 'medium-energy') {
-            return appliance.totalKwh >= 20 && appliance.totalKwh <= 50;
-          } else if (f === 'low-energy') {
-            return appliance.totalKwh < 20 && appliance.totalKwh > 0;
-          }
-          // cost filters
-          else if (f === 'high-cost') {
-            return appliance.totalCost > 10;
-          } else if (f === 'medium-cost') {
-            return appliance.totalCost >= 5 && appliance.totalCost <= 10;
-          } else if (f === 'low-cost') {
-            return appliance.totalCost < 5 && appliance.totalCost > 0;
-          }
+        }
 
-          return false;
-        });
+        if (filterGroups.energy.length > 0) {
+          if (!filterGroups.energy.some(f => {
+            if (f === 'high-energy') return appliance.totalKwh > 50;
+            if (f === 'medium-energy') return appliance.totalKwh >= 20 && appliance.totalKwh <= 50;
+            if (f === 'low-energy') return appliance.totalKwh < 20 && appliance.totalKwh > 0;
+            return false;
+          })) {
+            return false;
+          }
+        }
+
+        if (filterGroups.cost.length > 0) {
+          if (!filterGroups.cost.some(f => {
+            if (f === 'high-cost') return appliance.totalCost > 10;
+            if (f === 'medium-cost') return appliance.totalCost >= 5 && appliance.totalCost <= 10;
+            if (f === 'low-cost') return appliance.totalCost < 5 && appliance.totalCost > 0;
+            return false;
+          })) {
+            return false;
+          }
+        }
+
+        return true;
       });
     }
 

@@ -55,29 +55,59 @@ function AddAppliance() {
 
   const parseCSV = (text) => {
     const lines = text.split('\n').filter(line => line.trim());
-    if (lines.length === 0) return [];
-    
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-    
-    const timeIndex = headers.findIndex(h => h.includes('time') || h.includes('timestamp') || h.includes('date'));
-    const kwhIndex = headers.findIndex(h => h.includes('kwh') || h.includes('energy') || h.includes('power'));
-    
-    if (timeIndex === -1 || kwhIndex === -1) {
-      throw new Error('CSV must contain time and kWh columns');
+    if (lines.length === 0) {
+      throw new Error('CSV file is empty');
     }
-    
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+    const timeIndex = headers.findIndex(h =>
+      h.includes('time') || h.includes('timestamp') || h.includes('date')
+    );
+    const kwhIndex = headers.findIndex(h =>
+      h.includes('kwh') || h.includes('energy')
+    );
+
+    if (timeIndex === -1 || kwhIndex === -1) {
+      throw new Error('CSV must contain both time and kWh columns');
+    }
+
     const data = [];
+
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
-      if (values.length >= Math.max(timeIndex, kwhIndex) + 1) {
-        const time = values[timeIndex];
-        const kwh = parseFloat(values[kwhIndex]);
-        if (!isNaN(kwh)) {
-          data.push({ time, kwh });
-        }
+
+      if (values.length <= Math.max(timeIndex, kwhIndex)) {
+        throw new Error(`Missing values on row ${i + 1}`);
       }
+
+      const rawTime = values[timeIndex];
+      const rawKwh = values[kwhIndex];
+
+      if (!rawTime) {
+        throw new Error(`Missing time value on row ${i + 1}`);
+      }
+
+      const parsedTime = new Date(rawTime);
+      if (isNaN(parsedTime.getTime())) {
+        throw new Error(`Invalid time value "${rawTime}" on row ${i + 1}`);
+      }
+
+      const kwh = Number(rawKwh);
+      if (!rawKwh || Number.isNaN(kwh)) {
+        throw new Error(`Invalid kWh value "${rawKwh}" on row ${i + 1}`);
+      }
+
+      data.push({
+        time: parsedTime.toISOString(),
+        kwh
+      });
     }
-    
+
+    if (data.length === 0) {
+      throw new Error('No valid data rows found in CSV');
+    }
+
     return data;
   };
 
@@ -90,7 +120,6 @@ function AddAppliance() {
       return;
     }
     
-    setCsvFile(file);
     setIsUploading(true);
     setUploadProgress(0);
     setMessage('');
@@ -110,6 +139,7 @@ function AddAppliance() {
       try {
         setUploadProgress(70);
         const parsed = parseCSV(event.target.result);
+        setCsvFile(file);
         setCsvData(parsed);
         setUploadProgress(100);
         
@@ -119,10 +149,13 @@ function AddAppliance() {
         }, 500);
       } catch (error) {
         setMessage(`Error parsing CSV: ${error.message}`);
+        setCsvFile(null);
         setCsvData(null);
         setIsUploading(false);
         setUploadProgress(0);
         clearInterval(progressInterval);
+
+        document.getElementById('csvFile').value = '';
       }
     };
     reader.onerror = () => {

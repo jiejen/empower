@@ -45,24 +45,28 @@ const generateDateRange = (startDate, endDate) => {
 
 export const parseCostCSV = (csvContent) => {
   const lines = csvContent.trim().split('\n');
-  const costData = [];
-  
-  let startIndex = 0;
-  if (lines.length > 0) {
-    const firstLine = lines[0].toLowerCase();
-    if (firstLine.includes('date') && firstLine.includes('cost')) {
-      startIndex = 1;
-    }
+  if (lines.length === 0) {
+    throw new Error('CSV file is empty');
   }
-  
+
+  const costData = [];
+  let startIndex = 0;
+
+  const firstLine = lines[0].toLowerCase();
+  if (firstLine.includes('date') && firstLine.includes('cost')) {
+    startIndex = 1;
+  }
+
   for (let i = startIndex; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line) continue;
-    
+    if (!line) {
+      throw new Error(`Empty row detected at line ${i + 1}`);
+    }
+
     const parts = [];
     let currentPart = '';
     let inQuotes = false;
-    
+
     for (let j = 0; j < line.length; j++) {
       const char = line[j];
       if (char === '"') {
@@ -75,48 +79,45 @@ export const parseCostCSV = (csvContent) => {
       }
     }
     parts.push(currentPart.trim().replace(/^"|"$/g, ''));
-    
-    if (parts.length < 2) continue;
-    
+
+    if (parts.length < 2) {
+      throw new Error(`Invalid CSV format on line ${i + 1}`);
+    }
+
     const dateRangeStr = parts[0];
     const costStr = parts[1];
-    
-    const cost = parseFloat(costStr);
-    if (isNaN(cost) || cost < 0) {
-      console.warn(`Invalid cost value: ${costStr}`);
-      continue;
+
+    const cost = Number(costStr);
+    if (!costStr || Number.isNaN(cost) || cost < 0) {
+      throw new Error(`Invalid cost "${costStr}" on line ${i + 1}`);
     }
-    
+
     let startDate, endDate;
-    
+
     if (dateRangeStr.toLowerCase().includes(' to ')) {
       const rangeParts = dateRangeStr.split(/ to /i).map(p => p.trim());
       if (rangeParts.length !== 2) {
-        console.warn(`Invalid date range format: ${dateRangeStr}`);
-        continue;
+        throw new Error(`Invalid date range format on line ${i + 1}`);
       }
-      
+
       startDate = parseDate(rangeParts[0]);
       endDate = parseDate(rangeParts[1]);
-      
+
       if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        console.warn(`Invalid date in range: ${dateRangeStr}`);
-        continue;
+        throw new Error(`Invalid date in range "${dateRangeStr}" on line ${i + 1}`);
       }
-      
+
       if (startDate > endDate) {
-        console.warn(`Start date must be before end date: ${dateRangeStr}`);
-        continue;
+        throw new Error(`Start date must be before end date on line ${i + 1}`);
       }
     } else {
       startDate = parseDate(dateRangeStr);
       if (!startDate || isNaN(startDate.getTime())) {
-        console.warn(`Invalid date format: ${dateRangeStr}`);
-        continue;
+        throw new Error(`Invalid date "${dateRangeStr}" on line ${i + 1}`);
       }
       endDate = new Date(startDate);
     }
-    
+
     const datesInRange = generateDateRange(startDate, endDate);
     for (const date of datesInRange) {
       const dateKey = date.toISOString().split('T')[0];
@@ -127,9 +128,12 @@ export const parseCostCSV = (csvContent) => {
       });
     }
   }
-  
+
+  if (costData.length === 0) {
+    throw new Error('No valid cost data found in CSV');
+  }
+
   costData.sort((a, b) => a.timestamp - b.timestamp);
-  
   return costData;
 };
 

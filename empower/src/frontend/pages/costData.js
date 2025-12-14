@@ -65,7 +65,6 @@ function CostData() {
       return;
     }
 
-    setCsvFile(file);
     setCostUploadError('');
     setIsUploading(true);
     setUploadProgress(0);
@@ -88,6 +87,7 @@ function CostData() {
           setUploadProgress(50);
           const csvContent = e.target.result;
           const costData = parseCostCSV(csvContent);
+          setCsvFile(file);
           
           if (costData.length === 0) {
             setCostUploadError('No valid cost data found in CSV. Expected format: dateRange,costPerKwh (e.g., "2024-01-01 to 2024-01-31,0.12")');

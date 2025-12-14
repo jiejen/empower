@@ -451,9 +451,9 @@ function TrashReports() {
               onClick={() => navigate('/reports')}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
+                backgroundColor: 'white',
+                color: '#6b7280',
+                border: '1px solid #d1d5db',
                 borderRadius: '6px',
                 fontSize: '14px',
                 fontWeight: '500',
@@ -461,8 +461,14 @@ function TrashReports() {
                 transition: 'background-color 0.2s',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
               }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#f9fafb';
+                e.target.style.borderColor = '#9ca3af';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'white';
+                e.target.style.borderColor = '#d1d5db';
+              }}
             >
               Back to Reports
             </button>
