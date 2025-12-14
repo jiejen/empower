@@ -7,33 +7,48 @@ This UI is a prototype for managing home appliances, tracking energy usage, and 
 
 ## Features
 
-### Add Appliance
-- Create a new appliance entry
-- Specify appliance name, category, and location
-- Upload energy usage data via CSV (kWh vs timestamp) for appliance
+### Dashboard
+- View summary statistics
+- Filter appliance rankings
+- View past reports
 
-### View Appliances
-- See list of all appliances and their details
-- View usage statistics generated from uploaded data
-- Delete appliances
+### All Reports
+- Browse previously generated reports
+- Delete old reports
+- Favorite reports
 
 ### Create Report
 - Select one or more appliances
 - Select date ranges
 - Choose chart type (Line, Bar, Pie)
 - Generate visual analytics reports
+- Advanced statistics based on each report for experienced users
 
-### View Reports
-- Browse previously generated reports
-- Delete old reports
+### Deleted Reports
+- View deleted reports 
+- Restore or permanently delete previously deleted reports
 
-### Dashboard
-- View summary statistics
-- Filter appliance rankings
-- View past reports
+### All Appliances
+- See list of all appliances and their details
+- View usage statistics generated from uploaded data
+- Delete appliances
+- Favorite appliances in all appliances
 
-### Add Cost Data (Optional)*
+### Add Appliance
+- Create a new appliance entry
+- Specify appliance name, category, and location
+- Upload energy usage data via CSV (kWh vs timestamp) for appliance
+
+### Deleted Appliances
+- View deleted appliances
+- Restore or permanently delete previously deleted appliances
+
+### Profile
+- Edit user name, phone number, city, and state
+
+### Cost Data (Optional)*
 - Upload cost data via CSV (cost per kWh vs time range)
+- Delete cost data as needed
 
 \*If no cost data is uploaded, a default value of **$0.14 per kWh** is used.
 
@@ -52,7 +67,7 @@ This UI is a prototype for managing home appliances, tracking energy usage, and 
 ---
 
 ## Sample CSV
-Repository: `https://github.com/jiejen/empower/tree/main/empower/backend`  
+Repository: https://github.com/jiejen/empower/tree/main/empower/backend
 Use the following files for test data:
 - `daily_energy_usage.csv`
 - `energy_usage_2025.csv`
@@ -62,13 +77,16 @@ Use the following files for test data:
 ---
 
 ## Running the UI
-1. Open your browser and navigate to the Empower app URL: `https://empower1.vercel.app/`  
+1. Open your browser and navigate to the Empower app URL: https://empowercs4352.vercel.app/
 2. Sign in using the test account provided above.  
 3. View the dashboard.  
-4. Use the navigation bar to access **Appliances**, **Reports**, and **Add Appliance** pages.  
+4. Use the navigation bar to access **Dashboard**, **Appliances**, **Reports** pages.  
 5. Add appliances and upload CSV energy data.  
 6. Create a report by selecting appliances and a date range, then choose a chart type.  
 7. View generated reports and summary statistics.
+8. Favorite and delete appliances and reports as needed.
+9. Add cost data if needed.
+10. View updated dashboard.
 
 ---
 
